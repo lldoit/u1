@@ -48,3 +48,13 @@ Temporary Items
 
 # unity
 *.meta
+*.info
+Library/
+Temp/
+*.csproj
+*.sln
+*.suo
+Assets/LuaFramework/Examples/
+Assets/LuaFramework/Source/Generate/*Wrap.cs
+Assets/LuaFramework/ToLua/Examples/
+Assets/StreamingAssets/
