@@ -12,4 +12,4 @@ XlsxToLua:   https://github.com/zhangqi-ulua/XlsxToLua
 UnityHello:  https://github.com/woshihuo12/UnityHello
 
 //-------------2016-05-7-------------
-(1)更新tolua#到1.0.5.148版
+(1)更新tolua#到1.0.5.152版

@@ -221,11 +221,11 @@ namespace LuaInterface
                 {
                     bundle = fileName.Substring(0, pos);
                     bundle = bundle.Replace('/', '_');
-                    bundle = string.Format("Lua_{0}.unity3d", bundle);
+                    bundle = string.Format("lua_{0}.unity3d", bundle);
                 }
                 else
                 {
-                    bundle = "Lua.unity3d";
+                    bundle = "lua.unity3d";
                 }
 
                 sb.AppendFormat("\n\tno file '{0}' in {1}", fileName, bundle);
@@ -238,14 +238,16 @@ namespace LuaInterface
         {
             AssetBundle zipFile = null;
             byte[] buffer = null;
-            string zipName = "Lua";
+            string zipName = null;
+            StringBuilder sb = StringBuilderCache.Acquire();
+            sb.Append("lua");
             int pos = fileName.LastIndexOf('/');
 
             if (pos > 0)
             {
-                zipName = fileName.Substring(0, pos);
-                zipName = zipName.Replace('/', '_');
-                zipName = string.Format("Lua_{0}", zipName);
+                sb.Append("_");
+                sb.Append(fileName.Substring(0, pos).ToLower());        //shit, unity5 assetbund'name must lower
+                sb.Replace('/', '_');                
                 fileName = fileName.Substring(pos + 1);
             }
 
@@ -254,20 +256,15 @@ namespace LuaInterface
                 fileName += ".lua";
             }
 
-            zipMap.TryGetValue(zipName.ToLower(), out zipFile);
+#if UNITY_5
+            fileName += ".bytes";
+#endif
+            zipName = sb.ToString();
+            zipMap.TryGetValue(zipName, out zipFile);
 
             if (zipFile != null)
             {
 #if UNITY_5
-                string[] names = zipFile.GetAllAssetNames();
-                for (int i = 0; i < names.Length; i++)
-                {
-                    if (names[i].EndsWith(fileName.ToLower() + ".bytes"))
-                    {
-                        fileName = names[i];
-                        break;
-                    }
-                }
                 TextAsset luaCode = zipFile.LoadAsset<TextAsset>(fileName);
 #else
                 TextAsset luaCode = zipFile.Load(fileName, typeof(TextAsset)) as TextAsset;

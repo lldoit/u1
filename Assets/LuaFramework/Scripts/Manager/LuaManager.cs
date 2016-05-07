@@ -16,13 +16,13 @@ namespace LuaFramework {
             lua.LuaSetTop(0);
 
             LuaBinder.Bind(lua);
+            LuaCoroutine.Register(lua, this);
         }
 
         public void InitStart() {
             InitLuaPath();
             InitLuaBundle();
             this.lua.Start();    //启动LUAVM
-            LuaCoroutine.Register(lua, this);
             this.StartMain();
             this.StartLooper();
         }
@@ -73,22 +73,22 @@ namespace LuaFramework {
         /// </summary>
         void InitLuaBundle() {
             if (loader.beZip) {
-                loader.AddBundle("Lua/Lua" + AppConst.ExtName);
-                loader.AddBundle("Lua/Lua_System" + AppConst.ExtName);
-                loader.AddBundle("Lua/Lua_System_Reflection" + AppConst.ExtName);
-                loader.AddBundle("Lua/Lua_UnityEngine" + AppConst.ExtName);
-                loader.AddBundle("Lua/Lua_Common" + AppConst.ExtName);
-                loader.AddBundle("Lua/Lua_Logic" + AppConst.ExtName);
-                loader.AddBundle("Lua/Lua_View" + AppConst.ExtName);
-                loader.AddBundle("Lua/Lua_Controller" + AppConst.ExtName);
-                loader.AddBundle("Lua/Lua_Misc" + AppConst.ExtName);
+                loader.AddBundle("Lua" + AppConst.ExtName);
+                loader.AddBundle("lua_system" + AppConst.ExtName);
+                loader.AddBundle("lua_system_reflection" + AppConst.ExtName);
+                loader.AddBundle("lua_unityEngine" + AppConst.ExtName);
+                loader.AddBundle("lua_common" + AppConst.ExtName);
+                loader.AddBundle("lua_logic" + AppConst.ExtName);
+                loader.AddBundle("lua_view" + AppConst.ExtName);
+                loader.AddBundle("lua_controller" + AppConst.ExtName);
+                loader.AddBundle("lua_misc" + AppConst.ExtName);
 
-                loader.AddBundle("Lua/Lua_protobuf" + AppConst.ExtName);
-                loader.AddBundle("Lua/Lua_3rd_cjson" + AppConst.ExtName);
-                loader.AddBundle("Lua/Lua_3rd_luabitop" + AppConst.ExtName);
-                loader.AddBundle("Lua/Lua_3rd_pbc" + AppConst.ExtName);
-                loader.AddBundle("Lua/Lua_3rd_pblua" + AppConst.ExtName);
-                loader.AddBundle("Lua/Lua_3rd_sproto" + AppConst.ExtName);
+                loader.AddBundle("lua_protobuf" + AppConst.ExtName);
+                loader.AddBundle("lua_3rd_cjson" + AppConst.ExtName);
+                loader.AddBundle("lua_3rd_luabitop" + AppConst.ExtName);
+                loader.AddBundle("lua_3rd_pbc" + AppConst.ExtName);
+                loader.AddBundle("lua_3rd_pblua" + AppConst.ExtName);
+                loader.AddBundle("lua_3rd_sproto" + AppConst.ExtName);
             }
         }
 

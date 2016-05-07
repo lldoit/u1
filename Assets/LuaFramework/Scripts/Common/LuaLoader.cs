@@ -29,12 +29,12 @@ namespace LuaFramework {
         /// </summary>
         /// <param name="bundle"></param>
         public void AddBundle(string bundleName) {
-            string url = Util.DataPath + bundleName.ToLower();
+            string url = Util.DataPath + GetOSDir() + "/" + bundleName;//.ToLower();
             if (File.Exists(url)) {
                 AssetBundle bundle = AssetBundle.LoadFromFile(url);
                 if (bundle != null)
                 {
-                    bundleName = bundleName.Replace("Lua/", "");
+                    //bundleName = bundleName.Replace("Lua/", "");
                     bundleName = bundleName.Replace(AppConst.ExtName, "");
                     base.AddSearchBundle(bundleName.ToLower(), bundle);
                 }
