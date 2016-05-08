@@ -32,6 +32,17 @@ namespace LuaFramework {
             loop.luaState = lua;
         }
 
+        //cjson 比较特殊，只new了一个table，没有注册库，这里注册一下
+        protected void OpenCJson()
+        {
+            lua.LuaGetField(LuaIndexes.LUA_REGISTRYINDEX, "_LOADED");
+            lua.OpenLibs(LuaDLL.luaopen_cjson);
+            lua.LuaSetField(-2, "cjson");
+
+            lua.OpenLibs(LuaDLL.luaopen_cjson_safe);
+            lua.LuaSetField(-2, "cjson.safe");
+        }
+
         void StartMain() {
             lua.DoFile("Main.lua");
 
@@ -49,10 +60,10 @@ namespace LuaFramework {
             lua.OpenLibs(LuaDLL.luaopen_sproto_core);
             lua.OpenLibs(LuaDLL.luaopen_protobuf_c);
             lua.OpenLibs(LuaDLL.luaopen_lpeg);
-            lua.OpenLibs(LuaDLL.luaopen_cjson);
-            lua.OpenLibs(LuaDLL.luaopen_cjson_safe);
             lua.OpenLibs(LuaDLL.luaopen_bit);
             lua.OpenLibs(LuaDLL.luaopen_socket_core);
+
+            this.OpenCJson();
         }
 
         /// <summary>
