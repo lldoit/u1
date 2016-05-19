@@ -44,7 +44,7 @@ public class Base : MonoBehaviour {
     protected LuaManager LuaManager {
         get {
             if (m_LuaMgr == null) {
-                m_LuaMgr = facade.GetManager<LuaManager>(ManagerName.Lua);
+                m_LuaMgr = facade.GetManager<LuaManager>();
             }
             return m_LuaMgr;
         }
@@ -53,7 +53,7 @@ public class Base : MonoBehaviour {
     protected ResourceManager ResManager {
         get {
             if (m_ResMgr == null) {
-                m_ResMgr = facade.GetManager<ResourceManager>(ManagerName.Resource);
+                m_ResMgr = facade.GetManager<ResourceManager>();
             }
             return m_ResMgr;
         }
@@ -62,7 +62,7 @@ public class Base : MonoBehaviour {
     protected NetworkManager NetManager {
         get {
             if (m_NetMgr == null) {
-                m_NetMgr = facade.GetManager<NetworkManager>(ManagerName.Network);
+                m_NetMgr = facade.GetManager<NetworkManager>();
             }
             return m_NetMgr;
         }
@@ -71,7 +71,7 @@ public class Base : MonoBehaviour {
     protected SoundManager SoundManager {
         get {
             if (m_SoundMgr == null) {
-                m_SoundMgr = facade.GetManager<SoundManager>(ManagerName.Sound);
+                m_SoundMgr = facade.GetManager<SoundManager>();
             }
             return m_SoundMgr;
         }
@@ -80,7 +80,7 @@ public class Base : MonoBehaviour {
     protected TimerManager TimerManager {
         get {
             if (m_TimerMgr == null) {
-                m_TimerMgr = facade.GetManager<TimerManager>(ManagerName.Timer);
+                m_TimerMgr = facade.GetManager<TimerManager>();
             }
             return m_TimerMgr;
         }
@@ -89,7 +89,7 @@ public class Base : MonoBehaviour {
     protected ThreadManager ThreadManager {
         get {
             if (m_ThreadMgr == null) {
-                m_ThreadMgr = facade.GetManager<ThreadManager>(ManagerName.Thread);
+                m_ThreadMgr = facade.GetManager<ThreadManager>();
             }
             return m_ThreadMgr;
         }

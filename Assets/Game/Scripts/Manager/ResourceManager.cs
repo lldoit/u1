@@ -3,30 +3,33 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System;
-using System.IO;
 using LuaInterface;
 using UObject = UnityEngine.Object;
 
-public class AssetBundleInfo {
+public class AssetBundleInfo 
+{
     public AssetBundle m_AssetBundle;
     public int m_ReferencedCount;
 
-    public AssetBundleInfo(AssetBundle assetBundle) {
-        m_AssetBundle = assetBundle;
+    public AssetBundleInfo(AssetBundle ab)
+    {
+        m_AssetBundle = ab;
         m_ReferencedCount = 0;
     }
 }
 
-namespace LuaFramework {
-
-    public class ResourceManager : Manager {
-        string m_BaseDownloadingURL = "";
+namespace LuaFramework 
+{
+    public class ResourceManager : Manager 
+    {
+        string m_BaseDownloadingURL = string.Empty;
         AssetBundleManifest m_AssetBundleManifest = null;
         Dictionary<string, string[]> m_Dependencies = new Dictionary<string, string[]>();
         Dictionary<string, AssetBundleInfo> m_LoadedAssetBundles = new Dictionary<string, AssetBundleInfo>();
         Dictionary<string, List<LoadAssetRequest>> m_LoadRequests = new Dictionary<string, List<LoadAssetRequest>>();
 
-        class LoadAssetRequest {
+        class LoadAssetRequest 
+        {
             public Type assetType;
             public string[] assetNames;
             public LuaFunction luaFunc;
@@ -34,9 +37,10 @@ namespace LuaFramework {
         }
 
         // Load AssetBundleManifest.
-        public void Initialize(string manifestName, Action initOK) {
+        public void Initialize(string manifestName, Action initOK) 
+        {
             m_BaseDownloadingURL = Util.GetRelativePath();
-            //if (AppConst.LuaBundleMode)
+            if (AppConst.LuaBundleMode)
             {
                 LoadAsset<AssetBundleManifest>(manifestName, new string[] { "AssetBundleManifest" }, delegate (UObject[] objs)
                 {
@@ -47,42 +51,46 @@ namespace LuaFramework {
                     if (initOK != null) initOK();
                 });
             }
-            //else
-            //{
-            //    if (initOK != null) initOK();
-            //}
+            else
+            {
+                if (initOK != null) initOK();
+            }
         }
 
-        public void LoadPrefab(string abName, string assetName, Action<UObject[]> func) {
+        public void LoadPrefab(string abName, string assetName, Action<UObject[]> func) 
+        {
             LoadAsset<GameObject>(abName, new string[] { assetName }, func);
         }
 
-        public void LoadPrefab(string abName, string[] assetNames, Action<UObject[]> func) {
+        public void LoadPrefab(string abName, string[] assetNames, Action<UObject[]> func) 
+        {
             LoadAsset<GameObject>(abName, assetNames, func);
         }
 
-        public void LoadPrefab(string abName, string[] assetNames, LuaFunction func) {
+        public void LoadPrefab(string abName, string[] assetNames, LuaFunction func) 
+        {
             LoadAsset<GameObject>(abName, assetNames, null, func);
         }
 
-        string GetRealAssetPath(string abName) {
-            if (abName.Equals(AppConst.AssetDir)) {
+        string GetRealAssetPath(string abName) 
+        {
+            if (abName.Equals(AppConst.AssetDir))
                 return abName;
-            }
+
             abName = abName.ToLower();
-            if (!abName.EndsWith(AppConst.ExtName)) {
+            if (!abName.EndsWith(AppConst.ExtName))
                 abName += AppConst.ExtName;
-            }
-            if (abName.Contains("/")) {
+
+            if (abName.Contains("/"))
                 return abName;
-            }
+
             string[] paths = m_AssetBundleManifest.GetAllAssetBundles();
-            for (int i = 0; i < paths.Length; i++) {
+            for (int i = 0; i < paths.Length; i++) 
+            {
                 int index = paths[i].LastIndexOf('/');
                 string path = paths[i].Remove(0, index + 1);
-                if (path.Equals(abName)) {
+                if (path.Equals(abName))
                     return paths[i];
-                }
             }
             Debug.LogError("GetRealAssetPath Error:>>" + abName);
             return null;
@@ -91,7 +99,8 @@ namespace LuaFramework {
         /// <summary>
         /// 载入素材
         /// </summary>
-        void LoadAsset<T>(string abName, string[] assetNames, Action<UObject[]> action = null, LuaFunction func = null) where T : UObject {
+        void LoadAsset<T>(string abName, string[] assetNames, Action<UObject[]> action = null, LuaFunction func = null) where T : UObject
+        {
             abName = GetRealAssetPath(abName);
 
             LoadAssetRequest request = new LoadAssetRequest();
@@ -101,39 +110,48 @@ namespace LuaFramework {
             request.sharpFunc = action;
 
             List<LoadAssetRequest> requests = null;
-            if (!m_LoadRequests.TryGetValue(abName, out requests)) {
+            if (!m_LoadRequests.TryGetValue(abName, out requests)) 
+            {
                 requests = new List<LoadAssetRequest>();
                 requests.Add(request);
                 m_LoadRequests.Add(abName, requests);
                 StartCoroutine(OnLoadAsset<T>(abName));
-            } else {
+            } 
+            else 
+            {
                 requests.Add(request);
             }
         }
 
-        IEnumerator OnLoadAsset<T>(string abName) where T : UObject {
+        IEnumerator OnLoadAsset<T>(string abName) where T : UObject
+        {
             AssetBundleInfo bundleInfo = GetLoadedAssetBundle(abName);
-            if (bundleInfo == null) {
+            if (bundleInfo == null) 
+            {
                 yield return StartCoroutine(OnLoadAssetBundle(abName, typeof(T)));
 
                 bundleInfo = GetLoadedAssetBundle(abName);
-                if (bundleInfo == null) {
+                if (bundleInfo == null) 
+                {
                     m_LoadRequests.Remove(abName);
                     Debug.LogError("OnLoadAsset--->>>" + abName);
                     yield break;
                 }
             }
             List<LoadAssetRequest> list = null;
-            if (!m_LoadRequests.TryGetValue(abName, out list)) {
+            if (!m_LoadRequests.TryGetValue(abName, out list)) 
+            {
                 m_LoadRequests.Remove(abName);
                 yield break;
             }
-            for (int i = 0; i < list.Count; i++) {
+            for (int i = 0; i < list.Count; i++) 
+            {
                 string[] assetNames = list[i].assetNames;
                 List<UObject> result = new List<UObject>();
 
                 AssetBundle ab = bundleInfo.m_AssetBundle;
-                for (int j = 0; j < assetNames.Length; j++) {
+                for (int j = 0; j < assetNames.Length; j++) 
+                {
                     string assetPath = assetNames[j];
                     AssetBundleRequest request = ab.LoadAssetAsync(assetPath, list[i].assetType);
                     yield return request;
@@ -142,11 +160,13 @@ namespace LuaFramework {
                     //T assetObj = ab.LoadAsset<T>(assetPath);
                     //result.Add(assetObj);
                 }
-                if (list[i].sharpFunc != null) {
+                if (list[i].sharpFunc != null) 
+                {
                     list[i].sharpFunc(result.ToArray());
                     list[i].sharpFunc = null;
                 }
-                if (list[i].luaFunc != null) {
+                if (list[i].luaFunc != null) 
+                {
                     list[i].luaFunc.Call((object)result.ToArray());
                     list[i].luaFunc.Dispose();
                     list[i].luaFunc = null;
@@ -156,24 +176,27 @@ namespace LuaFramework {
             m_LoadRequests.Remove(abName);
         }
 
-        IEnumerator OnLoadAssetBundle(string abName, Type type) {
+        IEnumerator OnLoadAssetBundle(string abName, Type type) 
+        {
             string url = m_BaseDownloadingURL + abName;
 
             WWW download = null;
             if (type == typeof(AssetBundleManifest))
                 download = new WWW(url);
-            else {
+            else 
+            {
                 string[] dependencies = m_AssetBundleManifest.GetAllDependencies(abName);
-                if (dependencies.Length > 0) {
+                if (dependencies.Length > 0) 
+                {
                     m_Dependencies.Add(abName, dependencies);
-                    for (int i = 0; i < dependencies.Length; i++) {
+                    for (int i = 0; i < dependencies.Length; i++) 
+                    {
                         string depName = dependencies[i];
                         AssetBundleInfo bundleInfo = null;
-                        if (m_LoadedAssetBundles.TryGetValue(depName, out bundleInfo)) {
+                        if (m_LoadedAssetBundles.TryGetValue(depName, out bundleInfo))
                             bundleInfo.m_ReferencedCount++;
-                        } else if (!m_LoadRequests.ContainsKey(depName)) {
+                        else if (!m_LoadRequests.ContainsKey(depName))
                             yield return StartCoroutine(OnLoadAssetBundle(depName, type));
-                        }
                     }
                 }
                 download = WWW.LoadFromCacheOrDownload(url, m_AssetBundleManifest.GetAssetBundleHash(abName), 0);
@@ -181,12 +204,12 @@ namespace LuaFramework {
             yield return download;
 
             AssetBundle assetObj = download.assetBundle;
-            if (assetObj != null) {
+            if (assetObj != null)
                 m_LoadedAssetBundles.Add(abName, new AssetBundleInfo(assetObj));
-            }
         }
 
-        AssetBundleInfo GetLoadedAssetBundle(string abName) {
+        AssetBundleInfo GetLoadedAssetBundle(string abName) 
+        {
             AssetBundleInfo bundle = null;
             m_LoadedAssetBundles.TryGetValue(abName, out bundle);
             if (bundle == null) return null;
@@ -197,15 +220,17 @@ namespace LuaFramework {
                 return bundle;
 
             // Make sure all dependencies are loaded
-            foreach (var dependency in dependencies) {
+            for (int i = 0; i < dependencies.Length; ++i)
+            {
                 AssetBundleInfo dependentBundle;
-                m_LoadedAssetBundles.TryGetValue(dependency, out dependentBundle);
+                m_LoadedAssetBundles.TryGetValue(dependencies[i], out dependentBundle);
                 if (dependentBundle == null) return null;
             }
             return bundle;
         }
 
-        public void UnloadAssetBundle(string abName) {
+        public void UnloadAssetBundle(string abName) 
+        {
             abName = GetRealAssetPath(abName);
             Debug.Log(m_LoadedAssetBundles.Count + " assetbundle(s) in memory before unloading " + abName);
             UnloadAssetBundleInternal(abName);
@@ -213,23 +238,28 @@ namespace LuaFramework {
             Debug.Log(m_LoadedAssetBundles.Count + " assetbundle(s) in memory after unloading " + abName);
         }
 
-        void UnloadDependencies(string abName) {
+        void UnloadDependencies(string abName) 
+        {
             string[] dependencies = null;
             if (!m_Dependencies.TryGetValue(abName, out dependencies))
                 return;
 
             // Loop dependencies.
-            foreach (var dependency in dependencies) {
-                UnloadAssetBundleInternal(dependency);
+            for (int i = 0; i < dependencies.Length; ++i)
+            {
+                UnloadAssetBundleInternal(dependencies[i]);
             }
+
             m_Dependencies.Remove(abName);
         }
 
-        void UnloadAssetBundleInternal(string abName) {
+        void UnloadAssetBundleInternal(string abName) 
+        {
             AssetBundleInfo bundle = GetLoadedAssetBundle(abName);
             if (bundle == null) return;
 
-            if (--bundle.m_ReferencedCount == 0) {
+            if (--bundle.m_ReferencedCount == 0)
+            {
                 bundle.m_AssetBundle.Unload(false);
                 m_LoadedAssetBundles.Remove(abName);
                 Debug.Log(abName + " has been unloaded successfully");

@@ -243,13 +243,11 @@ namespace LuaFramework {
         /// <summary>
         /// 析构函数
         /// </summary>
-        void OnDestroy() {
-            if (NetManager != null) {
-                NetManager.Unload();
-            }
-            if (LuaManager != null) {
+        void OnDestroy()
+        {
+            if (LuaManager != null)
                 LuaManager.Close();
-            }
+
             Debug.Log("~GameManager was destroyed");
         }
     }

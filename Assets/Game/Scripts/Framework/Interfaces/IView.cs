@@ -1,5 +1,6 @@
 ﻿using System;
 
-public interface IView {
+public interface IView 
+{
     void OnMessage(IMessage message);
 }

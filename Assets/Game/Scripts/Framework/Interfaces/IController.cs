@@ -1,7 +1,4 @@
-﻿/* 
- LuaFramework Code By Jarjin leeibution 3.0 License 
-*/
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 public interface IController

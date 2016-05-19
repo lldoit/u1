@@ -4,8 +4,10 @@ using System.Collections.Generic;
 using UnityEngine.UI;
 using LuaInterface;
 
-namespace LuaFramework {
-    public class PanelManager : Manager {
+namespace LuaFramework 
+{
+    public class PanelManager : Manager 
+    {
         private Transform parent;
 
         Transform Parent {
@@ -24,7 +26,8 @@ namespace LuaFramework {
         /// 创建面板，请求资源管理器
         /// </summary>
         /// <param name="type"></param>
-        public void CreatePanel(string name, LuaFunction func = null) {
+        public void CreatePanel(string name, LuaFunction func = null) 
+        {
             string assetName = name + "Panel";
             string abName = name.ToLower() + AppConst.ExtName;
 

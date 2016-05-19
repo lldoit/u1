@@ -1,7 +1,4 @@
-﻿/* 
- LuaFramework Code By Jarjin lee
-*/
-using System;
+﻿using System;
 
 public interface ICommand {
 	void Execute(IMessage message);
