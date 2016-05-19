@@ -25,6 +25,6 @@ public static class LuaConst
     public static string zbsDir = luaResDir + "/mobdebug/";
 #endif    
 
-    public static bool openLuaSocket = true;            //是否打开Lua Socket库
+    public static bool openLuaSocket = false;            //是否打开Lua Socket库
     public static bool openZbsDebugger = false;         //是否连接ZeroBraneStudio调试
 }

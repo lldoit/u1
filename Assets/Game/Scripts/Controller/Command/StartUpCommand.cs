@@ -4,7 +4,6 @@ using LuaFramework;
 
 public class StartUpCommand : ControllerCommand 
 {
-
     public override void Execute(IMessage message) 
     {
         if (!Util.CheckEnvironment()) return;

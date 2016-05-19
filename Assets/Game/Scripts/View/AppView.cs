@@ -8,8 +8,10 @@ public class AppView : View
     ///<summary>
     /// 监听的消息
     ///</summary>
-    List<string> MessageList {
-        get {
+    List<string> MessageList
+    {
+        get
+        {
             return new List<string>()
             { 
                 NotiConst.UPDATE_MESSAGE,
@@ -20,7 +22,8 @@ public class AppView : View
         }
     }
 
-    void Awake() {
+    void Awake()
+    {
         RemoveMessage(this, MessageList);
         RegisterMessage(this, MessageList);
     }
@@ -29,10 +32,12 @@ public class AppView : View
     /// 处理View消息
     /// </summary>
     /// <param name="message"></param>
-    public override void OnMessage(IMessage message) {
+    public override void OnMessage(IMessage message)
+    {
         string name = message.Name;
         object body = message.Body;
-        switch (name) {
+        switch (name)
+        {
             case NotiConst.UPDATE_MESSAGE:      //更新消息
                 UpdateMessage(body.ToString());
             break;
@@ -48,19 +53,23 @@ public class AppView : View
         }
     }
 
-    public void UpdateMessage(string data) {
+    public void UpdateMessage(string data)
+    {
         this.message = data;
     }
 
-    public void UpdateExtract(string data) {
+    public void UpdateExtract(string data)
+    {
         this.message = data;
     }
 
-    public void UpdateDownload(string data) {
+    public void UpdateDownload(string data)
+    {
         this.message = data;
     }
 
-    public void UpdateProgress(string data) {
+    public void UpdateProgress(string data)
+    {
         this.message = data;
     }
 }

@@ -30,7 +30,8 @@ public class AppFacade : Facade
     /// <summary>
     /// 启动框架
     /// </summary>
-    public void StartUp() {
+    public void StartUp()
+    {
         SendMessageCommand(NotiConst.START_UP);
         RemoveMultiCommand(NotiConst.START_UP);
     }
