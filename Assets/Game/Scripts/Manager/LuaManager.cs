@@ -24,8 +24,8 @@ namespace LuaFramework
 
     public class LuaManager : Manager
     {
-        private LuaState lua;
-        private LuaLoader loader;
+        private LuaState lua = null;
+        private LuaLoader loader = null;
         private MyLuaClient mMyLuaClient;
 
         // Use this for initialization
@@ -99,15 +99,19 @@ namespace LuaFramework
             return null;
         }
 
-        public void LuaGC() 
+        public void LuaGC()
         {
-            lua.LuaGC(LuaGCOptions.LUA_GCCOLLECT);
+            if (lua != null)
+                lua.LuaGC(LuaGCOptions.LUA_GCCOLLECT);
         }
 
         public void Close() 
         {
-            loader.Dispose();
-            loader = null;
+            if (loader != null)
+            {
+                loader.Dispose();
+                loader = null;
+            }
         }
     }
 }

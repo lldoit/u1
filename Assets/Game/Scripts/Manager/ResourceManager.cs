@@ -40,7 +40,7 @@ namespace LuaFramework
         public void Initialize(string manifestName, Action initOK) 
         {
             m_BaseDownloadingURL = Util.GetRelativePath();
-            if (AppConst.LuaBundleMode)
+            //if (AppConst.LuaBundleMode)
             {
                 LoadAsset<AssetBundleManifest>(manifestName, new string[] { "AssetBundleManifest" }, delegate (UObject[] objs)
                 {
@@ -51,10 +51,10 @@ namespace LuaFramework
                     if (initOK != null) initOK();
                 });
             }
-            else
-            {
-                if (initOK != null) initOK();
-            }
+            //else
+            //{
+            //    if (initOK != null) initOK();
+            //}
         }
 
         public void LoadPrefab(string abName, string assetName, Action<UObject[]> func) 
