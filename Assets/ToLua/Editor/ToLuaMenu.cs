@@ -220,7 +220,7 @@ public static class ToLuaMenu
         {
             return;
         }
-
+       
         if (t.IsInterface)
         {
             Debugger.LogWarning("{0} has a base type {1} is Interface, use SetBaseType to jump it", bt.name, t.FullName);
@@ -271,9 +271,14 @@ public static class ToLuaMenu
     static BindType[] GenBindTypes(BindType[] list, bool beDropBaseType = true)
     {                
         allTypes = new List<BindType>(list);
-
         for (int i = 0; i < list.Length; i++)
-        {            
+        {
+            for (int j = i + 1; j < list.Length; j++)
+            {
+                if (list[i].type == list[j].type)
+                    throw new NotSupportedException("Repeat BindType:"+list[i].type);
+            }
+
             if (dropType.IndexOf(list[i].type) >= 0)
             {
                 Debug.LogWarning(list[i].type.FullName + " in dropType table, not need to export");
@@ -463,7 +468,7 @@ public static class ToLuaMenu
         return tree;
     }
 
-    static void AddSpaceNameToTree(ToLuaTree<string> tree, ToLuaNode<string> root, string space)
+   static void AddSpaceNameToTree(ToLuaTree<string> tree, ToLuaNode<string> parent, string space)
     {
         if (space == null || space == string.Empty)
         {
@@ -471,26 +476,58 @@ public static class ToLuaMenu
         }
 
         string[] ns = space.Split(new char[] { '.' });
-        ToLuaNode<string> parent = root;
 
         for (int j = 0; j < ns.Length; j++)
         {
-            //pos变量
-            ToLuaNode<string> node = tree.Find((_t) => { return _t == ns[j]; }, j);
+            var nodes = tree.Find((_t) => { return _t == ns[j]; }, j);
 
-            if (node == null)
+            if (nodes.Count == 0)
             {
-                node = new ToLuaNode<string>();
+                var node = new ToLuaNode<string>();
                 node.value = ns[j];
                 parent.childs.Add(node);
                 node.parent = parent;
-                //加入pos跟root里的pos比较，只有位置相同才是统一命名空间节点
                 node.layer = j;
                 parent = node;
             }
             else
             {
-                parent = node;
+                var flag = false;
+                var index = 0;
+                for (int i = 0; i < nodes.Count; i++)
+                {
+                    var count = j;
+                    var size = j;
+                    var nodecopy = nodes[i];
+                    while (nodecopy.parent != null)
+                    {
+                        nodecopy = nodecopy.parent;
+                        if (nodecopy.value != null && nodecopy.value == ns[--count])
+                        {
+                            size--;
+                        }
+                    }
+                    if (size == 0)
+                    {
+                        index = i;
+                        flag = true;
+                        break;
+                    }
+                }
+
+                if (!flag)
+                {
+                    var nnode = new ToLuaNode<string>();
+                    nnode.value = ns[j];
+                    nnode.layer = j;
+                    nnode.parent = parent;
+                    parent.childs.Add(nnode);
+                    parent = nnode;
+                }
+                else
+                {
+                    parent = nodes[index];
+                }
             }
         }
     }
@@ -961,7 +998,7 @@ public static class ToLuaMenu
 
         string path = Application.dataPath.Replace('\\', '/');
         path = path.Substring(0, path.LastIndexOf('/'));
-        File.Copy(path + "/LuaEncoder/Build.bat", tempDir +  "/Build.bat", true);
+        File.Copy(path + "/Luajit/Build.bat", tempDir +  "/Build.bat", true);
         CopyLuaBytesFiles(CustomSettings.luaDir, tempDir, false);
         Process proc = Process.Start(tempDir + "/Build.bat");
         proc.WaitForExit();
@@ -981,7 +1018,7 @@ public static class ToLuaMenu
 
         string path = Application.dataPath.Replace('\\', '/');
         path = path.Substring(0, path.LastIndexOf('/'));
-        File.Copy(path + "/LuaEncoder/Build.bat", tempDir + "/Build.bat", true);
+        File.Copy(path + "/Luajit/Build.bat", tempDir + "/Build.bat", true);
         CopyLuaBytesFiles(CustomSettings.luaDir, tempDir, false);
         Process proc = Process.Start(tempDir + "/Build.bat");
         proc.WaitForExit();        
@@ -1072,7 +1109,7 @@ public static class ToLuaMenu
 
         string path = Application.dataPath.Replace('\\', '/');
         path = path.Substring(0, path.LastIndexOf('/'));
-        File.Copy(path + "/LuaEncoder/Build.bat", tempDir + "/Build.bat", true);
+        File.Copy(path + "/Luajit/Build.bat", tempDir + "/Build.bat", true);
         CopyLuaBytesFiles(CustomSettings.luaDir, tempDir, false);
         Process proc = Process.Start(tempDir + "/Build.bat");
         proc.WaitForExit();

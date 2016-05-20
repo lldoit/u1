@@ -46,7 +46,7 @@ public class WelcomeScreen : EditorWindow
 
 
     Texture LoadTexture(string name) {
-        string path = "Assets/LuaFramework/Examples/Editor Default Resources/";
+        string path = "Assets/Examples/Editor Default Resources/";
         return (Texture)AssetDatabase.LoadAssetAtPath(path + name, typeof(Texture));
     }
 

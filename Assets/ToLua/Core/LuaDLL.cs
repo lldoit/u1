@@ -179,7 +179,7 @@ namespace LuaInterface
 
     public class LuaDLL
     {
-        public static string version = "1.0.5.149";
+        public static string version = "1.0.5.153";
         public static int LUA_MULTRET = -1;
         public static string[] LuaTypeName = { "none", "nil", "boolean", "lightuserdata", "number", "string", "table", "function", "userdata", "thread" };        
 
@@ -187,7 +187,7 @@ namespace LuaInterface
         const string LUADLL = "__Internal";
 #else
         const string LUADLL = "tolua";
-#endif
+#endif        
 
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern int luaopen_pb(IntPtr L);

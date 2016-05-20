@@ -19,14 +19,13 @@ public static class DelegateFactory
 		dict.Clear();
 		dict.Add(typeof(System.Action), System_Action);
 		dict.Add(typeof(UnityEngine.Events.UnityAction), UnityEngine_Events_UnityAction);
+		dict.Add(typeof(UnityEngine.Camera.CameraCallback), UnityEngine_Camera_CameraCallback);
 		dict.Add(typeof(UnityEngine.Application.LogCallback), UnityEngine_Application_LogCallback);
 		dict.Add(typeof(UnityEngine.Application.AdvertisingIdentifierCallback), UnityEngine_Application_AdvertisingIdentifierCallback);
-		dict.Add(typeof(UnityEngine.Camera.CameraCallback), UnityEngine_Camera_CameraCallback);
 		dict.Add(typeof(UnityEngine.AudioClip.PCMReaderCallback), UnityEngine_AudioClip_PCMReaderCallback);
 		dict.Add(typeof(UnityEngine.AudioClip.PCMSetPositionCallback), UnityEngine_AudioClip_PCMSetPositionCallback);
 		dict.Add(typeof(UnityEngine.RectTransform.ReapplyDrivenProperties), UnityEngine_RectTransform_ReapplyDrivenProperties);
 		dict.Add(typeof(System.Action<NotiData>), System_Action_NotiData);
-		dict.Add(typeof(System.Action<UnityEngine.Object[]>), System_Action_UnityEngine_Objects);
 	}
 
     [NoToLuaAttribute]
@@ -107,6 +106,31 @@ public static class DelegateFactory
 		return d;
 	}
 
+	class UnityEngine_Camera_CameraCallback_Event : LuaDelegate
+	{
+		public UnityEngine_Camera_CameraCallback_Event(LuaFunction func) : base(func) { }
+
+		public void Call(UnityEngine.Camera param0)
+		{
+			func.BeginPCall();
+			func.Push(param0);
+			func.PCall();
+			func.EndPCall();
+		}
+	}
+
+	public static Delegate UnityEngine_Camera_CameraCallback(LuaFunction func)
+	{
+		if (func == null)
+		{
+			UnityEngine.Camera.CameraCallback fn = delegate { };
+			return fn;
+		}
+
+		UnityEngine.Camera.CameraCallback d = (new UnityEngine_Camera_CameraCallback_Event(func)).Call;
+		return d;
+	}
+
 	class UnityEngine_Application_LogCallback_Event : LuaDelegate
 	{
 		public UnityEngine_Application_LogCallback_Event(LuaFunction func) : base(func) { }
@@ -158,31 +182,6 @@ public static class DelegateFactory
 		}
 
 		UnityEngine.Application.AdvertisingIdentifierCallback d = (new UnityEngine_Application_AdvertisingIdentifierCallback_Event(func)).Call;
-		return d;
-	}
-
-	class UnityEngine_Camera_CameraCallback_Event : LuaDelegate
-	{
-		public UnityEngine_Camera_CameraCallback_Event(LuaFunction func) : base(func) { }
-
-		public void Call(UnityEngine.Camera param0)
-		{
-			func.BeginPCall();
-			func.Push(param0);
-			func.PCall();
-			func.EndPCall();
-		}
-	}
-
-	public static Delegate UnityEngine_Camera_CameraCallback(LuaFunction func)
-	{
-		if (func == null)
-		{
-			UnityEngine.Camera.CameraCallback fn = delegate { };
-			return fn;
-		}
-
-		UnityEngine.Camera.CameraCallback d = (new UnityEngine_Camera_CameraCallback_Event(func)).Call;
 		return d;
 	}
 
@@ -283,31 +282,6 @@ public static class DelegateFactory
 		}
 
 		System.Action<NotiData> d = (new System_Action_NotiData_Event(func)).Call;
-		return d;
-	}
-
-	class System_Action_UnityEngine_Objects_Event : LuaDelegate
-	{
-		public System_Action_UnityEngine_Objects_Event(LuaFunction func) : base(func) { }
-
-		public void Call(UnityEngine.Object[] param0)
-		{
-			func.BeginPCall();
-			func.Push(param0);
-			func.PCall();
-			func.EndPCall();
-		}
-	}
-
-	public static Delegate System_Action_UnityEngine_Objects(LuaFunction func)
-	{
-		if (func == null)
-		{
-			System.Action<UnityEngine.Object[]> fn = delegate { };
-			return fn;
-		}
-
-		System.Action<UnityEngine.Object[]> d = (new System_Action_UnityEngine_Objects_Event(func)).Call;
 		return d;
 	}
 

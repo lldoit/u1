@@ -15,10 +15,15 @@ public static class LuaBinder
 		ManagerWrap.Register(L);
 		L.BeginModule("UnityEngine");
 		UnityEngine_ComponentWrap.Register(L);
+		UnityEngine_TransformWrap.Register(L);
+		UnityEngine_MaterialWrap.Register(L);
+		UnityEngine_LightWrap.Register(L);
+		UnityEngine_RigidbodyWrap.Register(L);
+		UnityEngine_CameraWrap.Register(L);
+		UnityEngine_AudioSourceWrap.Register(L);
 		UnityEngine_BehaviourWrap.Register(L);
 		UnityEngine_MonoBehaviourWrap.Register(L);
 		UnityEngine_GameObjectWrap.Register(L);
-		UnityEngine_TransformWrap.Register(L);
 		UnityEngine_TrackedReferenceWrap.Register(L);
 		UnityEngine_ApplicationWrap.Register(L);
 		UnityEngine_PhysicsWrap.Register(L);
@@ -27,18 +32,14 @@ public static class LuaBinder
 		UnityEngine_TextureWrap.Register(L);
 		UnityEngine_Texture2DWrap.Register(L);
 		UnityEngine_ShaderWrap.Register(L);
-		UnityEngine_MaterialWrap.Register(L);
 		UnityEngine_RendererWrap.Register(L);
 		UnityEngine_WWWWrap.Register(L);
 		UnityEngine_ScreenWrap.Register(L);
-		UnityEngine_CameraWrap.Register(L);
 		UnityEngine_CameraClearFlagsWrap.Register(L);
 		UnityEngine_AudioClipWrap.Register(L);
-		UnityEngine_AudioSourceWrap.Register(L);
 		UnityEngine_AssetBundleWrap.Register(L);
 		UnityEngine_ParticleSystemWrap.Register(L);
 		UnityEngine_AsyncOperationWrap.Register(L);
-		UnityEngine_LightWrap.Register(L);
 		UnityEngine_LightTypeWrap.Register(L);
 		UnityEngine_SleepTimeoutWrap.Register(L);
 		UnityEngine_AnimatorWrap.Register(L);
@@ -66,7 +67,6 @@ public static class LuaBinder
 		UnityEngine_RenderSettingsWrap.Register(L);
 		UnityEngine_BlendWeightsWrap.Register(L);
 		UnityEngine_RenderTextureWrap.Register(L);
-		UnityEngine_RigidbodyWrap.Register(L);
 		UnityEngine_RectTransformWrap.Register(L);
 		L.BeginModule("UI");
 		UnityEngine_UI_TextWrap.Register(L);
@@ -103,7 +103,6 @@ public static class LuaBinder
 		L.BeginModule("System");
 		L.RegFunction("Action", System_Action);
 		L.RegFunction("Action_NotiData", System_Action_NotiData);
-		L.RegFunction("Action_UnityEngine_Objects", System_Action_UnityEngine_Objects);
 		L.EndModule();
 		L.EndModule();
 		Debugger.Log("Register lua type cost time: {0}", Time.realtimeSinceStartup - t);
@@ -148,22 +147,6 @@ public static class LuaBinder
 		{
 			LuaFunction func = ToLua.CheckLuaFunction(L, 1);
 			Delegate arg1 = DelegateFactory.CreateDelegate(typeof(System.Action<NotiData>), func);
-			ToLua.Push(L, arg1);
-			return 1;
-		}
-		catch(Exception e)
-		{
-			return LuaDLL.toluaL_exception(L, e);
-		}
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int System_Action_UnityEngine_Objects(IntPtr L)
-	{
-		try
-		{
-			LuaFunction func = ToLua.CheckLuaFunction(L, 1);
-			Delegate arg1 = DelegateFactory.CreateDelegate(typeof(System.Action<UnityEngine.Object[]>), func);
 			ToLua.Push(L, arg1);
 			return 1;
 		}
