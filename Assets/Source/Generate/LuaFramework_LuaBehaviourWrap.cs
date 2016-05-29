@@ -7,6 +7,7 @@ public class LuaFramework_LuaBehaviourWrap
 	public static void Register(LuaState L)
 	{
 		L.BeginClass(typeof(LuaFramework.LuaBehaviour), typeof(View));
+		L.RegFunction("Init", Init);
 		L.RegFunction("AddClick", AddClick);
 		L.RegFunction("RemoveClick", RemoveClick);
 		L.RegFunction("ClearClick", ClearClick);
@@ -16,13 +17,31 @@ public class LuaFramework_LuaBehaviourWrap
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int Init(IntPtr L)
+	{
+		try
+		{
+			ToLua.CheckArgsCount(L, 3);
+			LuaFramework.LuaBehaviour obj = (LuaFramework.LuaBehaviour)ToLua.CheckObject(L, 1, typeof(LuaFramework.LuaBehaviour));
+			LuaTable arg0 = ToLua.CheckLuaTable(L, 2);
+			FairyGUI.GObject arg1 = (FairyGUI.GObject)ToLua.CheckObject(L, 3, typeof(FairyGUI.GObject));
+			obj.Init(arg0, arg1);
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
 	static int AddClick(IntPtr L)
 	{
 		try
 		{
 			ToLua.CheckArgsCount(L, 3);
 			LuaFramework.LuaBehaviour obj = (LuaFramework.LuaBehaviour)ToLua.CheckObject(L, 1, typeof(LuaFramework.LuaBehaviour));
-			UnityEngine.GameObject arg0 = (UnityEngine.GameObject)ToLua.CheckUnityObject(L, 2, typeof(UnityEngine.GameObject));
+			FairyGUI.GObject arg0 = (FairyGUI.GObject)ToLua.CheckObject(L, 2, typeof(FairyGUI.GObject));
 			LuaFunction arg1 = ToLua.CheckLuaFunction(L, 3);
 			obj.AddClick(arg0, arg1);
 			return 0;
@@ -40,7 +59,7 @@ public class LuaFramework_LuaBehaviourWrap
 		{
 			ToLua.CheckArgsCount(L, 2);
 			LuaFramework.LuaBehaviour obj = (LuaFramework.LuaBehaviour)ToLua.CheckObject(L, 1, typeof(LuaFramework.LuaBehaviour));
-			UnityEngine.GameObject arg0 = (UnityEngine.GameObject)ToLua.CheckUnityObject(L, 2, typeof(UnityEngine.GameObject));
+			FairyGUI.GObject arg0 = (FairyGUI.GObject)ToLua.CheckObject(L, 2, typeof(FairyGUI.GObject));
 			obj.RemoveClick(arg0);
 			return 0;
 		}

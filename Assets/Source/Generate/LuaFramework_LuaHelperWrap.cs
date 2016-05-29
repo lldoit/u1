@@ -8,8 +8,7 @@ public class LuaFramework_LuaHelperWrap
 	{
 		L.BeginStaticLibs("LuaHelper");
 		L.RegFunction("GetType", GetType);
-		L.RegFunction("GetPanelManager", GetPanelManager);
-		L.RegFunction("GetResManager", GetResManager);
+		L.RegFunction("GetGameResFactory", GetGameResFactory);
 		L.RegFunction("GetNetManager", GetNetManager);
 		L.RegFunction("GetSoundManager", GetSoundManager);
 		L.RegFunction("OnCallLuaFunc", OnCallLuaFunc);
@@ -35,28 +34,12 @@ public class LuaFramework_LuaHelperWrap
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int GetPanelManager(IntPtr L)
+	static int GetGameResFactory(IntPtr L)
 	{
 		try
 		{
 			ToLua.CheckArgsCount(L, 0);
-			LuaFramework.PanelManager o = LuaFramework.LuaHelper.GetPanelManager();
-			ToLua.Push(L, o);
-			return 1;
-		}
-		catch(Exception e)
-		{
-			return LuaDLL.toluaL_exception(L, e);
-		}
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int GetResManager(IntPtr L)
-	{
-		try
-		{
-			ToLua.CheckArgsCount(L, 0);
-			LuaFramework.ResourceManager o = LuaFramework.LuaHelper.GetResManager();
+			LuaFramework.GameResFactory o = LuaFramework.LuaHelper.GetGameResFactory();
 			ToLua.Push(L, o);
 			return 1;
 		}

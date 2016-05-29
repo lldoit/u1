@@ -17,7 +17,7 @@ public class StartUpCommand : ControllerCommand
 
         //-----------------初始化管理器-----------------------
         AppFacade.Instance.AddManager<LuaManager>();
-        AppFacade.Instance.AddManager<PanelManager>();
+        AppFacade.Instance.AddManager<GameResFactory>();
         AppFacade.Instance.AddManager<SoundManager>();
         AppFacade.Instance.AddManager<TimerManager>();
         AppFacade.Instance.AddManager<NetworkManager>();

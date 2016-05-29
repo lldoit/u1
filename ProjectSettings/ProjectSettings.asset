@@ -336,6 +336,7 @@ PlayerSettings:
   psmSplashimage: {fileID: 0}
   spritePackerPolicy: 
   scriptingDefineSymbols:
+    1: ASYNC_MODE
     7: 
   metroPackageName: slua-master
   metroPackageVersion: 

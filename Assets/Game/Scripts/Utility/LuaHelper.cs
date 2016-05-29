@@ -27,17 +27,9 @@ namespace LuaFramework
         /// <summary>
         /// 面板管理器
         /// </summary>
-        public static PanelManager GetPanelManager()
+        public static GameResFactory GetGameResFactory()
         {
-            return AppFacade.Instance.GetManager<PanelManager>();
-        }
-
-        /// <summary>
-        /// 资源管理器
-        /// </summary>
-        public static ResourceManager GetResManager() 
-        {
-            return AppFacade.Instance.GetManager<ResourceManager>();
+            return AppFacade.Instance.GetManager<GameResFactory>();
         }
 
         /// <summary>

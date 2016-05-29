@@ -24,8 +24,14 @@ public static class DelegateFactory
 		dict.Add(typeof(UnityEngine.Application.AdvertisingIdentifierCallback), UnityEngine_Application_AdvertisingIdentifierCallback);
 		dict.Add(typeof(UnityEngine.AudioClip.PCMReaderCallback), UnityEngine_AudioClip_PCMReaderCallback);
 		dict.Add(typeof(UnityEngine.AudioClip.PCMSetPositionCallback), UnityEngine_AudioClip_PCMSetPositionCallback);
-		dict.Add(typeof(UnityEngine.RectTransform.ReapplyDrivenProperties), UnityEngine_RectTransform_ReapplyDrivenProperties);
 		dict.Add(typeof(System.Action<NotiData>), System_Action_NotiData);
+		dict.Add(typeof(FairyGUI.EventCallback0), FairyGUI_EventCallback0);
+		dict.Add(typeof(FairyGUI.EventCallback1), FairyGUI_EventCallback1);
+		dict.Add(typeof(FairyGUI.ListItemRenderer), FairyGUI_ListItemRenderer);
+		dict.Add(typeof(FairyGUI.PlayCompleteCallback), FairyGUI_PlayCompleteCallback);
+		dict.Add(typeof(FairyGUI.TransitionHook), FairyGUI_TransitionHook);
+		dict.Add(typeof(FairyGUI.UIPackage.LoadResource), FairyGUI_UIPackage_LoadResource);
+		dict.Add(typeof(FairyGUI.GObjectPool.InitCallbackDelegate), FairyGUI_GObjectPool_InitCallbackDelegate);
 	}
 
     [NoToLuaAttribute]
@@ -235,31 +241,6 @@ public static class DelegateFactory
 		return d;
 	}
 
-	class UnityEngine_RectTransform_ReapplyDrivenProperties_Event : LuaDelegate
-	{
-		public UnityEngine_RectTransform_ReapplyDrivenProperties_Event(LuaFunction func) : base(func) { }
-
-		public void Call(UnityEngine.RectTransform param0)
-		{
-			func.BeginPCall();
-			func.Push(param0);
-			func.PCall();
-			func.EndPCall();
-		}
-	}
-
-	public static Delegate UnityEngine_RectTransform_ReapplyDrivenProperties(LuaFunction func)
-	{
-		if (func == null)
-		{
-			UnityEngine.RectTransform.ReapplyDrivenProperties fn = delegate { };
-			return fn;
-		}
-
-		UnityEngine.RectTransform.ReapplyDrivenProperties d = (new UnityEngine_RectTransform_ReapplyDrivenProperties_Event(func)).Call;
-		return d;
-	}
-
 	class System_Action_NotiData_Event : LuaDelegate
 	{
 		public System_Action_NotiData_Event(LuaFunction func) : base(func) { }
@@ -282,6 +263,177 @@ public static class DelegateFactory
 		}
 
 		System.Action<NotiData> d = (new System_Action_NotiData_Event(func)).Call;
+		return d;
+	}
+
+	class FairyGUI_EventCallback0_Event : LuaDelegate
+	{
+		public FairyGUI_EventCallback0_Event(LuaFunction func) : base(func) { }
+
+		public void Call()
+		{
+			func.Call();
+		}
+	}
+
+	public static Delegate FairyGUI_EventCallback0(LuaFunction func)
+	{
+		if (func == null)
+		{
+			FairyGUI.EventCallback0 fn = delegate { };
+			return fn;
+		}
+
+		FairyGUI.EventCallback0 d = (new FairyGUI_EventCallback0_Event(func)).Call;
+		return d;
+	}
+
+	class FairyGUI_EventCallback1_Event : LuaDelegate
+	{
+		public FairyGUI_EventCallback1_Event(LuaFunction func) : base(func) { }
+
+		public void Call(FairyGUI.EventContext param0)
+		{
+			func.BeginPCall();
+			func.PushObject(param0);
+			func.PCall();
+			func.EndPCall();
+		}
+	}
+
+	public static Delegate FairyGUI_EventCallback1(LuaFunction func)
+	{
+		if (func == null)
+		{
+			FairyGUI.EventCallback1 fn = delegate { };
+			return fn;
+		}
+
+		FairyGUI.EventCallback1 d = (new FairyGUI_EventCallback1_Event(func)).Call;
+		return d;
+	}
+
+	class FairyGUI_ListItemRenderer_Event : LuaDelegate
+	{
+		public FairyGUI_ListItemRenderer_Event(LuaFunction func) : base(func) { }
+
+		public void Call(int param0,FairyGUI.GObject param1)
+		{
+			func.BeginPCall();
+			func.Push(param0);
+			func.PushObject(param1);
+			func.PCall();
+			func.EndPCall();
+		}
+	}
+
+	public static Delegate FairyGUI_ListItemRenderer(LuaFunction func)
+	{
+		if (func == null)
+		{
+			FairyGUI.ListItemRenderer fn = delegate { };
+			return fn;
+		}
+
+		FairyGUI.ListItemRenderer d = (new FairyGUI_ListItemRenderer_Event(func)).Call;
+		return d;
+	}
+
+	class FairyGUI_PlayCompleteCallback_Event : LuaDelegate
+	{
+		public FairyGUI_PlayCompleteCallback_Event(LuaFunction func) : base(func) { }
+
+		public void Call()
+		{
+			func.Call();
+		}
+	}
+
+	public static Delegate FairyGUI_PlayCompleteCallback(LuaFunction func)
+	{
+		if (func == null)
+		{
+			FairyGUI.PlayCompleteCallback fn = delegate { };
+			return fn;
+		}
+
+		FairyGUI.PlayCompleteCallback d = (new FairyGUI_PlayCompleteCallback_Event(func)).Call;
+		return d;
+	}
+
+	class FairyGUI_TransitionHook_Event : LuaDelegate
+	{
+		public FairyGUI_TransitionHook_Event(LuaFunction func) : base(func) { }
+
+		public void Call()
+		{
+			func.Call();
+		}
+	}
+
+	public static Delegate FairyGUI_TransitionHook(LuaFunction func)
+	{
+		if (func == null)
+		{
+			FairyGUI.TransitionHook fn = delegate { };
+			return fn;
+		}
+
+		FairyGUI.TransitionHook d = (new FairyGUI_TransitionHook_Event(func)).Call;
+		return d;
+	}
+
+	class FairyGUI_UIPackage_LoadResource_Event : LuaDelegate
+	{
+		public FairyGUI_UIPackage_LoadResource_Event(LuaFunction func) : base(func) { }
+
+		public UnityEngine.Object Call(string param0,string param1,System.Type param2)
+		{
+			func.BeginPCall();
+			func.Push(param0);
+			func.Push(param1);
+			func.Push(param2);
+			func.PCall();
+			UnityEngine.Object ret = (UnityEngine.Object)func.CheckObject(typeof(UnityEngine.Object));
+			func.EndPCall();
+			return ret;
+		}
+	}
+
+	public static Delegate FairyGUI_UIPackage_LoadResource(LuaFunction func)
+	{
+		if (func == null)
+		{
+			FairyGUI.UIPackage.LoadResource fn = delegate { return null; };
+			return fn;
+		}
+
+		FairyGUI.UIPackage.LoadResource d = (new FairyGUI_UIPackage_LoadResource_Event(func)).Call;
+		return d;
+	}
+
+	class FairyGUI_GObjectPool_InitCallbackDelegate_Event : LuaDelegate
+	{
+		public FairyGUI_GObjectPool_InitCallbackDelegate_Event(LuaFunction func) : base(func) { }
+
+		public void Call(FairyGUI.GObject param0)
+		{
+			func.BeginPCall();
+			func.PushObject(param0);
+			func.PCall();
+			func.EndPCall();
+		}
+	}
+
+	public static Delegate FairyGUI_GObjectPool_InitCallbackDelegate(LuaFunction func)
+	{
+		if (func == null)
+		{
+			FairyGUI.GObjectPool.InitCallbackDelegate fn = delegate { };
+			return fn;
+		}
+
+		FairyGUI.GObjectPool.InitCallbackDelegate d = (new FairyGUI_GObjectPool_InitCallbackDelegate_Event(func)).Call;
 		return d;
 	}
 

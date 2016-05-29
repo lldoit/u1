@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using FairyGUI;
 
 namespace LuaFramework 
 {
@@ -257,11 +258,16 @@ namespace LuaFramework
 
         void OnInitialize() 
         {
+            GComponent BackGroundRoot = new GComponent();
+            BackGroundRoot.name = "BackGroundRoot";
+            BackGroundRoot.displayObject.gameObject.name = "BackGroundRoot";
+            GRoot.inst.AddChild(BackGroundRoot);
+
             LuaManager.InitStart();
-            LuaManager.DoFile("Logic/Game");         //加载游戏
-            LuaManager.DoFile("Logic/Network");      //加载网络
+            //LuaManager.DoFile("Logic/Game");         //加载游戏
+            //LuaManager.DoFile("Logic/Network");      //加载网络
             NetManager.OnInit();                     //初始化网络
-            Util.CallMethod("Game", "OnInitOK");     //初始化完成
+            //Util.CallMethod("Game", "OnInitOK");     //初始化完成
 
             initialize = true;
         }

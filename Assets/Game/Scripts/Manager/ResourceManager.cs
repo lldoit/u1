@@ -40,21 +40,21 @@ namespace LuaFramework
         public void Initialize(string manifestName, Action initOK) 
         {
             m_BaseDownloadingURL = Util.GetRelativePath();
-            //if (AppConst.LuaBundleMode)
+            if (AppConst.LuaBundleMode)
             {
                 LoadAsset<AssetBundleManifest>(manifestName, new string[] { "AssetBundleManifest" }, delegate (UObject[] objs)
                 {
-                    if (objs.Length > 0)
+                    if (objs!=null && objs.Length > 0)
                     {
                         m_AssetBundleManifest = objs[0] as AssetBundleManifest;
                     }
                     if (initOK != null) initOK();
                 });
             }
-            //else
-            //{
-            //    if (initOK != null) initOK();
-            //}
+            else
+            {
+                if (initOK != null) initOK();
+            }
         }
 
         public void LoadPrefab(string abName, string assetName, Action<UObject[]> func) 
@@ -101,25 +101,49 @@ namespace LuaFramework
         /// </summary>
         void LoadAsset<T>(string abName, string[] assetNames, Action<UObject[]> action = null, LuaFunction func = null) where T : UObject
         {
-            abName = GetRealAssetPath(abName);
-
-            LoadAssetRequest request = new LoadAssetRequest();
-            request.assetType = typeof(T);
-            request.assetNames = assetNames;
-            request.luaFunc = func;
-            request.sharpFunc = action;
-
-            List<LoadAssetRequest> requests = null;
-            if (!m_LoadRequests.TryGetValue(abName, out requests)) 
+            if (AppConst.DebugMode)
             {
-                requests = new List<LoadAssetRequest>();
-                requests.Add(request);
-                m_LoadRequests.Add(abName, requests);
-                StartCoroutine(OnLoadAsset<T>(abName));
-            } 
-            else 
+                if (assetNames.Length > 0)
+                {
+                    string prefabPath = assetNames[0];
+                    T prefab = Resources.Load<T>(prefabPath);
+                    if (prefab != null)
+                    {
+                        if (action != null)
+                        {
+                            action(new T[] { prefab });
+                            return;
+                        }
+                    }
+                }
+
+                if (action != null)
+                {
+                    action(null);
+                }
+            }
+            else
             {
-                requests.Add(request);
+                abName = GetRealAssetPath(abName);
+
+                LoadAssetRequest request = new LoadAssetRequest();
+                request.assetType = typeof(T);
+                request.assetNames = assetNames;
+                request.luaFunc = func;
+                request.sharpFunc = action;
+
+                List<LoadAssetRequest> requests = null;
+                if (!m_LoadRequests.TryGetValue(abName, out requests))
+                {
+                    requests = new List<LoadAssetRequest>();
+                    requests.Add(request);
+                    m_LoadRequests.Add(abName, requests);
+                    StartCoroutine(OnLoadAsset<T>(abName));
+                }
+                else
+                {
+                    requests.Add(request);
+                }
             }
         }
 
@@ -150,16 +174,19 @@ namespace LuaFramework
                 List<UObject> result = new List<UObject>();
 
                 AssetBundle ab = bundleInfo.m_AssetBundle;
-                for (int j = 0; j < assetNames.Length; j++) 
-                {
-                    string assetPath = assetNames[j];
-                    AssetBundleRequest request = ab.LoadAssetAsync(assetPath, list[i].assetType);
-                    yield return request;
-                    result.Add(request.asset);
+                if (assetNames.Length == 0)
+                    result.Add(ab);
+                else
+                    for (int j = 0; j < assetNames.Length; j++) 
+                    {
+                        string assetPath = assetNames[j];
+                        AssetBundleRequest request = ab.LoadAssetAsync(assetPath, list[i].assetType);
+                        yield return request;
+                        result.Add(request.asset);
 
-                    //T assetObj = ab.LoadAsset<T>(assetPath);
-                    //result.Add(assetObj);
-                }
+                        //T assetObj = ab.LoadAsset<T>(assetPath);
+                        //result.Add(assetObj);
+                    }
                 if (list[i].sharpFunc != null) 
                 {
                     list[i].sharpFunc(result.ToArray());

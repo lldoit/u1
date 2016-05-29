@@ -67,19 +67,10 @@ public static class LuaBinder
 		UnityEngine_RenderSettingsWrap.Register(L);
 		UnityEngine_BlendWeightsWrap.Register(L);
 		UnityEngine_RenderTextureWrap.Register(L);
-		UnityEngine_RectTransformWrap.Register(L);
-		L.BeginModule("UI");
-		UnityEngine_UI_TextWrap.Register(L);
-		UnityEngine_UI_MaskableGraphicWrap.Register(L);
-		UnityEngine_UI_GraphicWrap.Register(L);
-		L.EndModule();
 		L.BeginModule("Experimental");
 		L.BeginModule("Director");
 		UnityEngine_Experimental_Director_DirectorPlayerWrap.Register(L);
 		L.EndModule();
-		L.EndModule();
-		L.BeginModule("EventSystems");
-		UnityEngine_EventSystems_UIBehaviourWrap.Register(L);
 		L.EndModule();
 		L.BeginModule("Events");
 		L.RegFunction("UnityAction", UnityEngine_Events_UnityAction);
@@ -93,12 +84,53 @@ public static class LuaBinder
 		LuaFramework_LuaBehaviourWrap.Register(L);
 		LuaFramework_GameManagerWrap.Register(L);
 		LuaFramework_LuaManagerWrap.Register(L);
-		LuaFramework_PanelManagerWrap.Register(L);
+		LuaFramework_GameResFactoryWrap.Register(L);
 		LuaFramework_SoundManagerWrap.Register(L);
 		LuaFramework_TimerManagerWrap.Register(L);
 		LuaFramework_ThreadManagerWrap.Register(L);
 		LuaFramework_NetworkManagerWrap.Register(L);
-		LuaFramework_ResourceManagerWrap.Register(L);
+		L.EndModule();
+		L.BeginModule("FairyGUI");
+		FairyGUI_EventContextWrap.Register(L);
+		FairyGUI_EventDispatcherWrap.Register(L);
+		FairyGUI_EventListenerWrap.Register(L);
+		FairyGUI_InputEventWrap.Register(L);
+		FairyGUI_DisplayObjectWrap.Register(L);
+		FairyGUI_ContainerWrap.Register(L);
+		FairyGUI_StageWrap.Register(L);
+		FairyGUI_ControllerWrap.Register(L);
+		FairyGUI_GObjectWrap.Register(L);
+		FairyGUI_GGraphWrap.Register(L);
+		FairyGUI_GGroupWrap.Register(L);
+		FairyGUI_GImageWrap.Register(L);
+		FairyGUI_GLoaderWrap.Register(L);
+		FairyGUI_PlayStateWrap.Register(L);
+		FairyGUI_GMovieClipWrap.Register(L);
+		FairyGUI_TextFormatWrap.Register(L);
+		FairyGUI_GTextFieldWrap.Register(L);
+		FairyGUI_GRichTextFieldWrap.Register(L);
+		FairyGUI_GTextInputWrap.Register(L);
+		FairyGUI_GComponentWrap.Register(L);
+		FairyGUI_GListWrap.Register(L);
+		FairyGUI_GRootWrap.Register(L);
+		FairyGUI_GLabelWrap.Register(L);
+		FairyGUI_GButtonWrap.Register(L);
+		FairyGUI_GComboBoxWrap.Register(L);
+		FairyGUI_GProgressBarWrap.Register(L);
+		FairyGUI_GSliderWrap.Register(L);
+		FairyGUI_PopupMenuWrap.Register(L);
+		FairyGUI_ScrollPaneWrap.Register(L);
+		FairyGUI_TransitionWrap.Register(L);
+		FairyGUI_UIPackageWrap.Register(L);
+		FairyGUI_WindowWrap.Register(L);
+		FairyGUI_GObjectPoolWrap.Register(L);
+		FairyGUI_RelationsWrap.Register(L);
+		FairyGUI_RelationTypeWrap.Register(L);
+		L.RegFunction("EventCallback0", FairyGUI_EventCallback0);
+		L.RegFunction("EventCallback1", FairyGUI_EventCallback1);
+		L.RegFunction("ListItemRenderer", FairyGUI_ListItemRenderer);
+		L.RegFunction("PlayCompleteCallback", FairyGUI_PlayCompleteCallback);
+		L.RegFunction("TransitionHook", FairyGUI_TransitionHook);
 		L.EndModule();
 		L.BeginModule("System");
 		L.RegFunction("Action", System_Action);
@@ -115,6 +147,86 @@ public static class LuaBinder
 		{
 			LuaFunction func = ToLua.CheckLuaFunction(L, 1);
 			Delegate arg1 = DelegateFactory.CreateDelegate(typeof(UnityEngine.Events.UnityAction), func);
+			ToLua.Push(L, arg1);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int FairyGUI_EventCallback0(IntPtr L)
+	{
+		try
+		{
+			LuaFunction func = ToLua.CheckLuaFunction(L, 1);
+			Delegate arg1 = DelegateFactory.CreateDelegate(typeof(FairyGUI.EventCallback0), func);
+			ToLua.Push(L, arg1);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int FairyGUI_EventCallback1(IntPtr L)
+	{
+		try
+		{
+			LuaFunction func = ToLua.CheckLuaFunction(L, 1);
+			Delegate arg1 = DelegateFactory.CreateDelegate(typeof(FairyGUI.EventCallback1), func);
+			ToLua.Push(L, arg1);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int FairyGUI_ListItemRenderer(IntPtr L)
+	{
+		try
+		{
+			LuaFunction func = ToLua.CheckLuaFunction(L, 1);
+			Delegate arg1 = DelegateFactory.CreateDelegate(typeof(FairyGUI.ListItemRenderer), func);
+			ToLua.Push(L, arg1);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int FairyGUI_PlayCompleteCallback(IntPtr L)
+	{
+		try
+		{
+			LuaFunction func = ToLua.CheckLuaFunction(L, 1);
+			Delegate arg1 = DelegateFactory.CreateDelegate(typeof(FairyGUI.PlayCompleteCallback), func);
+			ToLua.Push(L, arg1);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int FairyGUI_TransitionHook(IntPtr L)
+	{
+		try
+		{
+			LuaFunction func = ToLua.CheckLuaFunction(L, 1);
+			Delegate arg1 = DelegateFactory.CreateDelegate(typeof(FairyGUI.TransitionHook), func);
 			ToLua.Push(L, arg1);
 			return 1;
 		}

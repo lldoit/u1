@@ -6,7 +6,7 @@ using LuaFramework;
 
 using BindType = ToLuaMenu.BindType;
 using System.Reflection;
-using UnityEngine.UI;
+using FairyGUI;
 
 public static class CustomSettings
 {
@@ -29,6 +29,7 @@ public static class CustomSettings
         typeof(UnityEngine.RenderSettings),
         typeof(UnityEngine.QualitySettings),
         typeof(UnityEngine.GL),
+        typeof(LuaHelper),
     };
 
     //附加导出委托类型(在导出委托时, customTypeList 中牵扯的委托类型都会导出， 无需写在这里)
@@ -131,9 +132,6 @@ public static class CustomSettings
         _GT(typeof(RenderTexture)),   
           
         //for LuaFramework
-        _GT(typeof(RectTransform)),
-        _GT(typeof(Text)),
-
         _GT(typeof(Util)),
         _GT(typeof(AppConst)),
         _GT(typeof(LuaHelper)),
@@ -142,12 +140,48 @@ public static class CustomSettings
 
         _GT(typeof(GameManager)),
         _GT(typeof(LuaManager)),
-        _GT(typeof(PanelManager)),
+        _GT(typeof(GameResFactory)),
         _GT(typeof(SoundManager)),
         _GT(typeof(TimerManager)),
         _GT(typeof(ThreadManager)),
         _GT(typeof(NetworkManager)),
-        _GT(typeof(ResourceManager)),		  
+
+        // FairyGUI
+        _GT(typeof(EventContext)),
+        _GT(typeof(EventDispatcher)),
+        _GT(typeof(EventListener)),
+        _GT(typeof(InputEvent)),
+        _GT(typeof(DisplayObject)),
+        _GT(typeof(Container)),
+        _GT(typeof(Stage)),
+        _GT(typeof(FairyGUI.Controller)),
+        _GT(typeof(GObject)),
+        _GT(typeof(GGraph)),
+        _GT(typeof(GGroup)),
+        _GT(typeof(GImage)),
+        _GT(typeof(GLoader)),
+        _GT(typeof(PlayState)),
+        _GT(typeof(GMovieClip)),
+        _GT(typeof(TextFormat)),
+        _GT(typeof(GTextField)),
+        _GT(typeof(GRichTextField)),
+        _GT(typeof(GTextInput)),
+        _GT(typeof(GComponent)),
+        _GT(typeof(GList)),
+        _GT(typeof(GRoot)),
+        _GT(typeof(GLabel)),
+        _GT(typeof(GButton)),
+        _GT(typeof(GComboBox)),
+        _GT(typeof(GProgressBar)),
+        _GT(typeof(GSlider)),
+        _GT(typeof(PopupMenu)),
+        _GT(typeof(ScrollPane)),
+        _GT(typeof(Transition)),
+        _GT(typeof(UIPackage)),
+        _GT(typeof(Window)),
+        _GT(typeof(GObjectPool)),
+        _GT(typeof(Relations)),
+        _GT(typeof(RelationType)),
     };
 
     public static List<Type> dynamicList = new List<Type>()
