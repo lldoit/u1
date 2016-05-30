@@ -65,38 +65,69 @@ function ui_manager:show_popup(ui_session, is_close_cur, args, uicommon_handler)
     if uicommon_handler and uicommon_handler.before_handler then
         uicommon_handler.before_handler()
     end
+    
+    -- 已存在，重新显示
+    if self._all_sessions[session_id] ~= nil then
+      local exist_session = self._all_sessions[session_id]
+      exist_session:reset_window(args)
+      exist_session:show_session()
+      exist_session:enter_anim()
+      self._shown_sessions[session_id] = exist_session
+      self._popup_back_sequence:push(exist_session)
+      if uicommon_handler and uicommon_handler.after_handler then
+        uicommon_handler.afterHandler()
+      end
+    -- 新建
+    else
+      UGameResFactory:CreatePopUp(session_data.prefab_name, session_data.res_name, ui_session, 
+        function(go)
+          ui_session:on_post_load()
+          self._all_sessions[session_id] = ui_session
 
-    GameResFactory.Instance():GetUIPrefab(session_data.prefab_name, self:get_session_root(ui_session_type.POPUP),
-    ui_session, function(go)
-        ui_session:on_post_load()
-        self._all_sessions[session_id] = ui_session
+          ui_session:reset_window(args)
+          ui_session:show_session()
+          ui_session:enter_anim()
 
-        ui_session:reset_window(args)
-        ui_session:show_session()
-        ui_session:enter_anim()
+          self._shown_sessions[session_id] = ui_session
+          self._popup_back_sequence:push(ui_session)
 
-        self._shown_sessions[session_id] = ui_session
-        self._popup_back_sequence:push(ui_session)
-
-        if uicommon_handler and uicommon_handler.after_handler then
+          if uicommon_handler and uicommon_handler.after_handler then
             uicommon_handler.afterHandler()
-        end
+          end
+        end )
+    end
+end
+
+-- 隐藏栈顶弹窗
+function ui_manager:hide_popup()
+  local top_pop_session = self._popup_back_sequence:peek()
+  if not top_pop_session then
+      return
+  end
+
+  local top_pop_session_id = top_pop_session:get_session_id()
+  top_pop_session:quit_anim( 
+    function()
+      top_pop_session:hide_session_directly()
+      self._shown_sessions[top_pop_session_id] = nil
+      self._popup_back_sequence:pop()
     end )
 end
 
 -- 关闭栈顶弹窗
 function ui_manager:close_popup(uicommon_handler)
-    local top_pop_session = self._popup_back_sequence:peek()
-    if not top_pop_session then
-        return
-    end
+  local top_pop_session = self._popup_back_sequence:peek()
+  if not top_pop_session then
+    return
+  end
 
-    local top_pop_session_id = top_pop_session:get_session_id()
-    top_pop_session:quit_anim( function()
-        top_pop_session:destroy_session()
-        self._shown_sessions[top_pop_session_id] = nil
-        self._all_sessions[top_pop_session_id] = nil
-        self._popup_back_sequence:pop()
+  local top_pop_session_id = top_pop_session:get_session_id()
+  top_pop_session:quit_anim( 
+    function()
+      top_pop_session:destroy_session()
+      self._shown_sessions[top_pop_session_id] = nil
+      self._all_sessions[top_pop_session_id] = nil
+      self._popup_back_sequence:pop()
     end )
 end
 
@@ -139,7 +170,7 @@ function ui_manager:show_session(ui_session, need_push, args, done_handler)
         self:close_current_session()
     end
 
-    UGameResFactory:CreateUI(session_data.prefab_name, self:get_session_root(session_data.session_type),
+    UGameResFactory:CreateUI(session_data.prefab_name, session_data.res_name, self:get_session_root(session_data.session_type),
     ui_session, function(go)
         ui_session:on_post_load()
         self._all_sessions[session_id] = ui_session
@@ -193,7 +224,7 @@ function ui_manager:create_layer_root(go_name, sort_order)
     rt.name = go_name
     rt.displayObject.gameObject.name = go_name
     rt.sortingOrder = sort_order
-    GRoot.inst.AddChild(rt);
+    GRoot.inst:AddChild(rt);
 
     return rt
 end
@@ -202,22 +233,22 @@ function ui_manager:get_session_root(session_type)
 
     if session_type == ui_session_type.BACKGROUND then
         if not self.background_root then
-            self.background_root = GRoot.inst.GetChild("BackGroundRoot")
+            self.background_root = GRoot.inst:GetChild("BackGroundRoot")
         end
         return self.background_root
     elseif session_type == ui_session_type.NORMAL then
         if not self.normal_root then
-            self.normal_root = GRoot.inst
+            self.normal_root = GRoot.inst:GetChild("NormalRoot")
         end
         return self.normal_root
     elseif session_type == ui_session_type.FIXED then
         if not self.fixed_root then
-            self.fixed_root = self:create_layer_root("FixedRoot", 250)
+            self.fixed_root = GRoot.inst:GetChild("FixedRoot")
         end
         return self.fixed_root
     elseif session_type == ui_session_type.POPUP then
         if not self.popup_root then
-            self.popup_root = self:create_layer_root("PopUpRoot", 500)
+            self.popup_root = GRoot.inst
         end
         return self.popup_root
     elseif session_type == ui_session_type.ABOVE_POPUP then

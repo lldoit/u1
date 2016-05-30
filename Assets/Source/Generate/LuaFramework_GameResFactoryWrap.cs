@@ -8,6 +8,7 @@ public class LuaFramework_GameResFactoryWrap
 	{
 		L.BeginClass(typeof(LuaFramework.GameResFactory), typeof(Manager));
 		L.RegFunction("CreateUI", CreateUI);
+		L.RegFunction("CreatePopUp", CreatePopUp);
 		L.RegFunction("__eq", op_Equality);
 		L.RegFunction("__tostring", Lua_ToString);
 		L.EndClass();
@@ -18,13 +19,34 @@ public class LuaFramework_GameResFactoryWrap
 	{
 		try
 		{
+			ToLua.CheckArgsCount(L, 6);
+			LuaFramework.GameResFactory obj = (LuaFramework.GameResFactory)ToLua.CheckObject(L, 1, typeof(LuaFramework.GameResFactory));
+			string arg0 = ToLua.CheckString(L, 2);
+			string arg1 = ToLua.CheckString(L, 3);
+			FairyGUI.GComponent arg2 = (FairyGUI.GComponent)ToLua.CheckObject(L, 4, typeof(FairyGUI.GComponent));
+			LuaTable arg3 = ToLua.CheckLuaTable(L, 5);
+			LuaFunction arg4 = ToLua.CheckLuaFunction(L, 6);
+			obj.CreateUI(arg0, arg1, arg2, arg3, arg4);
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int CreatePopUp(IntPtr L)
+	{
+		try
+		{
 			ToLua.CheckArgsCount(L, 5);
 			LuaFramework.GameResFactory obj = (LuaFramework.GameResFactory)ToLua.CheckObject(L, 1, typeof(LuaFramework.GameResFactory));
 			string arg0 = ToLua.CheckString(L, 2);
-			FairyGUI.GComponent arg1 = (FairyGUI.GComponent)ToLua.CheckObject(L, 3, typeof(FairyGUI.GComponent));
+			string arg1 = ToLua.CheckString(L, 3);
 			LuaTable arg2 = ToLua.CheckLuaTable(L, 4);
 			LuaFunction arg3 = ToLua.CheckLuaFunction(L, 5);
-			obj.CreateUI(arg0, arg1, arg2, arg3);
+			obj.CreatePopUp(arg0, arg1, arg2, arg3);
 			return 0;
 		}
 		catch(Exception e)

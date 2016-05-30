@@ -1,6 +1,4 @@
--- region *.lua
--- Date
--- 此文件由[BabeLua]插件自动生成
+-- 可以隐藏的PopUp需要加上DontDestroyOnLoad，防止切换场景时销毁自己
 ui_session_type =
 {
     -- 背景层
@@ -34,9 +32,10 @@ end
 
 -- 界面状态数据
 ui_session_data = class()
-function ui_session_data:init(session_type, prefab_name, is_first_session)
+function ui_session_data:init(session_type, prefab_name, res_name, is_first_session)
     self.session_type = session_type
     self.prefab_name = prefab_name
+    self.res_name = res_name
     self.is_first_session = is_first_session or false
 end
 
@@ -68,8 +67,12 @@ end
 function ui_session:show_session()
     self.is_lock = false
     self.is_shown = true
-    if not tolua.isnull(self.gameObject) then
-        self.gameObject:SetActive(true)
+    if not tolua.isnull(self.ui) then
+      if self.session_data.session_type == ui_session_type.POPUP then
+        self.ui:Show()
+      else
+        self.ui.visible = true
+      end
     end
 end
 
@@ -79,6 +82,9 @@ end
 
 -- 退出动画
 function ui_session:quit_anim(done_handler)
+  if done_handler then
+    done_handler()
+  end
 end
 
 -- 重置动画
@@ -89,8 +95,12 @@ end
 function ui_session:hide_session_directly()
     self.is_lock = true
     self.is_shown = false
-    if not tolua.isnull(self.gameObject) then
-        self.gameObject:SetActive(false)
+    if not tolua.isnull(self.ui) then
+      if self.session_data.session_type == ui_session_type.POPUP then
+        self.ui:Hide()
+      else
+        self.ui.visible = false
+      end
     end
 end
 
@@ -100,8 +110,12 @@ function ui_session:hide_session(uicommmon_handler)
     end
     self.is_lock = true
     self.is_shown = false
-    if not tolua.isnull(self.gameObject) then
-        self.gameObject:SetActive(false)
+    if not tolua.isnull(self.ui) then
+      if self.session_data.session_type == ui_session_type.POPUP then
+        self.ui:Hide()
+      else
+        self.ui.visible = false
+      end
     end
     if uicommmon_handler and uicommmon_handler.after_handler then
         uicommmon_handler.after_handler()
@@ -125,4 +139,3 @@ end
 function ui_session:get_session_id()
     return self.session_id;
 end
--- endregion

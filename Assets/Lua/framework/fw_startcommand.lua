@@ -14,7 +14,7 @@ function fw_startcommand:execute(msg)
     UNetworkManager:SetLuaTable(network_manager())
     fw_facade:instance():add_mgr(mgr_name.UI_MGR, ui_manager:instance())
     --ui_topbar.show_me()
-    ui_mainmenu_scene.show_me()
+    ui_mainmenu_scene.show()
 end
 
 return fw_startcommand

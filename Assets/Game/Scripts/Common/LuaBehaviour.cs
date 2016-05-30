@@ -3,75 +3,221 @@ using LuaInterface;
 using System.Collections;
 using System.Collections.Generic;
 using System;
-using UnityEngine.UI;
+using FairyGUI;
 
-namespace LuaFramework {
-    public class LuaBehaviour : View {
-        //private string data = null;
-        private Dictionary<string, LuaFunction> buttons = new Dictionary<string, LuaFunction>();
+namespace LuaFramework
+{
+    public class LuaBehaviour : View
+    {
+        private LuaState mLuaState = null;
+        private LuaTable mLuaTable = null;
 
-        protected void Awake() {
-            Util.CallMethod(name, "Awake", gameObject);
-        }
+        private Dictionary<string, LuaFunction> mButtonCallbacks = new Dictionary<string, LuaFunction>();
 
-        protected void Start() {
-            Util.CallMethod(name, "Start");
-        }
+        private LuaFunction mFixedUpdateFunc = null;
+        private LuaFunction mUpdateFunc = null;
+        private LuaFunction mLateUpdateFunc = null;
 
-        protected void OnClick() {
-            Util.CallMethod(name, "OnClick");
-        }
+        private bool mIsStarted = false;
 
-        protected void OnClickEvent(GameObject go) {
-            Util.CallMethod(name, "OnClick", go);
-        }
 
-        /// <summary>
-        /// 添加单击事件
-        /// </summary>
-        public void AddClick(GameObject go, LuaFunction luafunc) {
-            if (go == null || luafunc == null) return;
-            buttons.Add(go.name, luafunc);
-            go.GetComponent<Button>().onClick.AddListener(
-                delegate() {
-                    luafunc.Call(go);
-                }
-            );
-        }
-
-        /// <summary>
-        /// 删除单击事件
-        /// </summary>
-        /// <param name="go"></param>
-        public void RemoveClick(GameObject go) {
-            if (go == null) return;
-            LuaFunction luafunc = null;
-            if (buttons.TryGetValue(go.name, out luafunc)) {
-                luafunc.Dispose();
-                luafunc = null;
-                buttons.Remove(go.name);
+        private void SafeRelease(ref LuaFunction func)
+        {
+            if (func != null)
+            {
+                func.Dispose();
+                func = null;
             }
         }
 
-        /// <summary>
-        /// 清除单击事件
-        /// </summary>
-        public void ClearClick() {
-            foreach (var de in buttons) {
-                if (de.Value != null) {
+        private void SafeRelease(ref LuaTable table)
+        {
+            if (table != null)
+            {
+                table.Dispose();
+                table = null;
+            }
+        }
+
+        private bool CheckValid()
+        {
+            if (mLuaState == null) return false;
+            if (mLuaTable == null) return false;
+            return true;
+        }
+
+        public void Init(LuaTable tb, GObject ui)
+        {
+            mLuaState = MyLuaClient.GetMainState();
+            if (mLuaState == null) return;
+
+            if (tb == null)
+            {
+                mLuaTable = mLuaState.GetTable(name);
+            }
+            else
+            {
+                mLuaTable = tb;
+            }
+            if (mLuaTable == null)
+            {
+                Debug.LogWarning("mLuaTable is null:" + name);
+                return;
+            }
+            mLuaTable["gameObject"] = gameObject;
+            mLuaTable["ui"] = ui;
+            mLuaTable["lua_behaviour"] = this;
+
+            LuaFunction awakeFunc = mLuaTable.GetLuaFunction("Awake") as LuaFunction;
+            if (awakeFunc != null)
+            {
+                awakeFunc.BeginPCall();
+                awakeFunc.Push(mLuaTable);
+                awakeFunc.PCall();
+                awakeFunc.EndPCall();
+
+                awakeFunc.Dispose();
+                awakeFunc = null;
+            }
+
+            mUpdateFunc = mLuaTable.GetLuaFunction("Update") as LuaFunction;
+            mFixedUpdateFunc = mLuaTable.GetLuaFunction("FixedUpdate") as LuaFunction;
+            mLateUpdateFunc = mLuaTable.GetLuaFunction("LateUpdate") as LuaFunction;
+        }
+
+        private void Start()
+        {
+            if (!CheckValid()) return;
+
+            LuaFunction startFunc = mLuaTable.GetLuaFunction("Start") as LuaFunction;
+            if (startFunc != null)
+            {
+                startFunc.BeginPCall();
+                startFunc.Push(mLuaTable);
+                startFunc.PCall();
+                startFunc.EndPCall();
+
+                startFunc.Dispose();
+                startFunc = null;
+            }
+
+            AddUpdate();
+            mIsStarted = true;
+        }
+
+        private void AddUpdate()
+        {
+            if (!CheckValid()) return;
+
+            LuaLooper luaLooper = MyLuaClient.Instance.GetLooper();
+            if (luaLooper == null) return;
+
+            if (mUpdateFunc != null)
+            {
+                luaLooper.UpdateEvent.Add(mUpdateFunc, mLuaTable);
+            }
+
+            if (mLateUpdateFunc != null)
+            {
+                luaLooper.LateUpdateEvent.Add(mLateUpdateFunc, mLuaTable);
+            }
+
+            if (mFixedUpdateFunc != null)
+            {
+                luaLooper.FixedUpdateEvent.Add(mFixedUpdateFunc, mLuaTable);
+            }
+        }
+
+        private void RemoveUpdate()
+        {
+            if (!CheckValid()) return;
+
+            LuaLooper luaLooper = MyLuaClient.Instance.GetLooper();
+            if (luaLooper == null) return;
+
+            if (mUpdateFunc != null)
+            {
+                luaLooper.UpdateEvent.Remove(mUpdateFunc, mLuaTable);
+            }
+            if (mLateUpdateFunc != null)
+            {
+                luaLooper.LateUpdateEvent.Remove(mLateUpdateFunc, mLuaTable);
+            }
+            if (mFixedUpdateFunc != null)
+            {
+                luaLooper.FixedUpdateEvent.Remove(mFixedUpdateFunc, mLuaTable);
+            }
+        }
+
+        public void AddClick(GObject go, LuaFunction luafunc)
+        {
+            if (!CheckValid()) return;
+            if (go == null || luafunc == null) return;
+            if (!mButtonCallbacks.ContainsKey(go.name))
+            {
+                mButtonCallbacks.Add(go.name, luafunc);
+                go.onClick.Add(
+                    delegate ()
+                    {
+                        luafunc.BeginPCall();
+                        luafunc.Push(go);
+                        luafunc.PCall();
+                        luafunc.EndPCall();
+                    });
+            }
+        }
+
+        public void RemoveClick(GObject go)
+        {
+            if (!CheckValid()) return;
+            if (go == null) return;
+            LuaFunction luafunc = null;
+            if (mButtonCallbacks.TryGetValue(go.name, out luafunc))
+            {
+                luafunc.Dispose();
+                luafunc = null;
+                mButtonCallbacks.Remove(go.name);
+            }
+        }
+
+        public void ClearClick()
+        {
+            foreach (var de in mButtonCallbacks)
+            {
+                if (de.Value != null)
+                {
                     de.Value.Dispose();
                 }
             }
-            buttons.Clear();
+            mButtonCallbacks.Clear();
         }
 
         //-----------------------------------------------------------------
-        protected void OnDestroy() {
+        protected void OnDestroy()
+        {
+            if (!CheckValid()) return;
             ClearClick();
+            LuaFunction destroyFunc = mLuaTable.GetLuaFunction("OnDestroy") as LuaFunction;
+            if (destroyFunc != null)
+            {
+                destroyFunc.BeginPCall();
+                destroyFunc.PCall();
+                destroyFunc.EndPCall();
+
+                destroyFunc.Dispose();
+                destroyFunc = null;
+            }
+
+            SafeRelease(ref mFixedUpdateFunc);
+            SafeRelease(ref mUpdateFunc);
+            SafeRelease(ref mLateUpdateFunc);
+            SafeRelease(ref mLuaTable);
+
 #if ASYNC_MODE
-            string abName = name.ToLower().Replace("panel", "");
+            string abName = name.ToLower();
             ResManager.UnloadAssetBundle(abName + AppConst.ExtName);
 #endif
+
             Util.ClearMemory();
             Debug.Log("~" + name + " was destroy!");
         }

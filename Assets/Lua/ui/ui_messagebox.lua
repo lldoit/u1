@@ -162,12 +162,6 @@ function ui_messagebox:reset_anim(done_handler)
     self._content_tr.localScale = Vector3.zero
 end
 
-function ui_messagebox:quit_anim(done_handler)
-    if done_handler then
-        done_handler()
-    end
-end
-
 function ui_messagebox:on_pre_destroy()
     print("ui_messagebox:on_pre_destroy" .. self.gameObject.name)
 end

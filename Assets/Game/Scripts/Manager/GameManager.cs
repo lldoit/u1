@@ -258,10 +258,9 @@ namespace LuaFramework
 
         void OnInitialize() 
         {
-            GComponent BackGroundRoot = new GComponent();
-            BackGroundRoot.name = "BackGroundRoot";
-            BackGroundRoot.displayObject.gameObject.name = "BackGroundRoot";
-            GRoot.inst.AddChild(BackGroundRoot);
+            AddRoot("BackGroundRoot");
+            AddRoot("NormalRoot");
+            AddRoot("FixedRoot");
 
             LuaManager.InitStart();
             //LuaManager.DoFile("Logic/Game");         //加载游戏
@@ -281,6 +280,14 @@ namespace LuaFramework
                 LuaManager.Close();
 
             Debug.Log("~GameManager was destroyed");
+        }
+
+        void AddRoot(string name)
+        {
+            GComponent root = new GComponent();
+            root.name = name;
+            root.displayObject.gameObject.name = name;
+            GRoot.inst.AddChild(root);
         }
     }
 }
