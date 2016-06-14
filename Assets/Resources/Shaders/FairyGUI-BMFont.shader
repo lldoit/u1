@@ -11,6 +11,9 @@ Shader "FairyGUI/BMFont"
 		_StencilReadMask ("Stencil Read Mask", Float) = 255
 
 		_ColorMask ("Color Mask", Float) = 15
+
+		_BlendSrcFactor ("Blend SrcFactor", Float) = 5
+		_BlendDstFactor ("Blend DstFactor", Float) = 10
 	}
 
 	SubShader
@@ -37,8 +40,7 @@ Shader "FairyGUI/BMFont"
 		Lighting Off
 		ZWrite Off
 		Fog { Mode Off }
-		Offset -1, -1
-		Blend SrcAlpha OneMinusSrcAlpha
+		Blend [_BlendSrcFactor] [_BlendDstFactor]
 		ColorMask [_ColorMask]
 
 		Pass
@@ -76,7 +78,6 @@ Shader "FairyGUI/BMFont"
 				};
 
 				sampler2D _MainTex;
-				float4 _MainTex_ST;
 
 				#ifdef CLIPPED
 				float4 _ClipBox = float4(-2, -2, 0, 0);

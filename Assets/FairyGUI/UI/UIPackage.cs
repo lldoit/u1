@@ -575,7 +575,7 @@ namespace FairyGUI
 			XMLList resources = rxml.Elements();
 
 			_itemsById = new Dictionary<string, PackageItem>();
-			_itemsByName = new Dictionary<string, PackageItem>(); ;
+			_itemsByName = new Dictionary<string, PackageItem>();
 			PackageItem pi;
 
 			foreach (XML cxml in resources)
@@ -645,7 +645,7 @@ namespace FairyGUI
 
 			if (_resBundle != null)
 			{
-				//_resBundle.Unload(false);
+				_resBundle.Unload(false);
 				_resBundle = null;
 			}
 		}
@@ -1035,12 +1035,6 @@ namespace FairyGUI
 			XML xml = new XML(str);
 			string[] arr = null;
 
-			arr = xml.GetAttributeArray("pivot");
-			if (arr != null)
-			{
-				item.pivot.x = int.Parse(arr[0]);
-				item.pivot.y = int.Parse(arr[1]);
-			}
 			str = xml.GetAttribute("interval");
 			if (str != null)
 				item.interval = float.Parse(str) / 1000f;

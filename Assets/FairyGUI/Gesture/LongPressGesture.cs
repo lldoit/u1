@@ -23,9 +23,15 @@ namespace FairyGUI
 		public EventListener onAction { get; private set; }
 
 		/// <summary>
+		/// 第一次派发事件的触发时间。单位秒
+		/// </summary>
+		public float trigger;
+
+		/// <summary>
 		/// 派发onAction事件的时间间隔。单位秒。
 		/// </summary>
-		public float duration;
+		public float interval;
+
 		/// <summary>
 		/// 如果为真，则onAction再一次按下释放过程只派发一次。如果为假，则每隔duration时间派发一次。
 		/// </summary>
@@ -33,13 +39,16 @@ namespace FairyGUI
 
 		GObject _host;
 		Vector2 _startPoint;
+		bool _started;
 
-		public static float DURATION = 1.5f;
+		public static float TRIGGER = 1.5f;
+		public static float INTERVAL = 1f;
 
 		public LongPressGesture(GObject host)
 		{
 			_host = host;
-			duration = DURATION;
+			trigger = TRIGGER;
+			interval = INTERVAL;
 			Enable(true);
 
 			onBegin = new EventListener(this, "onLongPressBegin");
@@ -65,6 +74,12 @@ namespace FairyGUI
 			}
 		}
 
+		public void Cancel()
+		{
+			Stage.inst.onTouchEnd.Remove(__touchEnd);
+			Timers.inst.Remove(__timer);
+		}
+
 		void __touchBegin(EventContext context)
 		{
 			if (Stage.inst.touchCount > 1)
@@ -75,8 +90,9 @@ namespace FairyGUI
 
 			InputEvent evt = context.inputEvent;
 			_startPoint = _host.GlobalToLocal(new Vector2(evt.x, evt.y));
+			_started = false;
 
-			Timers.inst.Add(duration, 0, __timer);
+			Timers.inst.Add(trigger, 1, __timer);
 			Stage.inst.onTouchEnd.Add(__touchEnd);
 		}
 
@@ -92,8 +108,11 @@ namespace FairyGUI
 			}
 
 			onAction.Call();
-			if(once)
-				Timers.inst.Remove(__timer);
+			if (!_started && !once)
+			{
+				_started = true;
+				Timers.inst.Add(interval, 0, __timer);
+			}
 		}
 
 		void __touchEnd(EventContext context)

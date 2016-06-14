@@ -15,6 +15,8 @@ namespace FairyGUI
 		public Shape()
 		{
 			CreateGameObject("Shape");
+			graphics = new NGraphics(gameObject);
+			graphics.texture = NTexture.Empty;
 		}
 
 		public bool empty
@@ -22,61 +24,51 @@ namespace FairyGUI
 			get { return _type == 0; }
 		}
 
-		public void DrawRect(float aWidth, float aHeight, int lineSize, Color lineColor, Color fillColor)
+		public void DrawRect(int lineSize, Color lineColor, Color fillColor)
 		{
 			_type = 1;
 			_optimizeNotTouchable = false;
-			_contentRect = new Rect(0, 0, aWidth, aHeight);
 			_lineSize = lineSize;
 			_lineColor = lineColor;
 			_fillColor = fillColor;
-
-			DrawShape();
+			_requireUpdateMesh = true;
 		}
 
-		public void DrawEllipse(float aWidth, float aHeight, Color fillColor)
+		public void DrawEllipse(Color fillColor)
 		{
 			_type = 2;
 			_optimizeNotTouchable = false;
-			_contentRect = new Rect(0, 0, aWidth, aHeight);
 			_fillColor = fillColor;
-
-			DrawShape();
-		}
-
-		void DrawShape()
-		{
-			if (graphics == null)
-			{
-				graphics = new NGraphics(gameObject);
-				graphics.texture = NTexture.Empty;
-				InvalidateBatchingState();
-			}
-
-			if (_type == 1)
-				graphics.DrawRect(_contentRect, _lineSize, _lineColor, _fillColor);
-			else
-				graphics.DrawEllipse(_contentRect, _fillColor);
-		}
-
-		public void ResizeShape(float aWidth, float aHeight)
-		{
-			_contentRect = new Rect(0, 0, aWidth, aHeight);
-			DrawShape();
+			_requireUpdateMesh = true;
 		}
 
 		public void Clear()
 		{
 			_type = 0;
 			_optimizeNotTouchable = true;
-			if (graphics != null)
-				graphics.Clear();
+			graphics.ClearMesh();
 		}
 
 		public override void Update(UpdateContext context)
 		{
-			if (graphics != null)
-				graphics.Update(context);
+			if (_requireUpdateMesh)
+			{
+				_requireUpdateMesh = false;
+				if (_type != 0)
+				{
+					if (_contentRect.width > 0 && _contentRect.height > 0)
+					{
+						if (_type == 1)
+							graphics.DrawRect(_contentRect, _lineSize, _lineColor, _fillColor);
+						else
+							graphics.DrawEllipse(_contentRect, _fillColor);
+					}
+					else
+						graphics.ClearMesh();
+				}
+			}
+
+			base.Update(context);
 		}
 	}
 }

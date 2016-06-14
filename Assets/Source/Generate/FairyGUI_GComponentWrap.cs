@@ -8,6 +8,7 @@ public class FairyGUI_GComponentWrap
 	{
 		L.BeginClass(typeof(FairyGUI.GComponent), typeof(FairyGUI.GObject));
 		L.RegFunction("Dispose", Dispose);
+		L.RegFunction("InvalidateBatchingState", InvalidateBatchingState);
 		L.RegFunction("AddChild", AddChild);
 		L.RegFunction("AddChildAt", AddChildAt);
 		L.RegFunction("RemoveChild", RemoveChild);
@@ -87,6 +88,37 @@ public class FairyGUI_GComponentWrap
 			FairyGUI.GComponent obj = (FairyGUI.GComponent)ToLua.CheckObject(L, 1, typeof(FairyGUI.GComponent));
 			obj.Dispose();
 			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int InvalidateBatchingState(IntPtr L)
+	{
+		try
+		{
+			int count = LuaDLL.lua_gettop(L);
+
+			if (count == 1 && TypeChecker.CheckTypes(L, 1, typeof(FairyGUI.GComponent)))
+			{
+				FairyGUI.GComponent obj = (FairyGUI.GComponent)ToLua.ToObject(L, 1);
+				obj.InvalidateBatchingState();
+				return 0;
+			}
+			else if (count == 2 && TypeChecker.CheckTypes(L, 1, typeof(FairyGUI.GComponent), typeof(bool)))
+			{
+				FairyGUI.GComponent obj = (FairyGUI.GComponent)ToLua.ToObject(L, 1);
+				bool arg0 = LuaDLL.lua_toboolean(L, 2);
+				obj.InvalidateBatchingState(arg0);
+				return 0;
+			}
+			else
+			{
+				return LuaDLL.luaL_throw(L, "invalid arguments to method: FairyGUI.GComponent.InvalidateBatchingState");
+			}
 		}
 		catch(Exception e)
 		{

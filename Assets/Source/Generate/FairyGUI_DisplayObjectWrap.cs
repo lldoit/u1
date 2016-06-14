@@ -11,7 +11,9 @@ public class FairyGUI_DisplayObjectWrap
 		L.RegFunction("SetPosition", SetPosition);
 		L.RegFunction("SetSize", SetSize);
 		L.RegFunction("SetScale", SetScale);
-		L.RegFunction("SetGrayed", SetGrayed);
+		L.RegFunction("Locate", Locate);
+		L.RegFunction("EnterPaintingMode", EnterPaintingMode);
+		L.RegFunction("LeavePaintingMode", LeavePaintingMode);
 		L.RegFunction("GetBounds", GetBounds);
 		L.RegFunction("GlobalToLocal", GlobalToLocal);
 		L.RegFunction("LocalToGlobal", LocalToGlobal);
@@ -25,11 +27,14 @@ public class FairyGUI_DisplayObjectWrap
 		L.RegFunction("New", _CreateFairyGUI_DisplayObject);
 		L.RegFunction("__tostring", Lua_ToString);
 		L.RegVar("name", get_name, set_name);
+		L.RegVar("onPaint", get_onPaint, set_onPaint);
 		L.RegVar("gOwner", get_gOwner, set_gOwner);
+		L.RegVar("id", get_id, set_id);
 		L.RegVar("parent", get_parent, null);
 		L.RegVar("gameObject", get_gameObject, null);
 		L.RegVar("cachedTransform", get_cachedTransform, null);
 		L.RegVar("graphics", get_graphics, null);
+		L.RegVar("paintingGraphics", get_paintingGraphics, null);
 		L.RegVar("onClick", get_onClick, null);
 		L.RegVar("onRightClick", get_onRightClick, null);
 		L.RegVar("onTouchBegin", get_onTouchBegin, null);
@@ -42,6 +47,7 @@ public class FairyGUI_DisplayObjectWrap
 		L.RegVar("onKeyDown", get_onKeyDown, null);
 		L.RegVar("onClickLink", get_onClickLink, null);
 		L.RegVar("alpha", get_alpha, set_alpha);
+		L.RegVar("grayed", get_grayed, set_grayed);
 		L.RegVar("visible", get_visible, set_visible);
 		L.RegVar("x", get_x, set_x);
 		L.RegVar("y", get_y, set_y);
@@ -57,6 +63,10 @@ public class FairyGUI_DisplayObjectWrap
 		L.RegVar("rotation", get_rotation, set_rotation);
 		L.RegVar("rotationX", get_rotationX, set_rotationX);
 		L.RegVar("rotationY", get_rotationY, set_rotationY);
+		L.RegVar("skew", get_skew, set_skew);
+		L.RegVar("perspective", get_perspective, set_perspective);
+		L.RegVar("focalLength", get_focalLength, set_focalLength);
+		L.RegVar("pivot", get_pivot, set_pivot);
 		L.RegVar("material", get_material, set_material);
 		L.RegVar("shader", get_shader, set_shader);
 		L.RegVar("renderingOrder", get_renderingOrder, set_renderingOrder);
@@ -66,6 +76,9 @@ public class FairyGUI_DisplayObjectWrap
 		L.RegVar("stage", get_stage, null);
 		L.RegVar("worldSpaceContainer", get_worldSpaceContainer, null);
 		L.RegVar("touchable", get_touchable, set_touchable);
+		L.RegVar("paintingMode", get_paintingMode, null);
+		L.RegVar("filter", get_filter, set_filter);
+		L.RegVar("blendMode", get_blendMode, set_blendMode);
 		L.EndClass();
 	}
 
@@ -167,14 +180,51 @@ public class FairyGUI_DisplayObjectWrap
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int SetGrayed(IntPtr L)
+	static int Locate(IntPtr L)
+	{
+		try
+		{
+			ToLua.CheckArgsCount(L, 4);
+			FairyGUI.DisplayObject obj = (FairyGUI.DisplayObject)ToLua.CheckObject(L, 1, typeof(FairyGUI.DisplayObject));
+			float arg0 = (float)LuaDLL.luaL_checknumber(L, 2);
+			float arg1 = (float)LuaDLL.luaL_checknumber(L, 3);
+			float arg2 = (float)LuaDLL.luaL_checknumber(L, 4);
+			obj.Locate(arg0, arg1, arg2);
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int EnterPaintingMode(IntPtr L)
+	{
+		try
+		{
+			ToLua.CheckArgsCount(L, 3);
+			FairyGUI.DisplayObject obj = (FairyGUI.DisplayObject)ToLua.CheckObject(L, 1, typeof(FairyGUI.DisplayObject));
+			int arg0 = (int)LuaDLL.luaL_checknumber(L, 2);
+			System.Nullable<FairyGUI.Margin> arg1 = (System.Nullable<FairyGUI.Margin>)ToLua.CheckVarObject(L, 3, typeof(System.Nullable<FairyGUI.Margin>));
+			obj.EnterPaintingMode(arg0, arg1);
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int LeavePaintingMode(IntPtr L)
 	{
 		try
 		{
 			ToLua.CheckArgsCount(L, 2);
 			FairyGUI.DisplayObject obj = (FairyGUI.DisplayObject)ToLua.CheckObject(L, 1, typeof(FairyGUI.DisplayObject));
-			bool arg0 = LuaDLL.luaL_checkboolean(L, 2);
-			obj.SetGrayed(arg0);
+			int arg0 = (int)LuaDLL.luaL_checknumber(L, 2);
+			obj.LeavePaintingMode(arg0);
 			return 0;
 		}
 		catch(Exception e)
@@ -396,6 +446,25 @@ public class FairyGUI_DisplayObjectWrap
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_onPaint(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.DisplayObject obj = (FairyGUI.DisplayObject)o;
+			FairyGUI.EventCallback0 ret = obj.onPaint;
+			ToLua.Push(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index onPaint on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
 	static int get_gOwner(IntPtr L)
 	{
 		object o = null;
@@ -411,6 +480,25 @@ public class FairyGUI_DisplayObjectWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index gOwner on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_id(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.DisplayObject obj = (FairyGUI.DisplayObject)o;
+			uint ret = obj.id;
+			LuaDLL.lua_pushnumber(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index id on a nil value" : e.Message);
 		}
 	}
 
@@ -487,6 +575,25 @@ public class FairyGUI_DisplayObjectWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index graphics on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_paintingGraphics(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.DisplayObject obj = (FairyGUI.DisplayObject)o;
+			FairyGUI.NGraphics ret = obj.paintingGraphics;
+			ToLua.PushObject(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index paintingGraphics on a nil value" : e.Message);
 		}
 	}
 
@@ -715,6 +822,25 @@ public class FairyGUI_DisplayObjectWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index alpha on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_grayed(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.DisplayObject obj = (FairyGUI.DisplayObject)o;
+			bool ret = obj.grayed;
+			LuaDLL.lua_pushboolean(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index grayed on a nil value" : e.Message);
 		}
 	}
 
@@ -1004,6 +1130,82 @@ public class FairyGUI_DisplayObjectWrap
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_skew(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.DisplayObject obj = (FairyGUI.DisplayObject)o;
+			UnityEngine.Vector2 ret = obj.skew;
+			ToLua.Push(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index skew on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_perspective(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.DisplayObject obj = (FairyGUI.DisplayObject)o;
+			bool ret = obj.perspective;
+			LuaDLL.lua_pushboolean(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index perspective on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_focalLength(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.DisplayObject obj = (FairyGUI.DisplayObject)o;
+			int ret = obj.focalLength;
+			LuaDLL.lua_pushinteger(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index focalLength on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_pivot(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.DisplayObject obj = (FairyGUI.DisplayObject)o;
+			UnityEngine.Vector2 ret = obj.pivot;
+			ToLua.Push(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index pivot on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
 	static int get_material(IntPtr L)
 	{
 		object o = null;
@@ -1175,6 +1377,63 @@ public class FairyGUI_DisplayObjectWrap
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_paintingMode(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.DisplayObject obj = (FairyGUI.DisplayObject)o;
+			bool ret = obj.paintingMode;
+			LuaDLL.lua_pushboolean(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index paintingMode on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_filter(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.DisplayObject obj = (FairyGUI.DisplayObject)o;
+			FairyGUI.IFilter ret = obj.filter;
+			ToLua.PushObject(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index filter on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_blendMode(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.DisplayObject obj = (FairyGUI.DisplayObject)o;
+			FairyGUI.BlendMode ret = obj.blendMode;
+			ToLua.Push(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index blendMode on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
 	static int set_name(IntPtr L)
 	{
 		object o = null;
@@ -1190,6 +1449,37 @@ public class FairyGUI_DisplayObjectWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index name on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int set_onPaint(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.DisplayObject obj = (FairyGUI.DisplayObject)o;
+			FairyGUI.EventCallback0 arg0 = null;
+			LuaTypes funcType2 = LuaDLL.lua_type(L, 2);
+
+			if (funcType2 != LuaTypes.LUA_TFUNCTION)
+			{
+				 arg0 = (FairyGUI.EventCallback0)ToLua.CheckObject(L, 2, typeof(FairyGUI.EventCallback0));
+			}
+			else
+			{
+				LuaFunction func = ToLua.ToLuaFunction(L, 2);
+				arg0 = DelegateFactory.CreateDelegate(typeof(FairyGUI.EventCallback0), func) as FairyGUI.EventCallback0;
+			}
+
+			obj.onPaint = arg0;
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index onPaint on a nil value" : e.Message);
 		}
 	}
 
@@ -1213,6 +1503,25 @@ public class FairyGUI_DisplayObjectWrap
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int set_id(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.DisplayObject obj = (FairyGUI.DisplayObject)o;
+			uint arg0 = (uint)LuaDLL.luaL_checknumber(L, 2);
+			obj.id = arg0;
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index id on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
 	static int set_alpha(IntPtr L)
 	{
 		object o = null;
@@ -1228,6 +1537,25 @@ public class FairyGUI_DisplayObjectWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index alpha on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int set_grayed(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.DisplayObject obj = (FairyGUI.DisplayObject)o;
+			bool arg0 = LuaDLL.luaL_checkboolean(L, 2);
+			obj.grayed = arg0;
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index grayed on a nil value" : e.Message);
 		}
 	}
 
@@ -1517,6 +1845,82 @@ public class FairyGUI_DisplayObjectWrap
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int set_skew(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.DisplayObject obj = (FairyGUI.DisplayObject)o;
+			UnityEngine.Vector2 arg0 = ToLua.ToVector2(L, 2);
+			obj.skew = arg0;
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index skew on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int set_perspective(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.DisplayObject obj = (FairyGUI.DisplayObject)o;
+			bool arg0 = LuaDLL.luaL_checkboolean(L, 2);
+			obj.perspective = arg0;
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index perspective on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int set_focalLength(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.DisplayObject obj = (FairyGUI.DisplayObject)o;
+			int arg0 = (int)LuaDLL.luaL_checknumber(L, 2);
+			obj.focalLength = arg0;
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index focalLength on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int set_pivot(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.DisplayObject obj = (FairyGUI.DisplayObject)o;
+			UnityEngine.Vector2 arg0 = ToLua.ToVector2(L, 2);
+			obj.pivot = arg0;
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index pivot on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
 	static int set_material(IntPtr L)
 	{
 		object o = null;
@@ -1608,6 +2012,44 @@ public class FairyGUI_DisplayObjectWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index touchable on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int set_filter(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.DisplayObject obj = (FairyGUI.DisplayObject)o;
+			FairyGUI.IFilter arg0 = (FairyGUI.IFilter)ToLua.CheckObject(L, 2, typeof(FairyGUI.IFilter));
+			obj.filter = arg0;
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index filter on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int set_blendMode(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.DisplayObject obj = (FairyGUI.DisplayObject)o;
+			FairyGUI.BlendMode arg0 = (FairyGUI.BlendMode)ToLua.CheckObject(L, 2, typeof(FairyGUI.BlendMode));
+			obj.blendMode = arg0;
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index blendMode on a nil value" : e.Message);
 		}
 	}
 }

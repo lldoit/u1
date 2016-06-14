@@ -312,5 +312,10 @@ namespace FairyGUI
 			UIConfig.verticalScrollBar = null;
 			UIConfig.windowModalWaiting = null;
 		}
+
+		public void ApplyModifiedProperties()
+		{ 
+			//nothing yet
+		}
 	}
 }

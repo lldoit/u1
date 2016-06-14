@@ -92,32 +92,56 @@ namespace FairyGUI
 			}
 		}
 
-		public static RenderTexture CreateRenderTexture(float width, float height)
+		public static RenderTexture CreateRenderTexture(int width, int height, bool stencilSupport)
 		{
-			RenderTexture texture = new RenderTexture(Mathf.RoundToInt(width), Mathf.RoundToInt(height), 0, RenderTextureFormat.ARGB32);
+			RenderTexture texture = new RenderTexture(width, height, stencilSupport ? 24 : 0, RenderTextureFormat.ARGB32);
 			texture.antiAliasing = 1;
 			texture.filterMode = FilterMode.Bilinear;
 			texture.anisoLevel = 0;
 			texture.useMipMap = false;
 			texture.wrapMode = TextureWrapMode.Clamp;
+			texture.hideFlags = DisplayOptions.hideFlags;
 			return texture;
 		}
 
-		public static void Capture(Container container, RenderTexture texture)
+		public static void Capture(DisplayObject target, RenderTexture texture, Vector2 offset)
 		{
 			CheckMain();
 
+			Matrix4x4 matrix = target.cachedTransform.localToWorldMatrix;
+			float unitsPerPixel = new Vector4(matrix.m00, matrix.m10, matrix.m20, matrix.m30).magnitude;
+
+			Vector3 forward;
+			forward.x = matrix.m02;
+			forward.y = matrix.m12;
+			forward.z = matrix.m22;
+
+			Vector3 upwards;
+			upwards.x = matrix.m01;
+			upwards.y = matrix.m11;
+			upwards.z = matrix.m21;
+
+			float halfHeight = (float)texture.height / 2;
+
 			Camera camera = _main.cachedCamera;
 			camera.targetTexture = texture;
-			camera.orthographicSize = texture.height / 2 * StageCamera.UnitsPerPixel;
-			Vector3 v = container.cachedTransform.position;
-			v.x += camera.orthographicSize * camera.aspect;
-			v.y -= camera.orthographicSize;
-			_main.cachedTransform.localPosition = v;
+			camera.orthographicSize = halfHeight * unitsPerPixel;
+			_main.cachedTransform.localPosition = target.cachedTransform.TransformPoint(halfHeight * camera.aspect - offset.x, -halfHeight + offset.y, 0);
+			_main.cachedTransform.localRotation = Quaternion.LookRotation(forward, upwards);
 
-			int oldLayer = container.layer;
-			container.layer = _layer;
-			container.SetChildrenLayer(_layer);
+			int oldLayer = 0;
+
+			if (target.graphics != null)
+			{
+				oldLayer = target.graphics.gameObject.layer;
+				target.graphics.gameObject.layer = CaptureCamera.layer;
+			}
+
+			if (target is Container)
+			{
+				oldLayer = ((Container)target).numChildren > 0 ? ((Container)target).GetChildAt(0).layer : CaptureCamera.hiddenLayer;
+				((Container)target).SetChildrenLayer(CaptureCamera.layer);
+			}
 
 			RenderTexture old = RenderTexture.active;
 			RenderTexture.active = texture;
@@ -125,8 +149,11 @@ namespace FairyGUI
 			camera.Render();
 			RenderTexture.active = old;
 
-			container.layer = oldLayer;
-			container.SetChildrenLayer(oldLayer);
+			if (target.graphics != null)
+				target.graphics.gameObject.layer = oldLayer;
+
+			if (target is Container)
+				((Container)target).SetChildrenLayer(oldLayer);
 		}
 	}
 }

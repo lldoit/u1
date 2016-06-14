@@ -11,6 +11,9 @@ Shader "FairyGUI/Image"
 		_StencilReadMask ("Stencil Read Mask", Float) = 255
 
 		_ColorMask ("Color Mask", Float) = 15
+
+		_BlendSrcFactor ("Blend SrcFactor", Float) = 5
+		_BlendDstFactor ("Blend DstFactor", Float) = 10
 	}
 	
 	SubShader
@@ -37,15 +40,14 @@ Shader "FairyGUI/Image"
 		Lighting Off
 		ZWrite Off
 		Fog { Mode Off }
-		Offset -1, -1
-		Blend SrcAlpha OneMinusSrcAlpha
+		Blend [_BlendSrcFactor] [_BlendDstFactor], One One
 		ColorMask [_ColorMask]
 
 		Pass
 		{
 			CGPROGRAM
 				#pragma multi_compile NOT_COMBINED COMBINED
-				#pragma multi_compile NOT_GRAYED GRAYED
+				#pragma multi_compile NOT_GRAYED GRAYED COLOR_FILTER
 				#pragma multi_compile NOT_CLIPPED CLIPPED SOFT_CLIPPED ALPHA_MASK
 				#pragma vertex vert
 				#pragma fragment frag
@@ -89,6 +91,11 @@ Shader "FairyGUI/Image"
 				half4 _ClipSoftness = half4(0, 0, 0, 0);
 				#endif
 
+				#ifdef COLOR_FILTER
+				float4x4 _ColorMatrix;
+				float4 _ColorOffset;
+				#endif
+
 				v2f vert (appdata_t v)
 				{
 					v2f o;
@@ -116,7 +123,7 @@ Shader "FairyGUI/Image"
 					#endif
 
 					#ifdef GRAYED
-					fixed grey = dot(col.rgb, fixed3(0.299, 0.587, 0.114));  
+					fixed grey = dot(col.rgb, fixed3(0.299, 0.587, 0.114));
 					col.rgb = fixed3(grey, grey, grey);
 					#endif
 
@@ -139,8 +146,17 @@ Shader "FairyGUI/Image"
 					if (val < 0.0) col.a = 0.0;
 					#endif
 
+					#ifdef COLOR_FILTER
+					fixed4 col2 = col;
+					col2.r = dot(col, _ColorMatrix[0])+_ColorOffset.x;
+					col2.g = dot(col, _ColorMatrix[1])+_ColorOffset.y;
+					col2.b = dot(col, _ColorMatrix[2])+_ColorOffset.z;
+					col2.a = dot(col, _ColorMatrix[3])+_ColorOffset.w;
+					col = col2;
+					#endif
+
 					#ifdef ALPHA_MASK
-					clip (col.a - 0.001);
+					clip(col.a - 0.001);
 					#endif
 
 					return col;
@@ -148,4 +164,6 @@ Shader "FairyGUI/Image"
 			ENDCG
 		}
 	}
+
+	Fallback "FairyGUI/Image(WP)"
 }

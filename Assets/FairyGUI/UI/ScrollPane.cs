@@ -58,6 +58,8 @@ namespace FairyGUI
 		Tweener _tweener;
 		int _tweening;
 
+		EventCallback0 _refreshDelegate;
+
 		GComponent _owner;
 		Container _container;
 		Container _maskHolder;
@@ -74,6 +76,7 @@ namespace FairyGUI
 									string hzScrollBarRes)
 		{
 			onScroll = new EventListener(this, "onScroll");
+			_refreshDelegate = Refresh;
 
 			_throwTween = new ThrowTween();
 			_owner = owner;
@@ -175,7 +178,7 @@ namespace FairyGUI
 			else
 				_mouseWheelEnabled = false;
 
-			SetSize(owner.width, owner.height, true);
+			SetSize(owner.width, owner.height);
 
 			_container.onMouseWheel.Add(__mouseWheel);
 			_container.onTouchBegin.Add(__touchBegin);
@@ -669,7 +672,13 @@ namespace FairyGUI
 			return true;
 		}
 
-		internal void SetSize(float aWidth, float aHeight, bool noRefresh)
+		internal void OnOwnerSizeChanged()
+		{
+			SetSize(_owner.width, _owner.height);
+			PosChanged(false);
+		}
+
+		void SetSize(float aWidth, float aHeight)
 		{
 			if (_displayOnLeft && _vtScrollBar != null)
 				_maskHolder.x = Mathf.FloorToInt(_owner.margin.left + _vtScrollBar.width);
@@ -719,8 +728,6 @@ namespace FairyGUI
 			_pageSize = new Vector2(_maskWidth, _maskHeight);
 
 			HandleSizeChanged();
-			if (!noRefresh)
-				PosChanged(false);
 		}
 
 		internal void SetContentSize(float aWidth, float aHeight)
@@ -890,8 +897,8 @@ namespace FairyGUI
 
 			_needRefresh = true;
 
-			UpdateContext.OnBegin -= Refresh;
-			UpdateContext.OnBegin += Refresh;
+			UpdateContext.OnBegin -= _refreshDelegate;
+			UpdateContext.OnBegin += _refreshDelegate;
 
 			//如果在甩手指滚动过程中用代码重新设置滚动位置，要停止滚动
 			if (_tweening == 2) //kill throw tween only
@@ -905,7 +912,7 @@ namespace FairyGUI
 		private void Refresh()
 		{
 			_needRefresh = false;
-			UpdateContext.OnBegin -= Refresh;
+			UpdateContext.OnBegin -= _refreshDelegate;
 
 			float contentXLoc = 0f;
 			float contentYLoc = 0f;
@@ -978,7 +985,7 @@ namespace FairyGUI
 			if (_needRefresh) //user change scroll pos in on scroll
 			{
 				_needRefresh = false;
-				UpdateContext.OnBegin -= Refresh;
+				UpdateContext.OnBegin -= _refreshDelegate;
 
 				if (_hScroll)
 					contentXLoc = _xPerc * (_contentWidth - _maskWidth);
@@ -1503,9 +1510,9 @@ namespace FairyGUI
 		{
 			_scrollBarVisible = (bool)obj && _maskWidth > 0 && _maskHeight > 0;
 			if (_vtScrollBar != null)
-				_vtScrollBar.displayObject.visible = _scrollBarVisible && !_vScrollNone; ;
+				_vtScrollBar.displayObject.visible = _scrollBarVisible && !_vScrollNone;
 			if (_hzScrollBar != null)
-				_hzScrollBar.displayObject.visible = _scrollBarVisible && !_hScrollNone; ;
+				_hzScrollBar.displayObject.visible = _scrollBarVisible && !_hScrollNone;
 		}
 
 		private void __tweenUpdate()

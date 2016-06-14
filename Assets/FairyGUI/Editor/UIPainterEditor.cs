@@ -74,6 +74,7 @@ namespace FairyGUIEditor
 			if (GUILayout.Button(componentName.stringValue, "ObjectField"))
 				EditorWindow.GetWindow<PackagesWindow>(true, "Select a UI Component").SetSelection(packageName.stringValue, componentName.stringValue);
 			EditorGUILayout.EndHorizontal();
+			int oldSortingOrder = panel.sortingOrder;
 			EditorGUILayout.PropertyField(sortingOrder);
 			EditorGUILayout.PropertyField(renderCamera);
 			EditorGUILayout.PropertyField(fairyBatching);
@@ -83,6 +84,7 @@ namespace FairyGUIEditor
 			{
 				if (PrefabUtility.GetPrefabType(panel) != PrefabType.Prefab)
 				{
+					panel.ApplyModifiedProperties(sortingOrder.intValue!=oldSortingOrder);
 				}
 			}
 		}

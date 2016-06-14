@@ -24,13 +24,15 @@ namespace FairyGUI
 		public bool clipped;
 		public ClipInfo clipInfo;
 
-		public uint frameId;
 		public int counter;
 		public int renderingOrder;
 		public int batchingDepth;
 		public int rectMaskDepth;
 		public int stencilReferenceValue;
+		public float alpha;
+		public bool grayed;
 
+		public static uint frameId;
 		public static EventCallback0 OnBegin;
 		public static EventCallback0 OnEnd;
 
@@ -50,6 +52,8 @@ namespace FairyGUI
 			batchingDepth = 0;
 			rectMaskDepth = 0;
 			stencilReferenceValue = 0;
+			alpha = 1;
+			grayed = false;
 
 			clipped = false;
 			_clipStack.Clear();

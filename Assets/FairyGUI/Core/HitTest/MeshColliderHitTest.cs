@@ -32,22 +32,22 @@ namespace FairyGUI
 			this.height = height;
 		}
 
-		override public int HitTest(Container container, ref Vector2 localPoint)
+		override public bool HitTest(Container container, ref Vector2 localPoint)
 		{
 			Camera camera = container.GetRenderCamera();
 
 			RaycastHit hit;
 			if (!HitTestContext.GetRaycastHitFromCache(camera, out hit))
-				return 0;
+				return false;
 
 			if (hit.collider != collider)
-				return 0;
+				return false;
 
 			localPoint = new Vector2(hit.textureCoord.x * this.width, (1 - hit.textureCoord.y) * this.height);
 			HitTestContext.direction = Vector3.back;
 			HitTestContext.worldPoint = StageCamera.main.ScreenToWorldPoint(new Vector2(localPoint.x, Screen.height - localPoint.y));
 
-			return 1;
+			return true;
 		}
 
 		public bool ScreenToLocal(Camera camera, Vector3 screenPoint, ref Vector2 point)

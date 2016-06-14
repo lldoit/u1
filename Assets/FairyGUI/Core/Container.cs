@@ -10,28 +10,48 @@ namespace FairyGUI
 	/// </summary>
 	public class Container : DisplayObject
 	{
+		/// <summary>
+		/// 
+		/// </summary>
 		public RenderMode renderMode;
+
+		/// <summary>
+		/// 
+		/// </summary>
 		public Camera renderCamera;
 
-		List<DisplayObject> _children;
+		/// <summary>
+		/// 
+		/// </summary>
+		public bool opaque;
 
-		Rect? _clipRect;
+
+		/// <summary>
+		/// 
+		/// </summary>
+		public Vector4? clipSoftness;
+
+		/// <summary>
+		/// 
+		/// </summary>
+		public IHitTest hitArea;
+
+		///
+		public bool touchChildren;
+
+		public EventCallback0 onUpdate;
+
+		List<DisplayObject> _children;
 		DisplayObject _mask;
-		IHitTest _hitArea;
-		Vector4? _clipSoftness;
-		bool _touchChildren;
+		Rect? _clipRect;
 
 		bool _fBatchingRequested;
-		bool _fBatchingInherited;
+		bool _fBatchingRoot;
 		bool _fBatching;
 		List<DisplayObject> _descendants;
 
-		bool _skipRendering;
-		float _alphaInFrame;
-
-		internal EventCallback0 _onUpdate;
 		internal int _panelOrder;
-		internal bool _ownsGameObject;
+		bool _ownsGameObject;
 
 		public Container()
 			: base()
@@ -65,7 +85,7 @@ namespace FairyGUI
 		void Init()
 		{
 			_children = new List<DisplayObject>();
-			_touchChildren = true;
+			touchChildren = true;
 		}
 
 		public int numChildren
@@ -105,7 +125,7 @@ namespace FairyGUI
 							child.onAddedToStage.Call();
 					}
 
-					InvalidateBatchingState();
+					InvalidateBatchingState(true);
 				}
 				return child;
 			}
@@ -181,7 +201,7 @@ namespace FairyGUI
 				if (!dispose)
 				{
 					child.SetParent(null);
-					InvalidateBatchingState();
+					InvalidateBatchingState(true);
 				}
 				else
 					child.Dispose();
@@ -216,7 +236,7 @@ namespace FairyGUI
 				_children.Add(child);
 			else
 				_children.Insert(index, child);
-			InvalidateBatchingState();
+			InvalidateBatchingState(true);
 		}
 
 		public void SwapChildren(DisplayObject child1, DisplayObject child2)
@@ -234,7 +254,7 @@ namespace FairyGUI
 			DisplayObject obj2 = _children[index2];
 			_children[index1] = obj2;
 			_children[index2] = obj1;
-			InvalidateBatchingState();
+			InvalidateBatchingState(true);
 		}
 
 		public void ChangeChildrenOrder(List<int> indice, List<DisplayObject> objs)
@@ -248,7 +268,7 @@ namespace FairyGUI
 
 				_children[indice[i]] = obj;
 			}
-			InvalidateBatchingState();
+			InvalidateBatchingState(true);
 		}
 
 		public Rect? clipRect
@@ -257,18 +277,8 @@ namespace FairyGUI
 			set
 			{
 				_clipRect = value;
-				if (_clipRect != null)
-					_contentRect = (Rect)_clipRect;
-				else
-					_contentRect.Set(0, 0, 0, 0);
+				UpdateBatchingFlags();
 			}
-		}
-
-		//left-top-right-bottom
-		public Vector4? clipSoftness
-		{
-			get { return _clipSoftness; }
-			set { _clipSoftness = value; }
 		}
 
 		public DisplayObject mask
@@ -277,20 +287,8 @@ namespace FairyGUI
 			set
 			{
 				_mask = value;
-				InvalidateBatchingState();
+				UpdateBatchingFlags();
 			}
-		}
-
-		public IHitTest hitArea
-		{
-			get { return _hitArea; }
-			set { _hitArea = value; }
-		}
-
-		public bool touchChildren
-		{
-			get { return _touchChildren; }
-			set { _touchChildren = value; }
 		}
 
 		override public bool touchable
@@ -299,8 +297,8 @@ namespace FairyGUI
 			set
 			{
 				base.touchable = value;
-				if (_hitArea != null)
-					_hitArea.SetEnabled(value);
+				if (hitArea != null)
+					hitArea.SetEnabled(value);
 			}
 		}
 
@@ -408,21 +406,16 @@ namespace FairyGUI
 
 		override protected internal DisplayObject HitTest(bool forTouch)
 		{
-			if (_skipRendering)
-				return null;
-
-			if (!visible || !touchable || _optimizeNotTouchable)
+			if (!visible || (forTouch && (!touchable || _optimizeNotTouchable)))
 				return null;
 
 			Vector2 localPoint = new Vector2();
-			int hitTestResult;
 			Vector3 savedWorldPoint = HitTestContext.worldPoint;
 			Vector3 savedDirection = HitTestContext.direction;
 
-			if (_hitArea != null)
+			if (hitArea != null)
 			{
-				hitTestResult = _hitArea.HitTest(this, ref localPoint);
-				if (hitTestResult == 0)
+				if (!hitArea.HitTest(this, ref localPoint))
 				{
 					HitTestContext.worldPoint = savedWorldPoint;
 					HitTestContext.direction = savedDirection;
@@ -432,21 +425,19 @@ namespace FairyGUI
 			else
 			{
 				localPoint = GetHitTestLocalPoint();
-				hitTestResult = 2;
-			}
-
-			if (_clipRect != null && !((Rect)_clipRect).Contains(localPoint))
-			{
-				HitTestContext.worldPoint = savedWorldPoint;
-				HitTestContext.direction = savedDirection;
-				return null;
+				if (_clipRect != null && !((Rect)_clipRect).Contains(localPoint))
+				{
+					HitTestContext.worldPoint = savedWorldPoint;
+					HitTestContext.direction = savedDirection;
+					return null;
+				}
 			}
 
 			if (_mask != null && _mask.HitTest(false) == null)
 				return null;
 
 			DisplayObject target = null;
-			if (_touchChildren)
+			if (touchChildren)
 			{
 				int count = _children.Count;
 				for (int i = count - 1; i >= 0; --i) // front to back!
@@ -461,7 +452,7 @@ namespace FairyGUI
 				}
 			}
 
-			if (target == null && hitTestResult == 1)
+			if (target == null && opaque && _contentRect.Contains(localPoint))
 				target = this;
 
 			HitTestContext.worldPoint = savedWorldPoint;
@@ -491,34 +482,36 @@ namespace FairyGUI
 			get { return _fBatching; }
 			set
 			{
-				if (_fBatching != value)
-				{
-					_fBatching = value;
-					_fBatchingRequested = _fBatching;
-					if (!_fBatching)
-					{
-						if (_descendants != null)
-							_descendants.Clear();
-					}
-				}
+				_fBatching = value;
+				UpdateBatchingFlags();
 			}
 		}
 
-		public bool fairyBatchingInherited
+		internal void UpdateBatchingFlags()
 		{
-			get { return _fBatchingInherited; }
+			bool oldValue = _fBatchingRoot;
+			_fBatchingRoot = _fBatching || _clipRect != null || _mask != null || _paintingMode > 0;
+			if (oldValue != _fBatchingRoot)
+			{
+				if (_fBatchingRoot)
+					_fBatchingRequested = true;
+				else if (_descendants != null)
+					_descendants.Clear();
+
+				InvalidateBatchingState();
+			}
 		}
 
-		override public void InvalidateBatchingState()
+		public void InvalidateBatchingState(bool childrenChanged)
 		{
-			if (_fBatching || _clipRect != null || _mask != null)
+			if (childrenChanged && _fBatchingRoot)
 				_fBatchingRequested = true;
-			else if (_fBatchingInherited)
+			else
 			{
 				Container p = this.parent;
 				while (p != null)
 				{
-					if (p._fBatching || p._clipRect != null || p._mask != null)
+					if (p._fBatchingRoot)
 					{
 						p._fBatchingRequested = true;
 						break;
@@ -536,7 +529,7 @@ namespace FairyGUI
 			{
 				DisplayObject child = _children[i];
 				child.layer = value;
-				if (child is Container)
+				if ((child is Container) && !child.paintingMode)
 					((Container)child).SetChildrenLayer(value);
 			}
 		}
@@ -563,53 +556,43 @@ namespace FairyGUI
 
 		override public void Update(UpdateContext context)
 		{
-			_skipRendering = gOwner != null && gOwner.parent != null && !gOwner.parent.IsChildInView(gOwner);
-			if (_skipRendering)
-				return;
+			if (onUpdate != null)
+				onUpdate();
 
-			if (_onUpdate != null)
-				_onUpdate();
+			base.Update(context);
 
 			if (_mask != null)
-				context.EnterClipping(this._internalIndex, null, null);
+				context.EnterClipping(this.id, null, null);
 			else if (_clipRect != null)
-				context.EnterClipping(this._internalIndex, this.TransformRect((Rect)_clipRect, null), _clipSoftness);
+				context.EnterClipping(this.id, this.TransformRect((Rect)_clipRect, null), clipSoftness);
 
-			_alphaInFrame = parent != null ? (parent._alphaInFrame * this.alpha) : this.alpha;
+			float savedAlpha = context.alpha;
+			context.alpha *= this.alpha;
+			bool savedGrayed = context.grayed;
+			context.grayed = context.grayed || this.grayed;
 
-			if (_fBatching && !_fBatchingInherited)
-			{
-				if (_fBatchingRequested)
-				{
-					DoFairyBatching();
-				}
-
+			if (_fBatching)
 				context.batchingDepth++;
-				SetRenderingOrder(context);
-			}
 
-			if ((_fBatching || _fBatchingInherited) && context.batchingDepth > 0)
+			if (context.batchingDepth > 0)
 			{
+				if (_mask != null)
+					_mask.graphics.maskFrameId = UpdateContext.frameId;
+
 				int cnt = _children.Count;
 				for (int i = 0; i < cnt; i++)
 				{
 					DisplayObject child = _children[i];
 					if (child.visible)
-					{
-						context.counter++;
 						child.Update(context);
-						if (child.graphics != null)
-							child.graphics.alpha = _alphaInFrame * child.alpha;
-					}
 				}
 			}
 			else
 			{
 				if (_mask != null)
 				{
-					_mask.graphics.maskFrameId = context.frameId;
-					_mask.renderingOrder = context.renderingOrder;
-					context.renderingOrder++;
+					_mask.graphics.maskFrameId = UpdateContext.frameId;
+					_mask.renderingOrder = context.renderingOrder++;
 				}
 
 				int cnt = _children.Count;
@@ -618,54 +601,48 @@ namespace FairyGUI
 					DisplayObject child = _children[i];
 					if (child.visible)
 					{
-						context.counter++;
-						if (!(child is Container) && child != _mask)
-						{
-							child.renderingOrder = context.renderingOrder;
-							context.renderingOrder += 3;
-						}
+						if (child != _mask)
+							child.renderingOrder = context.renderingOrder++;
 
 						child.Update(context);
-						if (child.graphics != null)
-							child.graphics.alpha = _alphaInFrame * child.alpha;
 					}
 				}
 			}
 
-			if (_fBatching && !_fBatchingInherited)
+			if (_fBatching)
+			{
+				if (context.batchingDepth == 1)
+					SetRenderingOrder(context);
 				context.batchingDepth--;
+			}
+
+			context.alpha = savedAlpha;
+			context.grayed = savedGrayed;
 
 			if (_clipRect != null || _mask != null)
 				context.LeaveClipping();
+
+			if (_paintingMode > 0 && paintingGraphics.texture != null)
+				UpdateContext.OnEnd += _captureDelegate;
 		}
 
 		private void SetRenderingOrder(UpdateContext context)
 		{
+			if (_fBatchingRequested)
+				DoFairyBatching();
+
 			if (_mask != null)
-			{
-				_mask.graphics.maskFrameId = context.frameId;
-				_mask.renderingOrder = context.renderingOrder;
-				context.renderingOrder++;
-			}
+				_mask.renderingOrder = context.renderingOrder++;
 
 			int cnt = _descendants.Count;
 			for (int i = 0; i < cnt; i++)
 			{
 				DisplayObject child = _descendants[i];
-				if (!(child is Container))
-				{
-					if (child != _mask)
-					{
-						child.renderingOrder = context.renderingOrder;
-						context.renderingOrder += 3;
-					}
-				}
-				else if (((Container)child)._clipRect != null || ((Container)child)._mask != null)
-				{
-					if (((Container)child)._fBatchingRequested)
-						((Container)child).DoFairyBatching();
+				if (child != _mask)
+					child.renderingOrder = context.renderingOrder++;
+
+				if ((child is Container) && ((Container)child)._fBatchingRoot)
 					((Container)child).SetRenderingOrder(context);
-				}
 			}
 		}
 
@@ -680,11 +657,13 @@ namespace FairyGUI
 			CollectChildren(this);
 
 			int cnt = _descendants.Count;
+			//Debug.Log("DoFairyBatching " + cnt);
+
 			int i, j;
 			for (i = 0; i < cnt; i++)
 			{
 				DisplayObject current = _descendants[i];
-				Rect bound = current._tmpBounds;
+				Rect bound = current._internal_bounds;
 				if ((object)current.material == null || current._skipInFairyBatching)
 					continue;
 
@@ -704,7 +683,7 @@ namespace FairyGUI
 						break;
 					}
 
-					if (ToolSet.Intersects(ref bound, ref test._tmpBounds))
+					if (ToolSet.Intersects(ref bound, ref test._internal_bounds))
 						break;
 				}
 			}
@@ -719,23 +698,19 @@ namespace FairyGUI
 				if (child is Container)
 				{
 					Container container = (Container)child;
-					container._fBatchingInherited = true;
-					container._fBatchingRequested = false;
-
-					if (container._clipRect == null && container._mask == null)
-					{
-						container.CollectChildren(initiator);
-					}
-					else
+					if (container._fBatchingRoot)
 					{
 						initiator._descendants.Add(container);
-						container._tmpBounds = container.GetBounds(initiator);
-						container.DoFairyBatching();
+						container._internal_bounds = container.GetBounds(initiator);
+						if (container._fBatchingRequested)
+							container.DoFairyBatching();
 					}
+					else
+						container.CollectChildren(initiator);
 				}
 				else if (child != initiator._mask)
 				{
-					child._tmpBounds = child.GetBounds(initiator);
+					child._internal_bounds = child.GetBounds(initiator);
 					initiator._descendants.Add(child);
 				}
 			}
@@ -743,7 +718,7 @@ namespace FairyGUI
 
 		public override void Dispose()
 		{
-			base.Dispose(); //Destroy GameObject tree first, avoid destroying each seperately
+			base.Dispose(); //Destroy GameObject tree first, avoid destroying each seperately;
 
 			int numChildren = _children.Count;
 			for (int i = numChildren - 1; i >= 0; --i)

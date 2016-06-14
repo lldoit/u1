@@ -24,10 +24,10 @@ namespace FairyGUI
 
 		public void Update(MovieClip mc, UpdateContext context)
 		{
-			if (_lastUpdateFrameId == context.frameId) //PlayState may be shared, only update once per frame
+			if (_lastUpdateFrameId == UpdateContext.frameId) //PlayState may be shared, only update once per frame
 				return;
 
-			_lastUpdateFrameId = context.frameId;
+			_lastUpdateFrameId = UpdateContext.frameId;
 			float time = Time.time;
 			float elapsed = time - _lastTime;
 			if (ignoreTimeScale && Time.timeScale != 0)

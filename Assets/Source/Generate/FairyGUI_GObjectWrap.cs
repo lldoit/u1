@@ -87,6 +87,7 @@ public class FairyGUI_GObjectWrap
 		L.RegVar("scaleX", get_scaleX, set_scaleX);
 		L.RegVar("scaleY", get_scaleY, set_scaleY);
 		L.RegVar("scale", get_scale, set_scale);
+		L.RegVar("skew", get_skew, set_skew);
 		L.RegVar("pivotX", get_pivotX, set_pivotX);
 		L.RegVar("pivotY", get_pivotY, set_pivotY);
 		L.RegVar("pivot", get_pivot, set_pivot);
@@ -102,6 +103,8 @@ public class FairyGUI_GObjectWrap
 		L.RegVar("focusable", get_focusable, set_focusable);
 		L.RegVar("focused", get_focused, null);
 		L.RegVar("tooltips", get_tooltips, set_tooltips);
+		L.RegVar("filter", get_filter, set_filter);
+		L.RegVar("blendMode", get_blendMode, set_blendMode);
 		L.RegVar("inContainer", get_inContainer, null);
 		L.RegVar("onStage", get_onStage, null);
 		L.RegVar("resourceURL", get_resourceURL, null);
@@ -1795,6 +1798,25 @@ public class FairyGUI_GObjectWrap
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_skew(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GObject obj = (FairyGUI.GObject)o;
+			UnityEngine.Vector2 ret = obj.skew;
+			ToLua.Push(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index skew on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
 	static int get_pivotX(IntPtr L)
 	{
 		object o = null;
@@ -2076,6 +2098,44 @@ public class FairyGUI_GObjectWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index tooltips on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_filter(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GObject obj = (FairyGUI.GObject)o;
+			FairyGUI.IFilter ret = obj.filter;
+			ToLua.PushObject(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index filter on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_blendMode(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GObject obj = (FairyGUI.GObject)o;
+			FairyGUI.BlendMode ret = obj.blendMode;
+			ToLua.Push(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index blendMode on a nil value" : e.Message);
 		}
 	}
 
@@ -2783,6 +2843,25 @@ public class FairyGUI_GObjectWrap
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int set_skew(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GObject obj = (FairyGUI.GObject)o;
+			UnityEngine.Vector2 arg0 = ToLua.ToVector2(L, 2);
+			obj.skew = arg0;
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index skew on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
 	static int set_pivotX(IntPtr L)
 	{
 		object o = null;
@@ -3045,6 +3124,44 @@ public class FairyGUI_GObjectWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index tooltips on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int set_filter(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GObject obj = (FairyGUI.GObject)o;
+			FairyGUI.IFilter arg0 = (FairyGUI.IFilter)ToLua.CheckObject(L, 2, typeof(FairyGUI.IFilter));
+			obj.filter = arg0;
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index filter on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int set_blendMode(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GObject obj = (FairyGUI.GObject)o;
+			FairyGUI.BlendMode arg0 = (FairyGUI.BlendMode)ToLua.CheckObject(L, 2, typeof(FairyGUI.BlendMode));
+			obj.blendMode = arg0;
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index blendMode on a nil value" : e.Message);
 		}
 	}
 

@@ -6,9 +6,10 @@ namespace FairyGUI
 	/// <summary>
 	/// 
 	/// </summary>
-	public class MaterialPool
+	class MaterialPool
 	{
 		List<NMaterial> _items;
+		List<NMaterial> _blendItems;
 		MaterialManager _manager;
 		string[] _variants;
 
@@ -18,51 +19,67 @@ namespace FairyGUI
 			_variants = variants;
 		}
 
-		public NMaterial GetMaterial(uint frameId, uint context)
+		public NMaterial Get()
 		{
-			if (_items == null)
-				_items = new List<NMaterial>();
+			List<NMaterial> items;
 
-			int cnt = _items.Count;
-			NMaterial spare = null;
-			for (int i = 0; i < cnt; i++)
+			if (_manager.blendMode == BlendMode.Normal)
 			{
-				NMaterial mat = _items[i];
-				if (mat.frameId == frameId)
-				{
-					if (mat.context == context)
-						return mat;
-				}
-				else if (spare == null)
-					spare = mat;
-			}
-
-			if (spare != null)
-			{
-				spare.frameId = frameId;
-				spare.context = context;
-				return spare;
+				if (_items == null)
+					_items = new List<NMaterial>();
+				items = _items;
 			}
 			else
 			{
-				NMaterial mat = _manager.CreateMaterial();
+				if (_blendItems == null)
+					_blendItems = new List<NMaterial>();
+				items = _blendItems;
+			}
+
+			int cnt = items.Count;
+			NMaterial result = null;
+			for (int i = 0; i < cnt; i++)
+			{
+				NMaterial mat = items[i];
+				if (mat.frameId == _manager.frameId)
+				{
+					if (mat.clipId == _manager.clipId && mat.blendMode == _manager.blendMode)
+						return mat;
+				}
+				else if (result == null)
+					result = mat;
+			}
+
+			if (result != null)
+			{
+				result.frameId = _manager.frameId;
+				result.clipId = _manager.clipId;
+				result.blendMode = _manager.blendMode;
+			}
+			else
+			{
+				result = _manager.CreateMaterial();
 				if (_variants != null)
 				{
 					foreach (string v in _variants)
-						mat.EnableKeyword(v);
+						result.EnableKeyword(v);
 				}
-				mat.frameId = frameId;
-				mat.context = context;
-				_items.Add(mat);
-
-				return mat;
+				result.frameId = _manager.frameId;
+				result.clipId = _manager.clipId;
+				result.blendMode = _manager.blendMode;
+				items.Add(result);
 			}
+
+			return result;
 		}
 
 		public void Clear()
 		{
 			if (_items != null)
 				_items.Clear();
+
+			if (_blendItems != null)
+				_blendItems.Clear();
 		}
 
 		public void Dispose()
@@ -80,6 +97,21 @@ namespace FairyGUI
 						Material.DestroyImmediate(mat);
 				}
 				_items = null;
+			}
+
+			if (_blendItems != null)
+			{
+				if (Application.isPlaying)
+				{
+					foreach (NMaterial mat in _blendItems)
+						Material.Destroy(mat);
+				}
+				else
+				{
+					foreach (NMaterial mat in _blendItems)
+						Material.DestroyImmediate(mat);
+				}
+				_blendItems = null;
 			}
 		}
 	}

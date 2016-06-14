@@ -21,7 +21,7 @@ namespace FairyGUI
 	/// </summary>
 	[ExecuteInEditMode]
 	[AddComponentMenu("FairyGUI/UI Panel")]
-	public class UIPanel : MonoBehaviour
+	public class UIPanel : MonoBehaviour, EMRenderTarget
 	{
 		/// <summary>
 		/// 
@@ -94,8 +94,7 @@ namespace FairyGUI
 				if (container != null)//如果不为null，可能是因为Prefab revert， 而不是因为Assembly reload，
 					OnDestroy();
 
-				_renderTargets.Add(this);
-				_renderTargetsChanged = true;
+				EMRenderSupport.Add(this);
 				screenSizeVer = 0;
 				uiBounds.position = position;
 				uiBounds.size = cachedUISize;
@@ -107,9 +106,7 @@ namespace FairyGUI
 		void OnDisable()
 		{
 			if (!Application.isPlaying)
-			{
-				_renderTargets.Remove(this);
-			}
+				EMRenderSupport.Remove(this);
 		}
 
 		void Start()
@@ -129,7 +126,7 @@ namespace FairyGUI
 			if (container != null)
 			{
 				if (!Application.isPlaying)
-					_renderTargets.Remove(this);
+					EMRenderSupport.Remove(this);
 
 				if (_ui != null)
 				{
@@ -280,7 +277,7 @@ namespace FairyGUI
 
 		void CreateUI_EditMode()
 		{
-			if (!packageListReady || UIPackage.GetByName(packageName) == null)
+			if (!EMRenderSupport.packageListReady || UIPackage.GetByName(packageName) == null)
 				return;
 
 #if UNITY_5
@@ -394,16 +391,19 @@ namespace FairyGUI
 			}
 		}
 
-		void ApplyModifiedProperties()
+		public void ApplyModifiedProperties(bool sortingOrderChanged, bool fitScreenChanged)
 		{
 			if (container != null)
 			{
 				container.renderMode = renderMode;
 				container.renderCamera = renderCamera;
-				if (container._panelOrder != sortingOrder)
+				if (sortingOrderChanged)
 				{
 					container._panelOrder = sortingOrder;
-					_renderTargetsChanged = true;
+					if (Application.isPlaying)
+						SetSortingOrder(sortingOrder, true);
+					else
+						EMRenderSupport.orderChanged = true;
 				}
 				container.fairyBatching = fairyBatching;
 			}
@@ -421,22 +421,13 @@ namespace FairyGUI
 			if (fitScreen == FitScreen.None)
 				uiBounds.position = position;
 			screenSizeVer = 0;//force HandleScreenSizeChanged be called
-		}
 
-		void ApplyFitSceenChanged()
-		{
-			if (this.fitScreen == FitScreen.None)
+			if (fitScreenChanged && this.fitScreen == FitScreen.None)
 			{
 				if (this._ui != null)
-				{
-					this._ui.position = position;
 					this._ui.SetSize(this._ui.sourceWidth, this._ui.sourceHeight);
-				}
-				uiBounds.position = position;
 				uiBounds.size = cachedUISize;
 			}
-			else
-				screenSizeVer = 0; //force HandleScreenSizeChanged be called
 		}
 
 		public void MoveUI(Vector3 delta)
@@ -484,7 +475,12 @@ namespace FairyGUI
 			Gizmos.DrawWireCube(pos, size);
 		}
 
-		void PreRender()
+		public int EM_sortingOrder
+		{
+			get { return sortingOrder; }
+		}
+
+		public void EM_BeforeUpdate()
 		{
 			if (container == null)
 				CreateContainer();
@@ -496,65 +492,17 @@ namespace FairyGUI
 				HandleScreenSizeChanged();
 		}
 
-		static UpdateContext _updateContext;
-		static List<UIPanel> _renderTargets = new List<UIPanel>();
-		static bool _renderTargetsChanged;
-		public static bool packageListReady;
-
-		public static int activePanelCount
+		public void EM_Update(UpdateContext context)
 		{
-			get { return _renderTargets.Count; }
+			container.Update(context);
 		}
 
-		public static void RenderAllPanels()
+		public void EM_Reload()
 		{
-			if (Application.isPlaying)
-				return;
-
-			if (_updateContext == null)
-				_updateContext = new UpdateContext();
-
-			if (_renderTargetsChanged)
+			if (_ui != null)
 			{
-				_renderTargets.Sort(CompareDepth);
-				_renderTargetsChanged = false;
-			}
-
-			int cnt = _renderTargets.Count;
-			for (int i = 0; i < cnt; i++)
-			{
-				UIPanel panel = _renderTargets[i];
-				panel.PreRender();
-			}
-
-			if (packageListReady)
-			{
-				_updateContext.Begin();
-				for (int i = 0; i < cnt; i++)
-					_renderTargets[i].container.Update(_updateContext);
-				_updateContext.End();
-			}
-		}
-
-		static int CompareDepth(UIPanel c1, UIPanel c2)
-		{
-			return c1.sortingOrder - c2.sortingOrder;
-		}
-
-		public static void ReloadAllPanels()
-		{
-			if (Application.isPlaying)
-				return;
-
-			int cnt = _renderTargets.Count;
-			for (int i = 0; i < cnt; i++)
-			{
-				UIPanel panel = _renderTargets[i];
-				if (panel._ui != null)
-				{
-					panel._ui.Dispose();
-					panel._ui = null;
-				}
+				_ui.Dispose();
+				_ui = null;
 			}
 		}
 

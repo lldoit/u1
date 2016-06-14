@@ -11,7 +11,7 @@ namespace FairyGUI
 	[ExecuteInEditMode]
 	[AddComponentMenu("FairyGUI/UI Painter")]
 	[RequireComponent(typeof(MeshCollider), typeof(MeshRenderer))]
-	public class UIPainter : MonoBehaviour
+	public class UIPainter : MonoBehaviour, EMRenderTarget
 	{
 		/// <summary>
 		/// 
@@ -50,7 +50,10 @@ namespace FairyGUI
 		[NonSerialized]
 		Renderer _renderer;
 
-		public RenderTexture texture { get; private set; }
+		[NonSerialized]
+		RenderTexture _texture;
+
+		EventCallback0 _captureDelegate; 
 
 		void OnEnable()
 		{
@@ -63,36 +66,24 @@ namespace FairyGUI
 			}
 			else
 			{
-				if (!_renderTargets.Contains(this))
-					_renderTargets.Add(this);
-			}
-		}
-
-		void Update()
-		{
-			if (!Application.isPlaying)
-			{
-				if (_renderer == null)
-					_renderer = this.GetComponent<Renderer>();
-				if (_renderer != null && _renderer.sharedMaterial.mainTexture != texture)
-					_renderer.sharedMaterial.mainTexture = texture;
+				EMRenderSupport.Add(this);
 			}
 		}
 
 		void OnDisable()
 		{
 			if (!Application.isPlaying)
-				_renderTargets.Remove(this);
+				EMRenderSupport.Remove(this);
 		}
 
+#if FAIRYGUI_DLL || UNITY_WEBPLAYER || UNITY_WEBGL || UNITY_STANDALONE_WIN || UNITY_STANDALONE_OSX || UNITY_EDITOR
 		void OnGUI()
 		{
 			if (!Application.isPlaying)
-			{
-				if (packageName != null && componentName != null && !_captured)
-					CaptureInEditMode();
-			}
+				EM_BeforeUpdate();
 		}
+#endif
+
 
 		void Start()
 		{
@@ -114,7 +105,9 @@ namespace FairyGUI
 				container = null;
 			}
 			else
-				_renderTargets.Remove(this);
+			{
+				EMRenderSupport.Remove(this);
+			}
 
 			DestroyTexture();
 		}
@@ -128,13 +121,7 @@ namespace FairyGUI
 			this.container.fairyBatching = fairyBatching;
 			this.container._panelOrder = sortingOrder;
 			this.container.hitArea = new MeshColliderHitTest(this.gameObject.GetComponent<MeshCollider>());
-			this.container._onUpdate = () =>
-			{
-				UpdateContext.OnEnd += Capture;
-			};
-			if (Application.isPlaying)
-				SetSortingOrder(this.sortingOrder, true);
-
+			SetSortingOrder(this.sortingOrder, true);
 			this.container.layer = CaptureCamera.hiddenLayer;
 		}
 
@@ -184,11 +171,6 @@ namespace FairyGUI
 				Stage.inst.AddChild(this.container);
 		}
 
-		void Capture()
-		{
-			if (this._ui != null)
-				CaptureCamera.Capture(this.container, this.texture);
-		}
 
 		/// <summary>
 		/// 
@@ -211,9 +193,9 @@ namespace FairyGUI
 		{
 			if (_ui != null)
 			{
-				DestroyTexture();
 				_ui.Dispose();
 				_ui = null;
+				DestroyTexture();
 			}
 
 			_created = true;
@@ -226,48 +208,50 @@ namespace FairyGUI
 			{
 				this.container.AddChild(_ui.displayObject);
 				((MeshColliderHitTest)this.container.hitArea).SetArea(0, 0, _ui.width, _ui.height);
-				CreateTexture(Mathf.CeilToInt(_ui.width), Mathf.CeilToInt(_ui.height));
-				this.GetComponent<Renderer>().sharedMaterial.mainTexture = texture;
+				this.container.size = _ui.size;
+				_texture = CaptureCamera.CreateRenderTexture(Mathf.RoundToInt(_ui.width), Mathf.RoundToInt(_ui.height), false);
+				_renderer = this.GetComponent<Renderer>();
+				if (_renderer != null)
+				{
+					_renderer.sharedMaterial.mainTexture = _texture;
+					_captureDelegate = Capture;
+					if (_renderer.sharedMaterial.renderQueue == 3000) //Set in transpare queue only
+					{
+						this.container.onUpdate = () =>
+						{
+							UpdateContext.OnEnd += _captureDelegate;
+						};
+					}
+				}
 			}
 			else
 				Debug.LogError("Create " + componentName + "@" + packageName + " failed!");
 		}
 
-		void CreateTexture(int width, int height)
+		void Capture()
 		{
-			texture = new RenderTexture(width, height, 0, RenderTextureFormat.ARGB32);
-			texture.hideFlags = DisplayOptions.hideFlags;
-			texture.antiAliasing = 1;
-			texture.filterMode = FilterMode.Bilinear;
-			texture.anisoLevel = 0;
-			texture.useMipMap = false;
-			texture.wrapMode = TextureWrapMode.Clamp;
+			CaptureCamera.Capture(this.container, _texture, Vector2.zero);
+			if (_renderer != null)
+				_renderer.sortingOrder = container.renderingOrder;
 		}
 
 		void DestroyTexture()
 		{
-			if (texture != null)
+			if (_texture != null)
 			{
 				if (Application.isPlaying)
-					RenderTexture.Destroy(texture);
+					RenderTexture.Destroy(_texture);
 				else
-					RenderTexture.DestroyImmediate(texture);
-				texture = null;
+					RenderTexture.DestroyImmediate(_texture);
+				_texture = null;
 			}
 		}
 
 		#region edit mode functions
-		public static bool packageListReady;
-		public static List<UIPainter> _renderTargets = new List<UIPainter>();
-
-		public static int activePanelCount
-		{
-			get { return _renderTargets.Count; }
-		}
 
 		void CaptureInEditMode()
 		{
-			if (!packageListReady || UIPackage.GetByName(packageName) == null)
+			if (!EMRenderSupport.packageListReady || UIPackage.GetByName(packageName) == null)
 				return;
 
 			_captured = true;
@@ -283,10 +267,9 @@ namespace FairyGUI
 
 			if (view != null)
 			{
-				if (texture != null)
-					DestroyTexture();
+				DestroyTexture();
 
-				CreateTexture(Mathf.CeilToInt(view.width), Mathf.CeilToInt(view.height));
+				_texture = CaptureCamera.CreateRenderTexture(Mathf.RoundToInt(view.width), Mathf.RoundToInt(view.height), false);
 
 				Container root = (Container)view.displayObject;
 				root.layer = CaptureCamera.layer;
@@ -300,17 +283,14 @@ namespace FairyGUI
 				camera.cullingMask = 1 << CaptureCamera.layer;
 				camera.clearFlags = CameraClearFlags.Depth;
 				camera.orthographic = true;
-				camera.orthographicSize = view.height / 2;
 				camera.nearClipPlane = -30;
 				camera.farClipPlane = 30;
 				camera.enabled = false;
-				camera.targetTexture = texture;
+				camera.targetTexture = _texture;
 
-				Vector3 pos = root.cachedTransform.position;
-				pos.x += camera.orthographicSize * camera.aspect;
-				pos.y -= camera.orthographicSize;
-				pos.z = 0;
-				cameraObject.transform.localPosition = pos;
+				float halfHeight = (float)_texture.height / 2;
+				camera.orthographicSize = halfHeight;
+				cameraObject.transform.localPosition = root.cachedTransform.TransformPoint(halfHeight * camera.aspect, -halfHeight, 0);
 
 				UpdateContext context = new UpdateContext();
 				//run two times
@@ -323,7 +303,7 @@ namespace FairyGUI
 				context.End();
 
 				RenderTexture old = RenderTexture.active;
-				RenderTexture.active = texture;
+				RenderTexture.active = _texture;
 				GL.Clear(true, true, Color.clear);
 				camera.Render();
 				RenderTexture.active = old;
@@ -333,11 +313,23 @@ namespace FairyGUI
 				GameObject.DestroyImmediate(cameraObject);
 				GameObject.DestroyImmediate(tempGo);
 
-				this.GetComponent<Renderer>().sharedMaterial.mainTexture = texture;
+				if (_renderer != null)
+					_renderer.sharedMaterial.mainTexture = _texture;
 			}
 		}
 
-		void OnUpdateSource(object[] data)
+		public void ApplyModifiedProperties(bool sortingOrderChanged)
+		{
+			if (sortingOrderChanged)
+			{
+				if (Application.isPlaying)
+					SetSortingOrder(sortingOrder, true);
+				else
+					EMRenderSupport.orderChanged = true;
+			}
+		}
+
+		public void OnUpdateSource(object[] data)
 		{
 			if (Application.isPlaying)
 				return;
@@ -350,17 +342,31 @@ namespace FairyGUI
 				_captured = false;
 		}
 
-		public static void ReloadAllPanels()
+		public int EM_sortingOrder
 		{
-			if (Application.isPlaying)
-				return;
+			get { return sortingOrder; }
+		}
 
-			int cnt = _renderTargets.Count;
-			for (int i = 0; i < cnt; i++)
-			{
-				UIPainter panel = _renderTargets[i];
-				panel._captured = false;
-			}
+		public void EM_BeforeUpdate()
+		{
+			if (_renderer == null)
+				_renderer = this.GetComponent<Renderer>();
+			if (_renderer != null && _renderer.sharedMaterial.mainTexture != _texture)
+				_renderer.sharedMaterial.mainTexture = _texture;
+
+			if (packageName != null && componentName != null && !_captured)
+				CaptureInEditMode();
+		}
+
+		public void EM_Update(UpdateContext context)
+		{
+			if (_renderer != null)
+				_renderer.sortingOrder = context.renderingOrder++;
+		}
+
+		public void EM_Reload()
+		{
+			_captured = false;
 		}
 
 		#endregion

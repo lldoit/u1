@@ -38,10 +38,7 @@ namespace FairyGUI
 		float _contentSourceWidth;
 		float _contentSourceHeight;
 
-		Container _container;
-		Image _image;
-		MovieClip _movieClip;
-		DisplayObject _activeObject;
+		MovieClip _content;
 		GObject _errorSign;
 
 		static GObjectPool errorSignPool = new GObjectPool();
@@ -60,25 +57,21 @@ namespace FairyGUI
 
 		override protected void CreateDisplayObject()
 		{
-			_container = new Container("GLoader");
-			_container.gOwner = this;
-			_container.hitArea = new RectHitTest();
-			displayObject = _container;
-
-			_image = new Image();
-			_container.AddChild(_image);
+			displayObject = new Container("GLoader");
+			displayObject.gOwner = this;
+			_content = new MovieClip();
+			((Container)displayObject).AddChild(_content);
+			((Container)displayObject).opaque = true;
 		}
 
 		override public void Dispose()
 		{
-			if (_image.texture != null)
+			if (_content.texture != null)
 			{
 				if (_contentItem == null)
 					FreeExternal(image.texture);
 			}
-			_image.Dispose();
-			if (_movieClip != null)
-				_movieClip.Dispose();
+			_content.Dispose();
 			base.Dispose();
 		}
 
@@ -173,12 +166,9 @@ namespace FairyGUI
 				if (_playing != value)
 				{
 					_playing = value;
-					if (_movieClip != null)
-					{
-						_movieClip.playing = value;
-						if (gearAnimation.controller != null)
-							gearAnimation.UpdateState();
-					}
+					_content.playing = value;
+					if (gearAnimation.controller != null)
+						gearAnimation.UpdateState();
 				}
 			}
 		}
@@ -192,12 +182,9 @@ namespace FairyGUI
 			set
 			{
 				_frame = value;
-				if (_movieClip != null)
-				{
-					_movieClip.currentFrame = value;
-					if (gearAnimation.controller != null)
-						gearAnimation.UpdateState();
-				}
+				_content.currentFrame = value;
+				if (gearAnimation.controller != null)
+					gearAnimation.UpdateState();
 			}
 		}
 
@@ -206,13 +193,8 @@ namespace FairyGUI
 		/// </summary>
 		public Material material
 		{
-			get { return _image.material; }
-			set
-			{
-				_image.material = value;
-				if (_movieClip != null)
-					_movieClip.material = value;
-			}
+			get { return _content.material; }
+			set { _content.material = value; }
 		}
 
 		/// <summary>
@@ -220,13 +202,8 @@ namespace FairyGUI
 		/// </summary>
 		public string shader
 		{
-			get { return _image.shader; }
-			set
-			{
-				_image.shader = value;
-				if (_movieClip != null)
-					_movieClip.shader = value;
-			}
+			get { return _content.shader; }
+			set { _content.shader = value; }
 		}
 
 		/// <summary>
@@ -234,12 +211,10 @@ namespace FairyGUI
 		/// </summary>
 		public Color color
 		{
-			get { return _image.color; }
+			get { return _content.color; }
 			set
 			{
-				_image.color = value;
-				if (_movieClip != null)
-					_movieClip.color = value;
+				_content.color = value;
 
 				if (gearColor.controller != null)
 					gearColor.UpdateState();
@@ -251,8 +226,8 @@ namespace FairyGUI
 		/// </summary>
 		public FillMethod fillMethod
 		{
-			get { return _image.fillMethod; }
-			set { _image.fillMethod = value; }
+			get { return _content.fillMethod; }
+			set { _content.fillMethod = value; }
 		}
 
 		/// <summary>
@@ -260,8 +235,8 @@ namespace FairyGUI
 		/// </summary>
 		public int fillOrigin
 		{
-			get { return _image.fillOrigin; }
-			set { _image.fillOrigin = value; }
+			get { return _content.fillOrigin; }
+			set { _content.fillOrigin = value; }
 		}
 
 		/// <summary>
@@ -269,8 +244,8 @@ namespace FairyGUI
 		/// </summary>
 		public bool fillClockwise
 		{
-			get { return _image.fillClockwise; }
-			set { _image.fillClockwise = value; }
+			get { return _content.fillClockwise; }
+			set { _content.fillClockwise = value; }
 		}
 
 		/// <summary>
@@ -278,8 +253,8 @@ namespace FairyGUI
 		/// </summary>
 		public float fillAmount
 		{
-			get { return _image.fillAmount; }
-			set { _image.fillAmount = value; }
+			get { return _content.fillAmount; }
+			set { _content.fillAmount = value; }
 		}
 
 		/// <summary>
@@ -287,7 +262,7 @@ namespace FairyGUI
 		/// </summary>
 		public Image image
 		{
-			get { return _image; }
+			get { return _content; }
 		}
 
 		/// <summary>
@@ -295,17 +270,7 @@ namespace FairyGUI
 		/// </summary>
 		public MovieClip movieClip
 		{
-			get
-			{
-				if (_movieClip == null)
-				{
-					_movieClip = new MovieClip();
-					if (grayed)
-						_movieClip.SetGrayed(true);
-					_container.AddChild(_movieClip);
-				}
-				return _movieClip;
-			}
+			get { return _content; }
 		}
 
 		/// <summary>
@@ -315,19 +280,30 @@ namespace FairyGUI
 		{
 			get
 			{
-				return _image.texture;
+				return _content.texture;
 			}
 
 			set
 			{
 				ClearContent();
 
-				_image.texture = value;
+				_content.texture = value;
 				_contentSourceWidth = value.width;
 				_contentSourceHeight = value.height;
-				_activeObject = _image;
 				UpdateLayout();
 			}
+		}
+
+		override public IFilter filter
+		{
+			get { return _content.filter; }
+			set { _content.filter = value; }
+		}
+
+		override public BlendMode blendMode
+		{
+			get { return _content.blendMode; }
+			set { _content.blendMode = value; }
 		}
 
 		/// <summary>
@@ -355,10 +331,9 @@ namespace FairyGUI
 				_contentItem.Load();
 				if (_contentItem.type == PackageItemType.Image)
 				{
-					_image.texture = _contentItem.texture;
-					_image.scale9Grid = _contentItem.scale9Grid;
-					_image.scaleByTile = _contentItem.scaleByTile;
-					_activeObject = _image;
+					_content.texture = _contentItem.texture;
+					_content.scale9Grid = _contentItem.scale9Grid;
+					_content.scaleByTile = _contentItem.scaleByTile;
 
 					_contentSourceWidth = _contentItem.width;
 					_contentSourceHeight = _contentItem.height;
@@ -366,23 +341,15 @@ namespace FairyGUI
 				}
 				else if (_contentItem.type == PackageItemType.MovieClip)
 				{
-					if (_movieClip == null)
-					{
-						_movieClip = new MovieClip();
-						if (grayed)
-							_movieClip.SetGrayed(true);
-						_container.AddChild(_movieClip);
-					}
-
 					_contentSourceWidth = _contentItem.width;
 					_contentSourceHeight = _contentItem.height;
 
-					_movieClip.interval = _contentItem.interval;
-					_movieClip.SetData(_contentItem.texture, _contentItem.frames);
-					_movieClip.boundsRect = new Rect(0, 0, _contentSourceWidth, _contentSourceHeight);
-					_movieClip.playing = _playing;
-					_movieClip.currentFrame = _frame;
-					_activeObject = _movieClip;
+					_content.interval = _contentItem.interval;
+					_content.swing = _contentItem.swing;
+					_content.repeatDelay = _contentItem.repeatDelay;
+					_content.SetData(_contentItem.texture, _contentItem.frames, new Rect(0, 0, _contentSourceWidth, _contentSourceHeight));
+					_content.playing = _playing;
+					_content.currentFrame = _frame;
 
 					UpdateLayout();
 				}
@@ -408,10 +375,9 @@ namespace FairyGUI
 
 		protected void onExternalLoadSuccess(NTexture texture)
 		{
-			_image.texture = texture;
+			_content.texture = texture;
 			_contentSourceWidth = texture.width;
 			_contentSourceHeight = texture.height;
-			_activeObject = _image;
 			UpdateLayout();
 		}
 
@@ -436,7 +402,7 @@ namespace FairyGUI
 				_errorSign.width = this.width;
 				_errorSign.height = this.height;
 				_errorSign.grayed = grayed;
-				_container.AddChild(_errorSign.displayObject);
+				((Container)displayObject).AddChild(_errorSign.displayObject);
 			}
 		}
 
@@ -444,7 +410,7 @@ namespace FairyGUI
 		{
 			if (_errorSign != null)
 			{
-				_container.RemoveChild(_errorSign.displayObject);
+				((Container)displayObject).RemoveChild(_errorSign.displayObject);
 				errorSignPool.ReturnObject(_errorSign);
 				_errorSign = null;
 			}
@@ -452,7 +418,7 @@ namespace FairyGUI
 
 		private void UpdateLayout()
 		{
-			if (_activeObject == null)
+			if (_content.texture == null && _content.frameCount == 0)
 			{
 				if (_autoSize)
 				{
@@ -474,10 +440,9 @@ namespace FairyGUI
 				if (_contentHeight == 0)
 					_contentHeight = 30;
 				this.SetSize(_contentWidth, _contentHeight);
-				if (_activeObject is Image)
-					((Image)_activeObject).textureScale = Vector2.one;
-				else
-					_activeObject.SetScale(1, 1);
+				_content.SetScale(1, 1);
+				if (_content.texture != null)
+					_content.SetNativeSize();
 				_updatingLayout = false;
 			}
 			else
@@ -502,10 +467,10 @@ namespace FairyGUI
 					}
 				}
 
-				if (_activeObject is Image)
-					((Image)_activeObject).textureScale = new Vector2(sx, sy);
+				if (_content.texture != null)
+					_content.size = new Vector2(_contentWidth, _contentHeight);
 				else
-					_activeObject.SetScale(sx, sy);
+					_content.SetScale(sx, sy);
 
 				float nx;
 				float ny;
@@ -521,7 +486,7 @@ namespace FairyGUI
 					ny = Mathf.FloorToInt(this.height - _contentHeight);
 				else
 					ny = 0;
-				_activeObject.SetXY(nx, ny);
+				_content.SetXY(nx, ny);
 			}
 		}
 
@@ -529,22 +494,14 @@ namespace FairyGUI
 		{
 			ClearErrorState();
 
-			if (_activeObject != null)
+			if (_content.texture != null)
 			{
-				if (_image == _activeObject)
-				{
-					if (_image.texture != null)
-					{
-						if (_contentItem == null)
-							FreeExternal(image.texture);
-						_image.texture = null;
-					}
-				}
-				else if (_movieClip == _activeObject)
-					_movieClip.Clear();
-				_activeObject = null;
+				if (_contentItem == null)
+					FreeExternal(image.texture);
+				_content.texture = null;
 			}
 
+			_content.Clear();
 			_contentItem = null;
 		}
 
@@ -563,23 +520,10 @@ namespace FairyGUI
 
 		override protected void HandleSizeChanged()
 		{
+			base.HandleSizeChanged();
+
 			if (!_updatingLayout)
 				UpdateLayout();
-			if (_container.hitArea != null)
-				((RectHitTest)_container.hitArea).Set(0, 0, this.width, this.height);
-
-			_container.SetScale(this.scaleX, this.scaleY);
-		}
-
-		override protected void HandleGrayedChanged()
-		{
-			base.HandleGrayedChanged();
-
-			_image.SetGrayed(grayed);
-			if (_movieClip != null)
-				_movieClip.SetGrayed(grayed);
-			if (_errorSign != null)
-				_errorSign.grayed = grayed;
 		}
 
 		override public void Setup_BeforeAdd(XML xml)
@@ -617,13 +561,13 @@ namespace FairyGUI
 
 			str = xml.GetAttribute("fillMethod");
 			if (str != null)
-				_image.fillMethod = FieldTypes.ParseFillMethod(str);
+				_content.fillMethod = FieldTypes.ParseFillMethod(str);
 
-			if (_image.fillMethod != FillMethod.None)
+			if (_content.fillMethod != FillMethod.None)
 			{
-				_image.fillOrigin = xml.GetAttributeInt("fillOrigin");
-				_image.fillClockwise = xml.GetAttributeBool("fillClockwise", true);
-				_image.fillAmount = (float)xml.GetAttributeInt("fillAmount", 100) / 100;
+				_content.fillOrigin = xml.GetAttributeInt("fillOrigin");
+				_content.fillClockwise = xml.GetAttributeBool("fillClockwise", true);
+				_content.fillAmount = (float)xml.GetAttributeInt("fillAmount", 100) / 100;
 			}
 
 			if (_url != null)

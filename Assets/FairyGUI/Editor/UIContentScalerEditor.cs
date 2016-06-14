@@ -24,7 +24,7 @@ namespace FairyGUIEditor
 			DrawPropertiesExcluding(serializedObject, propertyToExclude);
 
 			if (serializedObject.ApplyModifiedProperties())
-				(target as UIContentScaler).ApplyChangeDelay();
+				(target as UIContentScaler).ApplyModifiedProperties();
 		}
 	}
 }

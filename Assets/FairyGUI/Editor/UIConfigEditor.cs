@@ -209,7 +209,7 @@ namespace FairyGUIEditor
 				errorState = 0;
 
 			if (serializedObject.ApplyModifiedProperties())
-				(target as UIContentScaler).ApplyChangeDelay();
+				(target as UIConfig).ApplyModifiedProperties();
 		}
 
 		void InitDefaultValue(UIConfig.ConfigKey key, UIConfig.ConfigValue value)

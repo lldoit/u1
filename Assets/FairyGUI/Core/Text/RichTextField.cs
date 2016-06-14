@@ -91,9 +91,11 @@ namespace FairyGUI
 			return _textField.GetHtmlObject(name);
 		}
 
-		override public void SetSize(float wv, float hv)
+		override protected void OnSizeChanged()
 		{
-			_textField.SetSize(wv, hv);
+			_textField.size = this.size;
+
+			base.OnSizeChanged();
 		}
 
 		public override Rect GetBounds(DisplayObject targetSpace)

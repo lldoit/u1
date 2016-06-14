@@ -48,6 +48,7 @@ namespace FairyGUI
 		int _sortingChildCount;
 		ChildrenRenderOrder _childrenRenderOrder;
 		int _apexIndex;
+		EventCallback0 _buildDelegate;
 
 		public GComponent()
 		{
@@ -55,6 +56,7 @@ namespace FairyGUI
 			_controllers = new List<Controller>();
 			_transitions = new List<Transition>();
 			_margin = new Margin();
+			_buildDelegate = BuildNativeDisplayList;
 
 			onDrop = new EventListener(this, "onDrop");
 		}
@@ -63,7 +65,7 @@ namespace FairyGUI
 		{
 			rootContainer = new Container("GComponent");
 			rootContainer.gOwner = this;
-			rootContainer._onUpdate = OnUpdate;
+			rootContainer.onUpdate = OnUpdate;
 			container = rootContainer;
 
 			displayObject = rootContainer;
@@ -87,15 +89,13 @@ namespace FairyGUI
 		/// </summary>
 		public bool fairyBatching
 		{
-			get
-			{
-				return rootContainer.fairyBatching;
-			}
+			get { return rootContainer.fairyBatching; }
+			set { rootContainer.fairyBatching = value; }
+		}
 
-			set
-			{
-				rootContainer.fairyBatching = value;
-			}
+		public void InvalidateBatchingState(bool childChanged)
+		{
+			rootContainer.InvalidateBatchingState(childChanged);
 		}
 
 		/// <summary>
@@ -103,18 +103,8 @@ namespace FairyGUI
 		/// </summary>
 		public bool opaque
 		{
-			get { return rootContainer.hitArea != null; }
-			set
-			{
-				if (value)
-				{
-					if (rootContainer.hitArea == null)
-						rootContainer.hitArea = new RectHitTest();
-					UpdateHitArea();
-				}
-				else
-					rootContainer.hitArea = null;
-			}
+			get { return rootContainer.opaque; }
+			set { rootContainer.opaque = value; }
 		}
 
 		public Margin margin
@@ -295,8 +285,8 @@ namespace FairyGUI
 					container.RemoveChild(child.displayObject);
 					if (_childrenRenderOrder == ChildrenRenderOrder.Arch)
 					{
-						UpdateContext.OnBegin -= BuildNativeDisplayList;
-						UpdateContext.OnBegin += BuildNativeDisplayList;
+						UpdateContext.OnBegin -= _buildDelegate;
+						UpdateContext.OnBegin += _buildDelegate;
 					}
 				}
 
@@ -496,8 +486,8 @@ namespace FairyGUI
 				}
 				else
 				{
-					UpdateContext.OnBegin -= BuildNativeDisplayList;
-					UpdateContext.OnBegin += BuildNativeDisplayList;
+					UpdateContext.OnBegin -= _buildDelegate;
+					UpdateContext.OnBegin += _buildDelegate;
 				}
 
 				SetBoundsChangedFlag();
@@ -694,8 +684,8 @@ namespace FairyGUI
 					{
 						container.AddChild(child.displayObject);
 
-						UpdateContext.OnBegin -= BuildNativeDisplayList;
-						UpdateContext.OnBegin += BuildNativeDisplayList;
+						UpdateContext.OnBegin -= _buildDelegate;
+						UpdateContext.OnBegin += _buildDelegate;
 					}
 				}
 			}
@@ -706,8 +696,8 @@ namespace FairyGUI
 					container.RemoveChild(child.displayObject);
 					if (_childrenRenderOrder == ChildrenRenderOrder.Arch)
 					{
-						UpdateContext.OnBegin -= BuildNativeDisplayList;
-						UpdateContext.OnBegin += BuildNativeDisplayList;
+						UpdateContext.OnBegin -= _buildDelegate;
+						UpdateContext.OnBegin += _buildDelegate;
 					}
 				}
 			}
@@ -864,34 +854,6 @@ namespace FairyGUI
 			return -1;
 		}
 
-		virtual protected void UpdateHitArea()
-		{
-			if (rootContainer.hitArea is PixelHitTest)
-			{
-				PixelHitTest test = (PixelHitTest)rootContainer.hitArea;
-				if (sourceWidth != 0)
-					test.scaleX = this.width / this.sourceWidth;
-				if (sourceHeight != 0)
-					test.scaleY = this.height / this.sourceHeight;
-			}
-			else
-				((RectHitTest)rootContainer.hitArea).Set(0, 0, this.width, this.height);
-		}
-
-		virtual protected void UpdateMask()
-		{
-			if (scrollPane == null)
-			{
-				float w = this.width - (_margin.left + _margin.right);
-				float h = this.height - (_margin.top + _margin.bottom);
-				rootContainer.clipRect = new Rect(_margin.left, _margin.top, w, h);
-			}
-			else
-			{
-				rootContainer.clipRect = new Rect(0, 0, this.width, this.height);
-			}
-		}
-
 		protected void SetupScroll(Margin scrollBarMargin,
 			ScrollType scroll, ScrollBarDisplayType scrollBarDisplay, int flags,
 			String vtScrollBarRes, String hzScrollBarRes)
@@ -900,8 +862,7 @@ namespace FairyGUI
 			rootContainer.AddChild(container);
 
 			scrollPane = new ScrollPane(this, scroll, scrollBarMargin, scrollBarDisplay, flags, vtScrollBarRes, hzScrollBarRes);
-
-			UpdateMask();
+			UpdateClipRect();
 			SetBoundsChangedFlag();
 		}
 
@@ -911,7 +872,7 @@ namespace FairyGUI
 			{
 				container = new Container();
 				rootContainer.AddChild(container);
-				UpdateMask();
+				UpdateClipRect();
 				container.SetXY(_margin.left, _margin.top);
 			}
 			else if (_margin.left != 0 || _margin.top != 0)
@@ -925,17 +886,35 @@ namespace FairyGUI
 			SetBoundsChangedFlag();
 		}
 
+		void UpdateClipRect()
+		{
+			if (scrollPane == null)
+			{
+				float w = this.width - (_margin.left + _margin.right);
+				float h = this.height - (_margin.top + _margin.bottom);
+				rootContainer.clipRect = new Rect(_margin.left, _margin.top, w, h);
+			}
+			else
+				rootContainer.clipRect = new Rect(0, 0, this.width, this.height);
+		}
+
 		override protected void HandleSizeChanged()
 		{
+			base.HandleSizeChanged();
+
 			if (scrollPane != null)
-				scrollPane.SetSize(this.width, this.height, false);
+				scrollPane.OnOwnerSizeChanged();
 			if (rootContainer.clipRect != null)
-				UpdateMask();
+				UpdateClipRect();
 
-			if (rootContainer.hitArea != null)
-				UpdateHitArea();
-
-			rootContainer.SetScale(this.scaleX, this.scaleY);
+			if (rootContainer.hitArea is PixelHitTest)
+			{
+				PixelHitTest test = (PixelHitTest)rootContainer.hitArea;
+				if (sourceWidth != 0)
+					test.scaleX = this.width / this.sourceWidth;
+				if (sourceHeight != 0)
+					test.scaleY = this.height / this.sourceHeight;
+			}
 		}
 
 		override protected void HandleGrayedChanged()
@@ -944,16 +923,7 @@ namespace FairyGUI
 			if (cc != null)
 				cc.selectedIndex = this.grayed ? 1 : 0;
 			else
-			{
 				base.HandleGrayedChanged();
-
-				int cnt = _children.Count;
-				for (int i = 0; i < cnt; ++i)
-				{
-					GObject child = _children[i];
-					child.grayed = grayed;
-				}
-			}
 		}
 
 		/// <summary>

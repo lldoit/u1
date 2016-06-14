@@ -33,6 +33,8 @@ public class FairyGUI_GLoaderWrap
 		L.RegVar("image", get_image, null);
 		L.RegVar("movieClip", get_movieClip, null);
 		L.RegVar("texture", get_texture, set_texture);
+		L.RegVar("filter", get_filter, set_filter);
+		L.RegVar("blendMode", get_blendMode, set_blendMode);
 		L.EndClass();
 	}
 
@@ -525,6 +527,44 @@ public class FairyGUI_GLoaderWrap
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_filter(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GLoader obj = (FairyGUI.GLoader)o;
+			FairyGUI.IFilter ret = obj.filter;
+			ToLua.PushObject(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index filter on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_blendMode(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GLoader obj = (FairyGUI.GLoader)o;
+			FairyGUI.BlendMode ret = obj.blendMode;
+			ToLua.Push(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index blendMode on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
 	static int set_showErrorSign(IntPtr L)
 	{
 		object o = null;
@@ -825,6 +865,44 @@ public class FairyGUI_GLoaderWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index texture on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int set_filter(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GLoader obj = (FairyGUI.GLoader)o;
+			FairyGUI.IFilter arg0 = (FairyGUI.IFilter)ToLua.CheckObject(L, 2, typeof(FairyGUI.IFilter));
+			obj.filter = arg0;
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index filter on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int set_blendMode(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GLoader obj = (FairyGUI.GLoader)o;
+			FairyGUI.BlendMode arg0 = (FairyGUI.BlendMode)ToLua.CheckObject(L, 2, typeof(FairyGUI.BlendMode));
+			obj.blendMode = arg0;
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index blendMode on a nil value" : e.Message);
 		}
 	}
 }

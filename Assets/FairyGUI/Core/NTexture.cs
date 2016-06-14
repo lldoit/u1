@@ -14,6 +14,8 @@ namespace FairyGUI
 		public Rect uvRect { get; private set; }
 		public Dictionary<string, MaterialManager> materialManagers { get; internal set; }
 		public int refCount;
+		public bool disposed;
+		public float lastActive;
 
 		Rect? _region;
 
@@ -42,6 +44,11 @@ namespace FairyGUI
 		{
 			if (_empty != null)
 			{
+				if (_empty.nativeTexture != null)
+				{
+					Texture.DestroyImmediate(_empty.nativeTexture);
+					_empty.nativeTexture = null;
+				}
 				_empty.Dispose();
 				_empty = null;
 			}
@@ -122,14 +129,18 @@ namespace FairyGUI
 
 		public void Dispose()
 		{
-			DestroyMaterials();
-
-			if (nativeTexture != null)
+			if (!disposed)
 			{
-				if (root == null)
-					Texture.Destroy(nativeTexture);
-				nativeTexture = null;
-				root = null;
+				disposed = true;
+
+				DestroyMaterials();
+				if (nativeTexture != null)
+				{
+					if (root == this)
+						Texture.Destroy(nativeTexture);
+					nativeTexture = null;
+					root = null;
+				}
 			}
 		}
 	}

@@ -85,7 +85,7 @@ namespace FairyGUI
 		/// <summary>
 		/// 
 		/// </summary>
-		public void ApplyChangeDelay()
+		public void ApplyModifiedProperties()
 		{
 			_changed = true;
 		}

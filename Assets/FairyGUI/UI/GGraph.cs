@@ -128,10 +128,12 @@ namespace FairyGUI
 				displayObject = _shape;
 				if (parent != null)
 					parent.ChildStateChanged(this);
+				HandleSizeChanged();
+				HandleScaleChanged();
 				HandlePositionChanged();
-				displayObject.alpha = this.alpha;
-				displayObject.rotation = this.rotation;
-				displayObject.visible = this.visible;
+				_shape.alpha = this.alpha;
+				_shape.rotation = this.rotation;
+				_shape.visible = this.visible;
 
 				return _shape;
 			}
@@ -149,21 +151,13 @@ namespace FairyGUI
 		public void DrawRect(float aWidth, float aHeight, int lineSize, Color lineColor, Color fillColor)
 		{
 			this.SetSize(aWidth, aHeight);
-			this.shape.DrawRect(aWidth * this.scaleX, aHeight * this.scaleY, lineSize, lineColor, fillColor);
+			this.shape.DrawRect(lineSize, lineColor, fillColor);
 		}
 
 		public void DrawEllipse(float aWidth, float aHeight, Color fillColor)
 		{
 			this.SetSize(aWidth, aHeight);
-			this.shape.DrawEllipse(aWidth * this.scaleX, aHeight * this.scaleY, fillColor);
-		}
-
-		override protected void HandleSizeChanged()
-		{
-			if (_shape != null)
-			{
-				_shape.ResizeShape(this.width * this.scaleX, this.height * this.scaleY);
-			}
+			this.shape.DrawEllipse(fillColor);
 		}
 
 		override public void Setup_BeforeAdd(XML xml)

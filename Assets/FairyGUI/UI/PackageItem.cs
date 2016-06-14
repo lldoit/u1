@@ -25,7 +25,6 @@ namespace FairyGUI
 		public NTexture texture;
 
 		//movieclip
-		public Vector2 pivot;
 		public float interval;
 		public float repeatDelay;
 		public bool swing;

@@ -38,18 +38,18 @@ namespace FairyGUI
 		/// <param name="container"></param>
 		/// <param name="localPoint"></param>
 		/// <returns></returns>
-		virtual public int HitTest(Container container, ref Vector2 localPoint)
+		virtual public bool HitTest(Container container, ref Vector2 localPoint)
 		{
 			Camera camera = container.GetRenderCamera();
 			RaycastHit hit;
 			if (!HitTestContext.GetRaycastHitFromCache(camera, out hit))
-				return 0;
+				return false;
 
 			if (hit.collider != collider)
-				return 0;
+				return false;
 
 			localPoint = container.GetHitTestLocalPoint();
-			return 1;
+			return true;
 		}
 	}
 }

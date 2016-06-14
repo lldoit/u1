@@ -98,8 +98,16 @@ namespace FairyGUI
 			get { return _content.texture; }
 			set
 			{
-				sourceWidth = value.width;
-				sourceHeight = value.height;
+				if (value != null)
+				{
+					sourceWidth = value.width;
+					sourceHeight = value.height;
+				}
+				else
+				{
+					sourceWidth = 0;
+					sourceHeight = 0;
+				}
 				initWidth = sourceWidth;
 				initHeight = sourceHeight;
 				_content.texture = value;
@@ -139,12 +147,6 @@ namespace FairyGUI
 			_content.texture = _packageItem.texture;
 
 			SetSize(sourceWidth, sourceHeight);
-		}
-
-		override protected void HandleSizeChanged()
-		{
-			_content.textureScale = new Vector2(this.width / sourceWidth, this.height / sourceHeight);
-			_content.SetScale(this.scaleX, this.scaleY);
 		}
 
 		override public void HandleControllerChanged(Controller c)

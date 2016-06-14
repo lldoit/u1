@@ -160,7 +160,7 @@ namespace FairyGUI
 			{
 				_selectedTitle = value;
 				if (_titleObject != null)
-					_titleObject.text = (_selected && _selectedTitle != null) ? _selectedTitle : _title; ;
+					_titleObject.text = (_selected && _selectedTitle != null) ? _selectedTitle : _title;
 			}
 		}
 

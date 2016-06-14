@@ -35,7 +35,6 @@ Shader "FairyGUI/Image (Opaque)"
 		Cull Off
 		Lighting Off
 		Fog { Mode Off }
-		Offset -1, -1
 		ColorMask [_ColorMask]
 
 		Pass

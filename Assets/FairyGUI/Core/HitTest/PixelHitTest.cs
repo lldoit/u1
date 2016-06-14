@@ -58,23 +58,23 @@ namespace FairyGUI
 		{
 		}
 
-		public int HitTest(Container container, ref Vector2 localPoint)
+		public bool HitTest(Container container, ref Vector2 localPoint)
 		{
 			localPoint = container.GetHitTestLocalPoint();
 
 			int x = Mathf.FloorToInt((localPoint.x / scaleX - offsetX) * _data.scale);
 			int y = Mathf.FloorToInt((localPoint.y / scaleY - offsetY) * _data.scale);
 			if (x < 0 || y < 0 || x >= _data.pixelWidth)
-				return 0;
+				return false;
 
 			int pos = y * _data.pixelWidth + x;
 			int pos2 = pos / 8;
 			int pos3 = pos % 8;
 
 			if (pos2 >= 0 && pos2 < _data.pixels.Length)
-				return (_data.pixels[pos2] >> pos3) & 0x1;
+				return ((_data.pixels[pos2] >> pos3) & 0x1) > 0;
 			else
-				return 0;
+				return false;
 		}
 	}
 }

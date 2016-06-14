@@ -178,9 +178,10 @@ namespace FairyGUI
 		int _sortingOrder;
 		bool _focusable;
 		string _tooltips;
-		Vector3 _pivotOffset;
 
 		protected float _yOffset;
+		//Size的实现方式，有两种，0-GObject的w/h等于DisplayObject的w/h。1-GObject的sourceWidth/sourceHeight等于DisplayObject的w/h，剩余部分由scale实现
+		protected int _sizeImplType;
 
 		internal PackageItem _packageItem;
 		internal protected bool underConstruct;
@@ -196,7 +197,6 @@ namespace FairyGUI
 			_width = 0;
 			_height = 0;
 			_alpha = 1;
-			_rotation = 0;
 			_visible = true;
 			_touchable = true;
 			_scaleX = 1;
@@ -454,29 +454,9 @@ namespace FairyGUI
 				_width = wv;
 				_height = hv;
 
-				if (_pivotX != 0 || _pivotY != 0)
-				{
-					if (!ignorePivot)
-					{
-						if (_rotationX == 0 && _rotationY == 0)
-						{
-							//fast
-							this.SetXY(_x - _pivotX * dWidth, _y - _pivotY * dHeight);
-						}
-						else
-						{
-							float fx = _pivotX * dWidth;
-							float fy = _pivotY * dHeight;
-
-							Matrix4x4 m = Matrix4x4.TRS(Vector3.zero, Quaternion.Euler(_rotationX, _rotationY, -_rotation), new Vector3(1, 1, 1));
-							Vector3 delta = m.MultiplyPoint(new Vector3(fx, -fy));
-							this.SetPosition(_x - delta.x, _y + delta.y, _z - delta.z);
-						}
-					}
-					UpdatePivotOffset();
-				}
-
 				HandleSizeChanged();
+				if (!ignorePivot && (_pivotX != 0 || _pivotY != 0))
+					this.SetXY(_x - _pivotX * dWidth, _y - _pivotY * dHeight);
 
 				if (gearSize.controller != null)
 					gearSize.UpdateState();
@@ -535,11 +515,30 @@ namespace FairyGUI
 			{
 				_scaleX = wv;
 				_scaleY = hv;
-				ApplyPivot();
-				HandleSizeChanged();
+				HandleScaleChanged();
 
 				if (gearSize.controller != null)
 					gearSize.UpdateState();
+			}
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		public Vector2 skew
+		{
+			get
+			{
+				if (displayObject != null)
+					return displayObject.skew;
+				else
+					return Vector2.zero;
+			}
+
+			set
+			{
+				if (displayObject != null)
+					displayObject.skew = value;
 			}
 		}
 
@@ -588,34 +587,9 @@ namespace FairyGUI
 				_pivotX = xv;
 				_pivotY = yv;
 
-				ApplyPivot();
-			}
-		}
-
-		void UpdatePivotOffset()
-		{
-			if (_rotationX != 0 || _rotationY != 0 || _rotation != 0 || _scaleX != 1 || _scaleY != 1)
-			{
-				float px = _pivotX * _width;
-				float py = _pivotY * _height;
-				Matrix4x4 m = Matrix4x4.TRS(Vector3.zero, Quaternion.Euler(_rotationX, _rotationY, -_rotation), new Vector3(_scaleX, _scaleY, 1));
-				_pivotOffset = m.MultiplyPoint(new Vector3(px, -py, 0));
-				_pivotOffset.x = px - _pivotOffset.x;
-				_pivotOffset.y = py + _pivotOffset.y;
-				_pivotOffset.z = -_pivotOffset.z;
-			}
-			else
-			{
-				_pivotOffset.Set(0, 0, 0);
-			}
-		}
-
-		void ApplyPivot()
-		{
-			if (_pivotX != 0 || _pivotY != 0)
-			{
-				UpdatePivotOffset();
-				HandlePositionChanged();
+				displayObject.pivot = new Vector2(_pivotX, _pivotY);
+				if (_sizeImplType == 1) //displayObject的轴心参考宽高与GObject的参看宽高不一样的情况下，需要调整displayObject的位置
+					HandlePositionChanged();
 			}
 		}
 
@@ -686,7 +660,6 @@ namespace FairyGUI
 			set
 			{
 				_rotation = value;
-				ApplyPivot();
 				if (displayObject != null)
 					displayObject.rotation = _rotation;
 
@@ -707,7 +680,6 @@ namespace FairyGUI
 			set
 			{
 				_rotationX = value;
-				ApplyPivot();
 				if (displayObject != null)
 					displayObject.rotationX = _rotationX;
 			}
@@ -725,7 +697,6 @@ namespace FairyGUI
 			set
 			{
 				_rotationY = value;
-				ApplyPivot();
 				if (displayObject != null)
 					displayObject.rotationY = _rotationY;
 			}
@@ -883,6 +854,18 @@ namespace FairyGUI
 			}
 		}
 
+		virtual public IFilter filter
+		{
+			get { return displayObject != null ? displayObject.filter : null; }
+			set { if (displayObject != null) displayObject.filter = value; }
+		}
+
+		virtual public BlendMode blendMode
+		{
+			get { return displayObject != null ? displayObject.blendMode : BlendMode.None; }
+			set { if (displayObject != null) displayObject.blendMode = value; }
+		}
+
 		private void __rollOver()
 		{
 			this.root.ShowTooltips(tooltips);
@@ -936,6 +919,8 @@ namespace FairyGUI
 		{
 			if (displayObject != null)
 				displayObject.InvalidateBatchingState();
+			else if ((this is GGroup) && parent != null)
+				parent.container.InvalidateBatchingState(true);
 		}
 
 		virtual public void HandleControllerChanged(Controller c)
@@ -1017,7 +1002,7 @@ namespace FairyGUI
 		virtual public string text
 		{
 			get { return null; }
-			set { }
+			set { /*override in child*/}
 		}
 
 		/// <summary>
@@ -1217,7 +1202,7 @@ namespace FairyGUI
 			RemoveFromParent();
 			RemoveEventListeners();
 			relations.Dispose();
-			if (displayObject != null && !displayObject._disposed)
+			if (displayObject != null && !displayObject.isDisposed)
 			{
 				displayObject.gOwner = null;
 				displayObject.Dispose();
@@ -1301,25 +1286,40 @@ namespace FairyGUI
 
 		virtual protected void CreateDisplayObject()
 		{
-
 		}
 
 		virtual protected void HandlePositionChanged()
 		{
 			if (displayObject != null)
-			{
-				displayObject.SetPosition((int)(_x + _pivotOffset.x), (int)(_y + _pivotOffset.y + _yOffset), _z + _pivotOffset.z);
-			}
+				displayObject.Locate((int)(_x + _width * _pivotX), (int)(_y + _height * _pivotY + _yOffset), _z);
 		}
 
 		virtual protected void HandleSizeChanged()
 		{
+			if (displayObject != null)
+			{
+				if (_sizeImplType == 0 || sourceWidth == 0 || sourceHeight == 0)
+					displayObject.SetSize(_width, _height);
+				else
+					displayObject.SetScale(_scaleX * _width / sourceWidth, _scaleY * _height / sourceHeight);
+			}
+		}
+
+		virtual protected void HandleScaleChanged()
+		{
+			if (displayObject != null)
+			{
+				if (_sizeImplType == 0 || sourceWidth == 0 || sourceHeight == 0)
+					displayObject.SetScale(_scaleX, _scaleY);
+				else
+					displayObject.SetScale(_scaleX * _width / sourceWidth, _scaleY * _height / sourceHeight);
+			}
 		}
 
 		virtual protected void HandleGrayedChanged()
 		{
 			if (displayObject != null)
-				displayObject.SetGrayed(_grayed);
+				displayObject.grayed = _grayed;
 		}
 
 		virtual public void ConstructFromResource(PackageItem pkgItem)
@@ -1350,6 +1350,10 @@ namespace FairyGUI
 			arr = xml.GetAttributeArray("scale");
 			if (arr != null)
 				SetScale(float.Parse(arr[0]), float.Parse(arr[1]));
+
+			arr = xml.GetAttributeArray("skew");
+			if (arr != null)
+				this.skew = new Vector2(int.Parse(arr[0]), int.Parse(arr[1]));
 
 			str = xml.GetAttribute("rotation");
 			if (str != null)
@@ -1385,6 +1389,28 @@ namespace FairyGUI
 			this.touchable = xml.GetAttributeBool("touchable", true);
 			this.visible = xml.GetAttributeBool("visible", true);
 			this.grayed = xml.GetAttributeBool("grayed", false);
+
+			str = xml.GetAttribute("blend");
+			if (str != null)
+				this.blendMode = FieldTypes.ParseBlendMode(str);
+
+			str = xml.GetAttribute("filter");
+			if (str != null)
+			{
+				switch (str)
+				{
+					case "color":
+						ColorFilter cf = new ColorFilter();
+						this.filter = cf;
+						arr = xml.GetAttributeArray("filterData");
+						cf.AdjustBrightness(float.Parse(arr[0]));
+						cf.AdjustContrast(float.Parse(arr[1]));
+						cf.AdjustSaturation(float.Parse(arr[2]));
+						cf.AdjustHue(float.Parse(arr[3]));
+						break;
+				}
+			}
+
 			str = xml.GetAttribute("tooltips");
 			if (str != null)
 				this.tooltips = str;

@@ -7,7 +7,7 @@ namespace FairyGUI
 	/// <summary>
 	/// 
 	/// </summary>
-	public class MovieClip : DisplayObject
+	public class MovieClip : Image
 	{
 		public struct Frame
 		{
@@ -26,8 +26,6 @@ namespace FairyGUI
 
 		public EventListener onPlayEnd { get; private set; }
 
-		Color _color;
-		FlipType _flip;
 		int _currentFrame;
 		bool _playing;
 		int _start;
@@ -35,53 +33,25 @@ namespace FairyGUI
 		int _times;
 		int _endAt;
 		int _status; //0-none, 1-next loop, 2-ending, 3-ended
+		EventCallback0 _playEndDelegate;
 
 		public MovieClip()
 		{
-			_optimizeNotTouchable = true;
-
 			playState = new PlayState();
 			interval = 0.1f;
 			_playing = true;
-			_color = Color.white;
-
-			CreateGameObject("MovieClip");
-			graphics = new NGraphics(gameObject);
-			graphics.shader = ShaderConfig.imageShader;
 
 			onPlayEnd = new EventListener(this, "onPlayEnd");
+			_playEndDelegate = () => { onPlayEnd.Call(); };
 
 			SetPlaySettings();
 		}
 
-		public Color color
-		{
-			get { return _color; }
-			set
-			{
-				if (!_color.Equals(value))
-				{
-					_color = value;
-					graphics.Tint(_color);
-				}
-			}
-		}
-
-		public FlipType flip
-		{
-			get { return _flip; }
-			set
-			{
-				_flip = value;
-				if (frameCount > 0)
-					DrawFrame();
-			}
-		}
-
-		public void SetData(NTexture texture, Frame[] frames)
+		public void SetData(NTexture texture, Frame[] frames, Rect boundsRect)
 		{
 			this.frames = frames;
 			this.frameCount = frames.Length;
+			_contentRect = boundsRect;
 
 			if (_end == -1 || _end > frameCount - 1)
 				_end = frameCount - 1;
@@ -90,6 +60,7 @@ namespace FairyGUI
 			playState.Rewind();
 
 			graphics.texture = texture;
+			OnSizeChanged();
 			InvalidateBatchingState();
 			DrawFrame();
 		}
@@ -98,16 +69,7 @@ namespace FairyGUI
 		{
 			this.frameCount = 0;
 			graphics.texture = null;
-			graphics.Clear();
-		}
-
-		public Rect boundsRect
-		{
-			get { return _contentRect; }
-			set
-			{
-				_contentRect = value;
-			}
+			graphics.ClearMesh();
 		}
 
 		public bool playing
@@ -170,7 +132,7 @@ namespace FairyGUI
 						playState.currrentFrame = _currentFrame;
 						_status = 3;
 
-						UpdateContext.OnEnd += () => { onPlayEnd.Call(); };
+						UpdateContext.OnEnd += _playEndDelegate;
 					}
 					else
 					{
@@ -190,13 +152,14 @@ namespace FairyGUI
 					DrawFrame();
 				}
 			}
-			graphics.Update(context);
+
+			base.Update(context);
 		}
 
 		void DrawFrame()
 		{
 			if (_currentFrame >= frames.Length)
-				graphics.Clear();
+				graphics.ClearMesh();
 			else
 			{
 				Frame frame = frames[_currentFrame];
@@ -206,6 +169,17 @@ namespace FairyGUI
 					ToolSet.FlipRect(ref uvRect, _flip);
 
 				graphics.SetOneQuadMesh(frame.rect, uvRect, _color);
+			}
+		}
+
+		protected override void Rebuild()
+		{
+			if (_texture != null)
+				base.Rebuild();
+			else if (frameCount > 0)
+			{
+				_requireUpdateMesh = false;
+				DrawFrame();
 			}
 		}
 	}

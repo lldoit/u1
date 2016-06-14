@@ -38,6 +38,17 @@ namespace FairyGUI
 		/// </summary>
 		public EventListener onStageResized { get; private set; }
 
+
+		/// <summary>
+		/// 
+		/// </summary>
+		public EventListener onCopy { get; private set; }
+
+		/// <summary>
+		/// 
+		/// </summary>
+		public EventListener onPaste { get; private set; }
+
 		/// <summary>
 		/// 
 		/// </summary>
@@ -58,9 +69,11 @@ namespace FairyGUI
 		int _frameGotTouchPosition;
 		bool _customInput;
 		Vector2 _customInputPos;
-		int _customInputButtons;
+		bool _customInputButtonDown;
 
 		AudioSource _audio;
+
+		List<NTexture> _toCollectTextures = new List<NTexture>();
 
 		static Stage _inst;
 		/// <summary>
@@ -117,6 +130,8 @@ namespace FairyGUI
 
 			onStageResized = new EventListener(this, "onStageResized");
 			onTouchMove = new EventListener(this, "onTouchMove");
+			onCopy = new EventListener(this, "onCopy");
+			onPaste = new EventListener(this, "onPaste");
 
 			StageEngine engine = GameObject.FindObjectOfType<StageEngine>();
 			if (engine != null)
@@ -140,6 +155,12 @@ namespace FairyGUI
 
 			inputCaret = new InputCaret();
 			highlighter = new Highlighter();
+
+			Timers.inst.Add(5, 0, RunTextureCollector);
+
+#if UNITY_WEBPLAYER || UNITY_WEBGL || UNITY_STANDALONE_WIN || UNITY_STANDALONE_OSX || UNITY_EDITOR
+			CopyPastePatch.Apply();
+#endif
 		}
 
 		/// <summary>
@@ -361,12 +382,19 @@ namespace FairyGUI
 				_audio.PlayOneShot(clip, this.soundVolume);
 		}
 
-		public void SetCustomInput(Vector2 screenPos, bool buttonDown, bool buttonUp)
+		public void SetCustomInput(Vector2 screenPos, bool buttonDown)
 		{
 			_customInput = true;
-			_customInputButtons = buttonDown ? 1 : (buttonUp ? 2 : 0);
+			_customInputButtonDown = buttonDown;
 			_customInputPos = screenPos;
 			_frameGotHitTarget = 0;
+		}
+
+		public void SetCustomInput(ref RaycastHit hit, bool buttonDown)
+		{
+			Vector2 screenPos = Camera.main.WorldToScreenPoint(hit.point);
+			HitTestContext.CacheRaycastHit(Camera.main, ref hit);
+			SetCustomInput(screenPos, buttonDown);
 		}
 
 		internal int InternalUpdate()
@@ -404,7 +432,7 @@ namespace FairyGUI
 
 				TouchInfo touch = _touches[0];
 				if (touch.x != pos.x || touch.y != pos.y
-					|| _customInputButtons != 0)
+					|| _customInputButtonDown)
 				{
 					_touchTarget = HitTest(pos);
 					touch.target = _touchTarget;
@@ -475,6 +503,8 @@ namespace FairyGUI
 		{
 			stageWidth = Screen.width;
 			stageHeight = Screen.height;
+
+			this.cachedTransform.localScale = new Vector3(StageCamera.UnitsPerPixel, StageCamera.UnitsPerPixel, StageCamera.UnitsPerPixel);
 
 			UIContentScaler scaler = this.gameObject.GetComponent<UIContentScaler>();
 			scaler.ApplyChange();
@@ -585,7 +615,7 @@ namespace FairyGUI
 					HandleRollOver(touch);
 			}
 
-			if (_customInputButtons == 1)
+			if (_customInputButtonDown)
 			{
 				if (!touch.began)
 				{
@@ -603,42 +633,31 @@ namespace FairyGUI
 					}
 				}
 			}
-			else if (_customInputButtons == 2)
+			else if (touch.began)
 			{
-				if (touch.began)
-				{
-					touch.began = false;
-					_touchCount--;
+				touch.began = false;
+				_touchCount--;
 
-					if (touch.target != null)
-					{
-						touch.UpdateEvent();
-						touch.target.onTouchEnd.BubbleCall(touch.evt);
-
-						if (!touch.clickCancelled && Mathf.Abs(touch.x - touch.downX) < 50 && Mathf.Abs(touch.y - touch.downY) < 50)
-						{
-							if (Time.realtimeSinceStartup - touch.lastClickTime < 0.35f)
-							{
-								if (touch.clickCount == 2)
-									touch.clickCount = 1;
-								else
-									touch.clickCount++;
-							}
-							else
-								touch.clickCount = 1;
-							touch.lastClickTime = Time.realtimeSinceStartup;
-							touch.UpdateEvent();
-							touch.target.onClick.BubbleCall(touch.evt);
-						}
-					}
-				}
-			}
-			if (Input.GetMouseButtonUp(1))
-			{
 				if (touch.target != null)
 				{
 					touch.UpdateEvent();
-					touch.target.onRightClick.BubbleCall(touch.evt);
+					touch.target.onTouchEnd.BubbleCall(touch.evt);
+
+					if (!touch.clickCancelled && Mathf.Abs(touch.x - touch.downX) < 50 && Mathf.Abs(touch.y - touch.downY) < 50)
+					{
+						if (Time.realtimeSinceStartup - touch.lastClickTime < 0.35f)
+						{
+							if (touch.clickCount == 2)
+								touch.clickCount = 1;
+							else
+								touch.clickCount++;
+						}
+						else
+							touch.clickCount = 1;
+						touch.lastClickTime = Time.realtimeSinceStartup;
+						touch.UpdateEvent();
+						touch.target.onClick.BubbleCall(touch.evt);
+					}
 				}
 			}
 		}
@@ -865,8 +884,8 @@ namespace FairyGUI
 					continue;
 
 				//借用一下tmpBounds
-				obj._tmpBounds.x = obj.cachedTransform.position.z;
-				obj._tmpBounds.y = i;
+				obj._internal_bounds.x = obj.cachedTransform.position.z;
+				obj._internal_bounds.y = i;
 
 				sTempList1.Add(obj);
 				sTempList2.Add(i);
@@ -884,14 +903,44 @@ namespace FairyGUI
 		static List<int> sTempList2;
 		static int CompareZ(DisplayObject c1, DisplayObject c2)
 		{
-			int ret = ((Container)c2)._tmpBounds.x.CompareTo(((Container)c1)._tmpBounds.x);
+			int ret = ((Container)c2)._internal_bounds.x.CompareTo(((Container)c1)._internal_bounds.x);
 			if (ret == 0)
 			{
 				//如果大家z值一样，使用原来的顺序，防止不停交换顺序（闪烁）
-				return c1._tmpBounds.y.CompareTo(c2._tmpBounds.y);
+				return c1._internal_bounds.y.CompareTo(c2._internal_bounds.y);
 			}
 			else
 				return ret;
+		}
+
+		public void MonitorTexture(NTexture texture)
+		{
+			if (_toCollectTextures.IndexOf(texture) == -1)
+				_toCollectTextures.Add(texture);
+		}
+
+		void RunTextureCollector(object param)
+		{
+			int cnt = _toCollectTextures.Count;
+			float curTime = Time.time;
+			int i = 0;
+			while (i < cnt)
+			{
+				NTexture texture = _toCollectTextures[i];
+				if (texture.disposed)
+				{
+					_toCollectTextures.RemoveAt(i);
+					cnt--;
+				}
+				else if (curTime - texture.lastActive > 5)
+				{
+					texture.Dispose();
+					_toCollectTextures.RemoveAt(i);
+					cnt--;
+				}
+				else
+					i++;
+			}
 		}
 	}
 

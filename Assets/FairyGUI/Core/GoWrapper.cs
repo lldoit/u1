@@ -34,7 +34,7 @@ namespace FairyGUI
 			for (int i = 0; i < cnt; i++)
 			{
 				Renderer r = _renders[i];
-				if (r is SkinnedMeshRenderer)
+				if ((r is SkinnedMeshRenderer) || (r is MeshRenderer))
 				{
 					//Set the object rendering in Transparent Queue as UI objects
 					_renders[i].material.renderQueue = 3000;
@@ -77,12 +77,6 @@ namespace FairyGUI
 					t.gameObject.layer = value;
 				}
 			}
-		}
-
-		public Rect contentRect
-		{
-			get { return _contentRect; }
-			set { _contentRect = value; }
 		}
 
 		public override void Dispose()

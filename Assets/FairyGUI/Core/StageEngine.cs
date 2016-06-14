@@ -17,10 +17,12 @@ namespace FairyGUI
 			ObjectTotal = (int)DisplayObject._gInstanceCounter;
 		}
 
+#if FAIRYGUI_DLL || UNITY_WEBPLAYER || UNITY_WEBGL || UNITY_STANDALONE_WIN || UNITY_STANDALONE_OSX || UNITY_EDITOR
 		void OnGUI()
 		{
 			Stage.inst.HandleGUIEvents(Event.current);
 		}
+#endif
 
 		void OnLevelWasLoaded()
 		{

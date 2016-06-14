@@ -70,7 +70,7 @@ namespace FairyGUIEditor
 			if (Application.isPlaying)
 				return;
 
-			if (_loaded || UIPanel.activePanelCount == 0 && UIPainter.activePanelCount == 0)
+			if (_loaded || !EMRenderSupport.hasTarget)
 				return;
 
 			LoadPackages();
@@ -124,10 +124,7 @@ namespace FairyGUIEditor
 			foreach (UIConfig config in configs)
 				config.Load();
 
-			UIPanel.packageListReady = true;
-			UIPainter.packageListReady = true;
-			UIPainter.ReloadAllPanels();
-			UIPanel.ReloadAllPanels();
+			EMRenderSupport.Reload();
 		}
 
 		static int CompareUIPackage(UIPackage u1, UIPackage u2)

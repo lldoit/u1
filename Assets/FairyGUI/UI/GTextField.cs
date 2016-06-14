@@ -310,6 +310,14 @@ namespace FairyGUI
 			get { return _textWidth; }
 		}
 
+		/// <summary>
+		/// 
+		/// </summary>
+		public float textHeight
+		{
+			get { return _textHeight; }
+		}
+
 		override public void HandleControllerChanged(Controller c)
 		{
 			base.HandleControllerChanged(c);

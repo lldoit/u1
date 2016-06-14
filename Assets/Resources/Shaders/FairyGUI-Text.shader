@@ -11,6 +11,9 @@ Shader "FairyGUI/Text"
 		_StencilReadMask ("Stencil Read Mask", Float) = 255
 
 		_ColorMask ("Color Mask", Float) = 15
+
+		_BlendSrcFactor ("Blend SrcFactor", Float) = 5
+		_BlendDstFactor ("Blend DstFactor", Float) = 10
 	}
 
 	SubShader
@@ -36,9 +39,8 @@ Shader "FairyGUI/Text"
 		Cull Off
 		Lighting Off
 		ZWrite Off
-		Offset -1, -1
 		Fog { Mode Off }
-		Blend SrcAlpha OneMinusSrcAlpha
+		Blend [_BlendSrcFactor] [_BlendDstFactor]
 		ColorMask [_ColorMask]
 
 		Pass
@@ -48,6 +50,7 @@ Shader "FairyGUI/Text"
 				#pragma multi_compile NOT_CLIPPED CLIPPED SOFT_CLIPPED
 				#pragma vertex vert
 				#pragma fragment frag
+
 				#include "UnityCG.cginc"
 
 				struct appdata_t
@@ -77,7 +80,6 @@ Shader "FairyGUI/Text"
 				};
 
 				sampler2D _MainTex;
-				float4 _MainTex_ST;
 
 				#ifdef CLIPPED
 				float4 _ClipBox = float4(-2, -2, 0, 0);

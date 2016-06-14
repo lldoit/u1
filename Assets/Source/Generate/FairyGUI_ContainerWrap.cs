@@ -33,15 +33,16 @@ public class FairyGUI_ContainerWrap
 		L.RegFunction("__tostring", Lua_ToString);
 		L.RegVar("renderMode", get_renderMode, set_renderMode);
 		L.RegVar("renderCamera", get_renderCamera, set_renderCamera);
-		L.RegVar("numChildren", get_numChildren, null);
-		L.RegVar("clipRect", get_clipRect, set_clipRect);
+		L.RegVar("opaque", get_opaque, set_opaque);
 		L.RegVar("clipSoftness", get_clipSoftness, set_clipSoftness);
-		L.RegVar("mask", get_mask, set_mask);
 		L.RegVar("hitArea", get_hitArea, set_hitArea);
 		L.RegVar("touchChildren", get_touchChildren, set_touchChildren);
+		L.RegVar("onUpdate", get_onUpdate, set_onUpdate);
+		L.RegVar("numChildren", get_numChildren, null);
+		L.RegVar("clipRect", get_clipRect, set_clipRect);
+		L.RegVar("mask", get_mask, set_mask);
 		L.RegVar("touchable", get_touchable, set_touchable);
 		L.RegVar("fairyBatching", get_fairyBatching, set_fairyBatching);
-		L.RegVar("fairyBatchingInherited", get_fairyBatchingInherited, null);
 		L.EndClass();
 	}
 
@@ -460,10 +461,25 @@ public class FairyGUI_ContainerWrap
 	{
 		try
 		{
-			ToLua.CheckArgsCount(L, 1);
-			FairyGUI.Container obj = (FairyGUI.Container)ToLua.CheckObject(L, 1, typeof(FairyGUI.Container));
-			obj.InvalidateBatchingState();
-			return 0;
+			int count = LuaDLL.lua_gettop(L);
+
+			if (count == 1 && TypeChecker.CheckTypes(L, 1, typeof(FairyGUI.Container)))
+			{
+				FairyGUI.Container obj = (FairyGUI.Container)ToLua.ToObject(L, 1);
+				obj.InvalidateBatchingState();
+				return 0;
+			}
+			else if (count == 2 && TypeChecker.CheckTypes(L, 1, typeof(FairyGUI.Container), typeof(bool)))
+			{
+				FairyGUI.Container obj = (FairyGUI.Container)ToLua.ToObject(L, 1);
+				bool arg0 = LuaDLL.lua_toboolean(L, 2);
+				obj.InvalidateBatchingState(arg0);
+				return 0;
+			}
+			else
+			{
+				return LuaDLL.luaL_throw(L, "invalid arguments to method: FairyGUI.Container.InvalidateBatchingState");
+			}
 		}
 		catch(Exception e)
 		{
@@ -577,7 +593,7 @@ public class FairyGUI_ContainerWrap
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int get_numChildren(IntPtr L)
+	static int get_opaque(IntPtr L)
 	{
 		object o = null;
 
@@ -585,32 +601,13 @@ public class FairyGUI_ContainerWrap
 		{
 			o = ToLua.ToObject(L, 1);
 			FairyGUI.Container obj = (FairyGUI.Container)o;
-			int ret = obj.numChildren;
-			LuaDLL.lua_pushinteger(L, ret);
+			bool ret = obj.opaque;
+			LuaDLL.lua_pushboolean(L, ret);
 			return 1;
 		}
 		catch(Exception e)
 		{
-			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index numChildren on a nil value" : e.Message);
-		}
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int get_clipRect(IntPtr L)
-	{
-		object o = null;
-
-		try
-		{
-			o = ToLua.ToObject(L, 1);
-			FairyGUI.Container obj = (FairyGUI.Container)o;
-			System.Nullable<UnityEngine.Rect> ret = obj.clipRect;
-			ToLua.PushObject(L, ret);
-			return 1;
-		}
-		catch(Exception e)
-		{
-			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index clipRect on a nil value" : e.Message);
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index opaque on a nil value" : e.Message);
 		}
 	}
 
@@ -630,25 +627,6 @@ public class FairyGUI_ContainerWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index clipSoftness on a nil value" : e.Message);
-		}
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int get_mask(IntPtr L)
-	{
-		object o = null;
-
-		try
-		{
-			o = ToLua.ToObject(L, 1);
-			FairyGUI.Container obj = (FairyGUI.Container)o;
-			FairyGUI.DisplayObject ret = obj.mask;
-			ToLua.PushObject(L, ret);
-			return 1;
-		}
-		catch(Exception e)
-		{
-			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index mask on a nil value" : e.Message);
 		}
 	}
 
@@ -691,6 +669,82 @@ public class FairyGUI_ContainerWrap
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_onUpdate(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.Container obj = (FairyGUI.Container)o;
+			FairyGUI.EventCallback0 ret = obj.onUpdate;
+			ToLua.Push(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index onUpdate on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_numChildren(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.Container obj = (FairyGUI.Container)o;
+			int ret = obj.numChildren;
+			LuaDLL.lua_pushinteger(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index numChildren on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_clipRect(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.Container obj = (FairyGUI.Container)o;
+			System.Nullable<UnityEngine.Rect> ret = obj.clipRect;
+			ToLua.PushObject(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index clipRect on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_mask(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.Container obj = (FairyGUI.Container)o;
+			FairyGUI.DisplayObject ret = obj.mask;
+			ToLua.PushObject(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index mask on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
 	static int get_touchable(IntPtr L)
 	{
 		object o = null;
@@ -725,25 +779,6 @@ public class FairyGUI_ContainerWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index fairyBatching on a nil value" : e.Message);
-		}
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int get_fairyBatchingInherited(IntPtr L)
-	{
-		object o = null;
-
-		try
-		{
-			o = ToLua.ToObject(L, 1);
-			FairyGUI.Container obj = (FairyGUI.Container)o;
-			bool ret = obj.fairyBatchingInherited;
-			LuaDLL.lua_pushboolean(L, ret);
-			return 1;
-		}
-		catch(Exception e)
-		{
-			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index fairyBatchingInherited on a nil value" : e.Message);
 		}
 	}
 
@@ -786,7 +821,7 @@ public class FairyGUI_ContainerWrap
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int set_clipRect(IntPtr L)
+	static int set_opaque(IntPtr L)
 	{
 		object o = null;
 
@@ -794,13 +829,13 @@ public class FairyGUI_ContainerWrap
 		{
 			o = ToLua.ToObject(L, 1);
 			FairyGUI.Container obj = (FairyGUI.Container)o;
-			System.Nullable<UnityEngine.Rect> arg0 = (System.Nullable<UnityEngine.Rect>)ToLua.CheckVarObject(L, 2, typeof(System.Nullable<UnityEngine.Rect>));
-			obj.clipRect = arg0;
+			bool arg0 = LuaDLL.luaL_checkboolean(L, 2);
+			obj.opaque = arg0;
 			return 0;
 		}
 		catch(Exception e)
 		{
-			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index clipRect on a nil value" : e.Message);
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index opaque on a nil value" : e.Message);
 		}
 	}
 
@@ -820,25 +855,6 @@ public class FairyGUI_ContainerWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index clipSoftness on a nil value" : e.Message);
-		}
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int set_mask(IntPtr L)
-	{
-		object o = null;
-
-		try
-		{
-			o = ToLua.ToObject(L, 1);
-			FairyGUI.Container obj = (FairyGUI.Container)o;
-			FairyGUI.DisplayObject arg0 = (FairyGUI.DisplayObject)ToLua.CheckObject(L, 2, typeof(FairyGUI.DisplayObject));
-			obj.mask = arg0;
-			return 0;
-		}
-		catch(Exception e)
-		{
-			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index mask on a nil value" : e.Message);
 		}
 	}
 
@@ -877,6 +893,75 @@ public class FairyGUI_ContainerWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index touchChildren on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int set_onUpdate(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.Container obj = (FairyGUI.Container)o;
+			FairyGUI.EventCallback0 arg0 = null;
+			LuaTypes funcType2 = LuaDLL.lua_type(L, 2);
+
+			if (funcType2 != LuaTypes.LUA_TFUNCTION)
+			{
+				 arg0 = (FairyGUI.EventCallback0)ToLua.CheckObject(L, 2, typeof(FairyGUI.EventCallback0));
+			}
+			else
+			{
+				LuaFunction func = ToLua.ToLuaFunction(L, 2);
+				arg0 = DelegateFactory.CreateDelegate(typeof(FairyGUI.EventCallback0), func) as FairyGUI.EventCallback0;
+			}
+
+			obj.onUpdate = arg0;
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index onUpdate on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int set_clipRect(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.Container obj = (FairyGUI.Container)o;
+			System.Nullable<UnityEngine.Rect> arg0 = (System.Nullable<UnityEngine.Rect>)ToLua.CheckVarObject(L, 2, typeof(System.Nullable<UnityEngine.Rect>));
+			obj.clipRect = arg0;
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index clipRect on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int set_mask(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.Container obj = (FairyGUI.Container)o;
+			FairyGUI.DisplayObject arg0 = (FairyGUI.DisplayObject)ToLua.CheckObject(L, 2, typeof(FairyGUI.DisplayObject));
+			obj.mask = arg0;
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index mask on a nil value" : e.Message);
 		}
 	}
 

@@ -27,6 +27,8 @@ namespace FairyGUI
 
 		public GMovieClip()
 		{
+			_sizeImplType = 1;
+
 			gearAnimation = new GearAnimation(this);
 			gearColor = new GearColor(this);
 
@@ -149,15 +151,11 @@ namespace FairyGUI
 
 			_packageItem.Load();
 			_content.interval = _packageItem.interval;
-			_content.SetData(_packageItem.texture, _packageItem.frames);
-			_content.boundsRect = new Rect(0, 0, sourceWidth, sourceHeight);
+			_content.swing = _packageItem.swing;
+			_content.repeatDelay = _packageItem.repeatDelay;
+			_content.SetData(_packageItem.texture, _packageItem.frames, new Rect(0, 0, sourceWidth, sourceHeight));
 
 			SetSize(sourceWidth, sourceHeight);
-		}
-
-		override protected void HandleSizeChanged()
-		{
-			displayObject.SetScale(this.width / sourceWidth * this.scaleX, this.height / sourceHeight * this.scaleY);
 		}
 
 		override public void Setup_BeforeAdd(XML xml)

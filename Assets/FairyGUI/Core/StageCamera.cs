@@ -9,6 +9,8 @@ namespace FairyGUI
 	[AddComponentMenu("FairyGUI/UI Camera")]
 	public class StageCamera : MonoBehaviour
 	{
+		public bool constantSize = true;
+
 		[System.NonSerialized]
 		public Transform cachedTransform;
 		[System.NonSerialized]
@@ -30,7 +32,8 @@ namespace FairyGUI
 		public const string Name = "Stage Camera";
 		public const string LayerName = "UI";
 
-		public const float UnitsPerPixel = 0.02f;
+		public static float DefaultCameraSize = 5;
+		public static float UnitsPerPixel = 0.02f;
 
 		void OnEnable()
 		{
@@ -48,7 +51,6 @@ namespace FairyGUI
 		{
 			if (screenWidth != Screen.width || screenHeight != Screen.height)
 				OnScreenSizeChanged();
-			
 		}
 
 		void OnScreenSizeChanged()
@@ -58,8 +60,16 @@ namespace FairyGUI
 			if (screenWidth == 0 || screenHeight == 0)
 				return;
 
-			cachedCamera.orthographicSize = screenHeight / 2 * UnitsPerPixel;
-			cachedCamera.aspect = (float)screenWidth / screenHeight;
+			if (constantSize)
+			{
+				cachedCamera.orthographicSize = DefaultCameraSize;
+				UnitsPerPixel = cachedCamera.orthographicSize * 2 / screenHeight;
+			}
+			else
+			{
+				UnitsPerPixel = 0.02f;
+				cachedCamera.orthographicSize = screenHeight / 2 * UnitsPerPixel;
+			}
 			cachedTransform.localPosition = new Vector3(cachedCamera.orthographicSize * cachedCamera.aspect, -cachedCamera.orthographicSize);
 
 			if (isMain)
@@ -83,8 +93,13 @@ namespace FairyGUI
 			//call only edit mode
 			if (isMain && !Application.isPlaying)
 			{
-				UIPanel.RenderAllPanels();
+				EMRenderSupport.Update();
 			}
+		}
+
+		public void ApplyModifiedProperties()
+		{
+			screenWidth = 0; //force OnScreenSizeChanged called in next update
 		}
 
 		/// <summary>
@@ -116,7 +131,7 @@ namespace FairyGUI
 			camera.cullingMask = cullingMask;
 			camera.clearFlags = CameraClearFlags.Depth;
 			camera.orthographic = true;
-			camera.orthographicSize = 5;
+			camera.orthographicSize =DefaultCameraSize;
 			camera.nearClipPlane = -30;
 			camera.farClipPlane = 30;
 

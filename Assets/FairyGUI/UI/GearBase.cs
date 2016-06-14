@@ -111,7 +111,7 @@ namespace FairyGUI
 			if (str != null)
 				values = str.Split(jointChar1);
 
-			if (values != null)
+			if (pages != null && values != null)
 			{
 				for (int i = 0; i < values.Length; i++)
 				{

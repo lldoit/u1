@@ -19,12 +19,10 @@ namespace FairyGUI
 		protected FlipType _flip;
 		protected Rect? _scale9Grid;
 		protected bool _scaleByTile;
-		protected bool _needRebuild;
 		protected FillMethod _fillMethod;
 		protected int _fillOrigin;
 		protected float _fillAmount;
 		protected bool _fillClockwise;
-		protected Vector2 _textureScale;
 
 		public Image()
 		{
@@ -41,7 +39,6 @@ namespace FairyGUI
 		{
 			_optimizeNotTouchable = true;
 			_fillClockwise = true;
-			_textureScale = Vector2.one;
 
 			CreateGameObject("Image");
 			graphics = new NGraphics(gameObject);
@@ -82,7 +79,7 @@ namespace FairyGUI
 				if (_flip != value)
 				{
 					_flip = value;
-					_needRebuild = true;
+					_requireUpdateMesh = true;
 				}
 			}
 		}
@@ -95,7 +92,7 @@ namespace FairyGUI
 				if (_fillMethod != value)
 				{
 					_fillMethod = value;
-					_needRebuild = true;
+					_requireUpdateMesh = true;
 				}
 			}
 		}
@@ -108,7 +105,7 @@ namespace FairyGUI
 				if (_fillOrigin != value)
 				{
 					_fillOrigin = value;
-					_needRebuild = true;
+					_requireUpdateMesh = true;
 				}
 			}
 		}
@@ -121,7 +118,7 @@ namespace FairyGUI
 				if (_fillClockwise != value)
 				{
 					_fillClockwise = value;
-					_needRebuild = true;
+					_requireUpdateMesh = true;
 				}
 			}
 		}
@@ -134,26 +131,7 @@ namespace FairyGUI
 				if (_fillAmount != value)
 				{
 					_fillAmount = value;
-					_needRebuild = true;
-				}
-			}
-		}
-
-		public Vector2 textureScale
-		{
-			get { return _textureScale; }
-			set
-			{
-				if (Mathf.Approximately(_textureScale.x, value.x)
-					&& Mathf.Approximately(_textureScale.y, value.y))
-					return;
-
-				_textureScale = value;
-				if (_texture != null)
-				{
-					_contentRect.width = _texture.width * _textureScale.x;
-					_contentRect.height = _texture.height * _textureScale.y;
-					_needRebuild = true;
+					_requireUpdateMesh = true;
 				}
 			}
 		}
@@ -166,7 +144,7 @@ namespace FairyGUI
 				if (_scale9Grid != value)
 				{
 					_scale9Grid = value;
-					_needRebuild = true;
+					_requireUpdateMesh = true;
 				}
 			}
 		}
@@ -179,17 +157,35 @@ namespace FairyGUI
 				if (_scaleByTile != value)
 				{
 					_scaleByTile = value;
-					_needRebuild = true;
+					_requireUpdateMesh = true;
 				}
 			}
 		}
 
+		public void SetNativeSize()
+		{
+			float oldWidth = _contentRect.width;
+			float oldHeight = _contentRect.height;
+			if (_texture != null)
+			{
+				_contentRect.width = _texture.width;
+				_contentRect.height = _texture.height;
+			}
+			else
+			{
+				_contentRect.width = 0;
+				_contentRect.height = 0;
+			}
+			if (oldWidth != _contentRect.width || oldHeight != _contentRect.height)
+				OnSizeChanged();
+		}
+
 		public override void Update(UpdateContext context)
 		{
-			if (_needRebuild)
+			if (_requireUpdateMesh)
 				Rebuild();
 
-			graphics.Update(context);
+			base.Update(context);
 		}
 
 		virtual protected void UpdateTexture(NTexture value)
@@ -197,39 +193,22 @@ namespace FairyGUI
 			if (value == _texture)
 				return;
 
-			if (value != null && (_texture == null || _texture.width != value.width || _texture.height != value.height
-				|| !_texture.uvRect.Equals(value.uvRect)))
-				_needRebuild = true;
-
+			_requireUpdateMesh = true;
 			_texture = value;
-			if (_texture != null)
-			{
-				_contentRect.width = _texture.width * _textureScale.x;
-				_contentRect.height = _texture.height * _textureScale.y;
-				if (scaleX != 0 && scaleY != 0)
-					graphics.enabled = true;
-			}
-			else
-			{
-				_contentRect.width = 0;
-				_contentRect.height = 0;
-				graphics.enabled = false;
-			}
-
+			if (_contentRect.width == 0)
+				SetNativeSize();
 			graphics.texture = _texture;
 			InvalidateBatchingState();
 		}
 
 		virtual protected void Rebuild()
 		{
-			_needRebuild = false;
-			if (_texture == null || scaleX == 0 || scaleY == 0)
+			_requireUpdateMesh = false;
+			if (_texture == null)
 			{
-				graphics.enabled = false;
+				graphics.ClearMesh();
 				return;
 			}
-
-			graphics.enabled = true;
 
 			Rect uvRect = _texture.uvRect;
 			if (_flip != FlipType.None)
@@ -242,14 +221,14 @@ namespace FairyGUI
 				graphics.FillTriangles();
 				graphics.UpdateMesh();
 			}
-			else if (_textureScale == Vector2.one)
+			else if (_texture.width == _contentRect.width && _texture.height == _contentRect.height)
 			{
 				graphics.SetOneQuadMesh(_contentRect, uvRect, _color);
 			}
 			else if (_scaleByTile)
 			{
-				int hc = Mathf.CeilToInt(_textureScale.x);
-				int vc = Mathf.CeilToInt(_textureScale.y);
+				int hc = Mathf.CeilToInt(_contentRect.width / _texture.width);
+				int vc = Mathf.CeilToInt(_contentRect.height / _texture.height);
 				float tailWidth = _contentRect.width - (hc - 1) * _texture.width;
 				float tailHeight = _contentRect.height - (vc - 1) * _texture.height;
 
@@ -342,7 +321,7 @@ namespace FairyGUI
 
 		public void PrintTo(Mesh mesh, Rect localRect)
 		{
-			if (_needRebuild)
+			if (_requireUpdateMesh)
 				Rebuild();
 
 			Rect uvRect = _texture.uvRect;
@@ -355,13 +334,35 @@ namespace FairyGUI
 			int[] triangles;
 			int vertCount = 0;
 
-			if (_scaleByTile)
+			if (!_scaleByTile || _scale9Grid == null || (_texture.width == _contentRect.width && _texture.height == _contentRect.height))
 			{
 				verts = new Vector3[graphics.vertices.Length];
 				uv = new Vector2[graphics.uv.Length];
 
-				int hc = Mathf.CeilToInt(_textureScale.x);
-				int vc = Mathf.CeilToInt(_textureScale.y);
+				Rect bound = ToolSet.Intersection(ref _contentRect, ref localRect);
+
+				float u0 = bound.xMin / _contentRect.width;
+				float u1 = bound.xMax / _contentRect.width;
+				float v0 = (_contentRect.height - bound.yMax) / _contentRect.height;
+				float v1 = (_contentRect.height - bound.yMin) / _contentRect.height;
+				u0 = Mathf.Lerp(uvRect.xMin, uvRect.xMax, u0);
+				u1 = Mathf.Lerp(uvRect.xMin, uvRect.xMax, u1);
+				v0 = Mathf.Lerp(uvRect.yMin, uvRect.yMax, v0);
+				v1 = Mathf.Lerp(uvRect.yMin, uvRect.yMax, v1);
+				NGraphics.FillUVOfQuad(uv, 0, Rect.MinMaxRect(u0, v0, u1, v1));
+
+				bound.x = 0;
+				bound.y = 0;
+				NGraphics.FillVertsOfQuad(verts, 0, bound);
+				vertCount += 4;
+			}
+			else if (_scaleByTile)
+			{
+				verts = new Vector3[graphics.vertices.Length];
+				uv = new Vector2[graphics.uv.Length];
+
+				int hc = Mathf.CeilToInt(_contentRect.width / _texture.width);
+				int vc = Mathf.CeilToInt(_contentRect.height / _texture.height);
 				float tailWidth = _contentRect.width - (hc - 1) * _texture.width;
 				float tailHeight = _contentRect.height - (vc - 1) * _texture.height;
 
@@ -402,28 +403,6 @@ namespace FairyGUI
 						}
 					}
 				}
-			}
-			else if (_scale9Grid == null || _textureScale == Vector2.zero)
-			{
-				verts = new Vector3[graphics.vertices.Length];
-				uv = new Vector2[graphics.uv.Length];
-
-				Rect bound = ToolSet.Intersection(ref _contentRect, ref localRect);
-
-				float u0 = bound.xMin / _contentRect.width;
-				float u1 = bound.xMax / _contentRect.width;
-				float v0 = (_contentRect.height - bound.yMax) / _contentRect.height;
-				float v1 = (_contentRect.height - bound.yMin) / _contentRect.height;
-				u0 = Mathf.Lerp(uvRect.xMin, uvRect.xMax, u0);
-				u1 = Mathf.Lerp(uvRect.xMin, uvRect.xMax, u1);
-				v0 = Mathf.Lerp(uvRect.yMin, uvRect.yMax, v0);
-				v1 = Mathf.Lerp(uvRect.yMin, uvRect.yMax, v1);
-				NGraphics.FillUVOfQuad(uv, 0, Rect.MinMaxRect(u0, v0, u1, v1));
-
-				bound.x = 0;
-				bound.y = 0;
-				NGraphics.FillVertsOfQuad(verts, 0, bound);
-				vertCount += 4;
 			}
 			else
 			{

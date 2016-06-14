@@ -38,7 +38,6 @@ namespace FairyGUI
 		BaseFont _font;
 		float _textWidth;
 		float _textHeight;
-		bool _meshChanged;
 		bool _textChanged;
 
 		const int GUTTER_X = 2;
@@ -135,7 +134,7 @@ namespace FairyGUI
 
 						if (Stage.touchScreen && _mobileInputAdapter == null)
 						{
-#if !(UNITY_WEBPLAYER || UNITY_WEBGL)
+#if !(UNITY_WEBPLAYER || UNITY_WEBGL || UNITY_STANDALONE_WIN || UNITY_STANDALONE_OSX || UNITY_EDITOR)
 							_mobileInputAdapter = new MobileInputAdapter();
 #endif
 						}
@@ -230,7 +229,7 @@ namespace FairyGUI
 				if (_stroke != value)
 				{
 					_stroke = value;
-					_meshChanged = true;
+					_requireUpdateMesh = true;
 				}
 			}
 		}
@@ -246,7 +245,7 @@ namespace FairyGUI
 				if (_strokeColor != value)
 				{
 					_strokeColor = value;
-					_meshChanged = true;
+					_requireUpdateMesh = true;
 				}
 			}
 		}
@@ -272,16 +271,12 @@ namespace FairyGUI
 			}
 		}
 
-		override public void SetSize(float wv, float hv)
+		override protected void OnSizeChanged()
 		{
-			if (!float.IsNaN(wv) && _contentRect.width != wv)
-			{
-				if (_wordWrap)
-					_textChanged = true;
-				_contentRect.width = wv;
-			}
-			if (!float.IsNaN(hv))
-				_contentRect.height = hv;
+			if (_wordWrap)
+				_textChanged = true;
+
+			base.OnSizeChanged();
 		}
 
 		public override Rect GetBounds(DisplayObject targetSpace)
@@ -370,13 +365,13 @@ namespace FairyGUI
 					if (!_textChanged)
 						RequestText();
 					graphics.texture = _font.mainTexture;
-					_meshChanged = true;
+					_requireUpdateMesh = true;
 				}
 
 				if (_textChanged)
 					BuildLines();
 
-				if (_meshChanged)
+				if (_requireUpdateMesh)
 					BuildMesh();
 			}
 
@@ -387,38 +382,23 @@ namespace FairyGUI
 				rect.y += GUTTER_Y;
 				rect.width -= GUTTER_X * 2;
 				rect.height -= GUTTER_Y * 2;
-				context.EnterClipping(this._internalIndex, this.TransformRect(rect, null), null);
-				graphics.Update(context);
+				context.EnterClipping(this.id, this.TransformRect(rect, null), null);
+
+				base.Update(context);
 
 				if (_highlighter != null)
-					_highlighter.grahpics.Update(context);
+					_highlighter.grahpics.UpdateMaterial(context);
 
 				context.LeaveClipping();
 
 				if (_caret != null) //不希望光标发生剪切，所以放到LeaveClipping后
 				{
-					_caret.grahpics.Update(context);
+					_caret.grahpics.UpdateMaterial(context);
 					_caret.Blink();
 				}
 			}
 			else
-				graphics.Update(context);
-		}
-
-		public override int renderingOrder
-		{
-			get
-			{
-				return base.renderingOrder;
-			}
-			set
-			{
-				base.renderingOrder = value;
-				if (_caret != null)
-					_caret.grahpics.sortingOrder = value + 1;
-				if (_highlighter != null)
-					_highlighter.grahpics.sortingOrder = value + 2;
-			}
+				base.Update(context);
 		}
 
 		//准备字体纹理
@@ -460,7 +440,7 @@ namespace FairyGUI
 			Cleanup();
 
 			_textChanged = false;
-			_meshChanged = true;
+			_requireUpdateMesh = true;
 
 			if (_caret != null)
 				_caret.SetSizeAndColor(_textFormat.size, _textFormat.color);
@@ -737,6 +717,7 @@ namespace FairyGUI
 			{
 				_contentRect.width = _textWidth;
 				_contentRect.height = _textHeight;
+				base.OnSizeChanged();
 			}
 		}
 
@@ -755,6 +736,7 @@ namespace FairyGUI
 			{
 				_contentRect.width = _textWidth;
 				_contentRect.height = _textHeight;
+				base.OnSizeChanged();
 			}
 		}
 
@@ -763,11 +745,11 @@ namespace FairyGUI
 		static List<Color32> sCachedCols = new List<Color32>();
 		void BuildMesh()
 		{
-			_meshChanged = false;
+			_requireUpdateMesh = false;
 
 			if (_textWidth == 0)
 			{
-				graphics.Clear();
+				graphics.ClearMesh();
 				if (_caret != null)
 				{
 					_caretPosition = 0;
@@ -1252,38 +1234,40 @@ namespace FairyGUI
 			_caretPosition = cp.charIndex;
 			Vector2 pos = GetCharLocation(cp);
 
-			if (pos.x - this.pivotX < 5)
+			Vector2 offset = _positionOffset;
+			if (pos.x - offset.x < 5)
 			{
 				float move = pos.x - (int)Math.Min(50, _contentRect.width / 2);
 				if (move < 0)
 					move = 0;
 				else if (move + _contentRect.width > _textWidth)
 					move = Math.Max(0, _textWidth - _contentRect.width);
-				this.pivotX = move;
+				offset.x = move;
 			}
-			else if (pos.x - this.pivotX > _contentRect.width - 5)
+			else if (pos.x - offset.x > _contentRect.width - 5)
 			{
 				float move = pos.x - (int)Math.Min(50, _contentRect.width / 2);
 				if (move < 0)
 					move = 0;
 				else if (move + _contentRect.width > _textWidth)
 					move = Math.Max(0, _textWidth - _contentRect.width);
-				this.pivotX = move;
+				offset.x = move;
 			}
 
 			LineInfo line = _lines[cp.lineIndex];
-			if (line.y - this.pivotY < 0)
+			if (line.y - offset.y < 0)
 			{
 				float move = line.y - GUTTER_Y;
-				this.pivotY = move;
+				offset.y = move;
 			}
-			else if (line.y + line.height - this.pivotY >= _contentRect.height)
+			else if (line.y + line.height - offset.y >= _contentRect.height)
 			{
 				float move = line.y + line.height + GUTTER_Y - _contentRect.height;
 				if (move < 0)
 					move = 0;
-				this.pivotY = move;
+				offset.y = move;
 			}
+			this.SetPositionOffset(offset);
 
 			_caret.SetPosition(pos);
 
@@ -1342,8 +1326,7 @@ namespace FairyGUI
 			if (_elements == null)
 				return null;
 
-			pos.x += this.pivotX;
-			pos.y += this.pivotY;
+			pos += this._positionOffset;
 
 			if (!_contentRect.Contains(pos))
 				return null;
@@ -1536,7 +1519,7 @@ namespace FairyGUI
 							return;
 
 						LineInfo line = _lines[cp.lineIndex - 1];
-						cp = GetCharPosition(new Vector3(_caret.cachedTransform.localPosition.x + this.pivotX, line.y, 0));
+						cp = GetCharPosition(new Vector3(_caret.cachedTransform.localPosition.x + _positionOffset.x, line.y, 0));
 						AdjustCaret(cp);
 						break;
 					}
@@ -1558,7 +1541,7 @@ namespace FairyGUI
 							return;
 
 						LineInfo line = _lines[cp.lineIndex + 1];
-						cp = GetCharPosition(new Vector3(_caret.cachedTransform.localPosition.x + this.pivotX, line.y, 0));
+						cp = GetCharPosition(new Vector3(_caret.cachedTransform.localPosition.x + this._positionOffset.x, line.y, 0));
 						AdjustCaret(cp);
 						break;
 					}
@@ -1624,7 +1607,7 @@ namespace FairyGUI
 							context.PreventDefault();
 							string s = GetSelection();
 							if (!string.IsNullOrEmpty(s))
-								ToolSet.clipboard = s;
+								Stage.inst.onCopy.Call(s);
 						}
 						break;
 					}
@@ -1635,9 +1618,7 @@ namespace FairyGUI
 						if (evt.ctrl)
 						{
 							context.PreventDefault();
-							string s = ToolSet.clipboard;
-							if (!string.IsNullOrEmpty(s))
-								InsertText(s);
+							Stage.inst.onPaste.Call(this);
 						}
 						break;
 					}
@@ -1651,7 +1632,7 @@ namespace FairyGUI
 							string s = GetSelection();
 							if (!string.IsNullOrEmpty(s))
 							{
-								ToolSet.clipboard = s;
+								Stage.inst.onCopy.Call(s);
 								DeleteSelection();
 								onChanged.Call();
 							}
@@ -1691,8 +1672,8 @@ namespace FairyGUI
 			{
 				Vector3 v = Stage.inst.touchPosition;
 				v = this.GlobalToLocal(v);
-				v.x += this.pivotX;
-				v.y += this.pivotY;
+				v.x += this._positionOffset.x;
+				v.y += this._positionOffset.y;
 				cp = GetCharPosition(v);
 			}
 
@@ -1712,8 +1693,8 @@ namespace FairyGUI
 			if (float.IsNaN(v.x))
 				return;
 
-			v.x += this.pivotX;
-			v.y += this.pivotY;
+			v.x += this._positionOffset.x;
+			v.y += this._positionOffset.y;
 			CharPosition cp = GetCharPosition(v);
 			if (cp.charIndex != _caretPosition)
 				AdjustCaret(cp);

@@ -26,6 +26,6 @@ namespace FairyGUI
 		/// <param name="container"></param>
 		/// <param name="localPoint"></param>
 		/// <returns></returns>
-		int HitTest(Container container, ref Vector2 localPoint);
+		bool HitTest(Container container, ref Vector2 localPoint);
 	}
 }

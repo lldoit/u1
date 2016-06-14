@@ -28,6 +28,7 @@ public class FairyGUI_GTextFieldWrap
 		L.RegVar("UBBEnabled", get_UBBEnabled, set_UBBEnabled);
 		L.RegVar("autoSize", get_autoSize, set_autoSize);
 		L.RegVar("textWidth", get_textWidth, null);
+		L.RegVar("textHeight", get_textHeight, null);
 		L.EndClass();
 	}
 
@@ -424,6 +425,25 @@ public class FairyGUI_GTextFieldWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index textWidth on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_textHeight(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GTextField obj = (FairyGUI.GTextField)o;
+			float ret = obj.textHeight;
+			LuaDLL.lua_pushnumber(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index textHeight on a nil value" : e.Message);
 		}
 	}
 

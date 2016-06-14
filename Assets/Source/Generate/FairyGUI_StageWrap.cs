@@ -17,6 +17,7 @@ public class FairyGUI_StageWrap
 		L.RegFunction("PlayOneShotSound", PlayOneShotSound);
 		L.RegFunction("SetCustomInput", SetCustomInput);
 		L.RegFunction("SortWorldSpacePanelsByZOrder", SortWorldSpacePanelsByZOrder);
+		L.RegFunction("MonitorTexture", MonitorTexture);
 		L.RegFunction("New", _CreateFairyGUI_Stage);
 		L.RegFunction("__tostring", Lua_ToString);
 		L.RegVar("touchScreen", get_touchScreen, null);
@@ -24,6 +25,8 @@ public class FairyGUI_StageWrap
 		L.RegVar("stageWidth", get_stageWidth, null);
 		L.RegVar("soundVolume", get_soundVolume, set_soundVolume);
 		L.RegVar("onStageResized", get_onStageResized, null);
+		L.RegVar("onCopy", get_onCopy, null);
+		L.RegVar("onPaste", get_onPaste, null);
 		L.RegVar("onTouchMove", get_onTouchMove, null);
 		L.RegVar("inst", get_inst, null);
 		L.RegVar("touchTarget", get_touchTarget, null);
@@ -212,13 +215,29 @@ public class FairyGUI_StageWrap
 	{
 		try
 		{
-			ToLua.CheckArgsCount(L, 4);
-			FairyGUI.Stage obj = (FairyGUI.Stage)ToLua.CheckObject(L, 1, typeof(FairyGUI.Stage));
-			UnityEngine.Vector2 arg0 = ToLua.ToVector2(L, 2);
-			bool arg1 = LuaDLL.luaL_checkboolean(L, 3);
-			bool arg2 = LuaDLL.luaL_checkboolean(L, 4);
-			obj.SetCustomInput(arg0, arg1, arg2);
-			return 0;
+			int count = LuaDLL.lua_gettop(L);
+
+			if (count == 3 && TypeChecker.CheckTypes(L, 1, typeof(FairyGUI.Stage), typeof(UnityEngine.RaycastHit), typeof(bool)))
+			{
+				FairyGUI.Stage obj = (FairyGUI.Stage)ToLua.ToObject(L, 1);
+				UnityEngine.RaycastHit arg0 = (UnityEngine.RaycastHit)ToLua.ToObject(L, 2);
+				bool arg1 = LuaDLL.lua_toboolean(L, 3);
+				obj.SetCustomInput(ref arg0, arg1);
+				ToLua.Push(L, arg0);
+				return 1;
+			}
+			else if (count == 3 && TypeChecker.CheckTypes(L, 1, typeof(FairyGUI.Stage), typeof(UnityEngine.Vector2), typeof(bool)))
+			{
+				FairyGUI.Stage obj = (FairyGUI.Stage)ToLua.ToObject(L, 1);
+				UnityEngine.Vector2 arg0 = ToLua.ToVector2(L, 2);
+				bool arg1 = LuaDLL.lua_toboolean(L, 3);
+				obj.SetCustomInput(arg0, arg1);
+				return 0;
+			}
+			else
+			{
+				return LuaDLL.luaL_throw(L, "invalid arguments to method: FairyGUI.Stage.SetCustomInput");
+			}
 		}
 		catch(Exception e)
 		{
@@ -235,6 +254,23 @@ public class FairyGUI_StageWrap
 			FairyGUI.Stage obj = (FairyGUI.Stage)ToLua.CheckObject(L, 1, typeof(FairyGUI.Stage));
 			int arg0 = (int)LuaDLL.luaL_checknumber(L, 2);
 			obj.SortWorldSpacePanelsByZOrder(arg0);
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int MonitorTexture(IntPtr L)
+	{
+		try
+		{
+			ToLua.CheckArgsCount(L, 2);
+			FairyGUI.Stage obj = (FairyGUI.Stage)ToLua.CheckObject(L, 1, typeof(FairyGUI.Stage));
+			FairyGUI.NTexture arg0 = (FairyGUI.NTexture)ToLua.CheckObject(L, 2, typeof(FairyGUI.NTexture));
+			obj.MonitorTexture(arg0);
 			return 0;
 		}
 		catch(Exception e)
@@ -347,6 +383,44 @@ public class FairyGUI_StageWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index onStageResized on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_onCopy(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.Stage obj = (FairyGUI.Stage)o;
+			FairyGUI.EventListener ret = obj.onCopy;
+			ToLua.PushObject(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index onCopy on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_onPaste(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.Stage obj = (FairyGUI.Stage)o;
+			FairyGUI.EventListener ret = obj.onPaste;
+			ToLua.PushObject(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index onPaste on a nil value" : e.Message);
 		}
 	}
 

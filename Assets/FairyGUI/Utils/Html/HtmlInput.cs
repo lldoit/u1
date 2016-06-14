@@ -74,7 +74,8 @@ namespace FairyGUI.Utils
 				textInput.displayAsPassword = type == "password";
 				textInput.SetSize(width - _borderSize * 2, height - _borderSize * 2);
 				textInput.maxLength = element.GetInt("maxlength", int.MaxValue);
-				_border.DrawRect(width, height, _borderSize, borderColor, new Color(0, 0, 0, 0));
+				_border.size = new Vector2(width, height);
+				_border.DrawRect(_borderSize, borderColor, new Color(0, 0, 0, 0));
 			}
 			textInput.text = element.GetString("value");
 		}

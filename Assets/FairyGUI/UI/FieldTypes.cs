@@ -457,5 +457,29 @@ namespace FairyGUI
 					return TransitionActionType.Unknown;
 			}
 		}
+
+		public static BlendMode ParseBlendMode(string value)
+		{
+			switch (value)
+			{
+				case "add":
+					return BlendMode.Add;
+
+				case "multiply":
+					return BlendMode.Multiply;
+
+				case "none":
+					return BlendMode.None;
+				
+				case "screen":
+					return BlendMode.Screen;
+
+				case "erase":
+					return BlendMode.Erase;
+
+				default:
+					return BlendMode.Normal;
+			}
+		}
 	}
 }

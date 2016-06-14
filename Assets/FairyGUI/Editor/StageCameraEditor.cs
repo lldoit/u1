@@ -24,7 +24,7 @@ namespace FairyGUIEditor
 			DrawPropertiesExcluding(serializedObject, propertyToExclude);
 
 			if (serializedObject.ApplyModifiedProperties())
-				(target as UIContentScaler).ApplyChange();
+				(target as StageCamera).ApplyModifiedProperties();
 		}
 	}
 }

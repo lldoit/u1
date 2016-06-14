@@ -137,28 +137,6 @@ namespace FairyGUI.Utils
 			}
 		}
 
-		public static string clipboard
-		{
-#if UNITY_WEBPLAYER || UNITY_WEBGL
-			get
-			{
-				TextEditor te = new TextEditor();
-				te.Paste();
-				return te.content.text;
-			}
-			set
-			{
-				TextEditor te = new TextEditor();
-				te.content = new GUIContent(value);
-				te.OnFocus();
-				te.Copy();
-			}
-#else
-			get { return null; }
-			set { }
-#endif
-		}
-
 		public static void uvLerp(Vector2[] uvSrc, Vector2[] uvDest, float min, float max)
 		{
 			float uMin = float.MaxValue;
@@ -202,6 +180,30 @@ namespace FairyGUI.Utils
 			t.localScale = s;
 			t.localRotation = q;
 #endif
+		}
+
+		public static void SkewMatrix(ref Matrix4x4 matrix, float skewX, float skewY)
+		{
+			skewX = -skewX * Mathf.Deg2Rad;
+			skewY = -skewY * Mathf.Deg2Rad;
+			float sinX = Mathf.Sin(skewX);
+			float cosX = Mathf.Cos(skewX);
+			float sinY = Mathf.Sin(skewY);
+			float cosY = Mathf.Cos(skewY);
+
+			float m00 = matrix.m00 * cosY - matrix.m10 * sinX;
+			float m10 = matrix.m00 * sinY + matrix.m10 * cosX;
+			float m01 = matrix.m01 * cosY - matrix.m11 * sinX;
+			float m11 = matrix.m01 * sinY + matrix.m11 * cosX;
+			float m02 = matrix.m02 * cosY - matrix.m12 * sinX;
+			float m12 = matrix.m02 * sinY + matrix.m12 * cosX;
+
+			matrix.m00 = m00;
+			matrix.m10 = m10;
+			matrix.m01 = m01;
+			matrix.m11 = m11;
+			matrix.m02 = m02;
+			matrix.m12 = m12;
 		}
 	}
 }

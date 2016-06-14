@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using FairyGUI.Utils;
 
 namespace FairyGUI
 {
@@ -16,19 +17,26 @@ namespace FairyGUI
 
 		public MeshFilter meshFilter { get; private set; }
 		public MeshRenderer meshRenderer { get; private set; }
+		public GameObject gameObject { get; private set; }
 
 		public bool grayed;
+		public BlendMode blendMode;
+		public uint maskFrameId;
 
-		internal uint maskFrameId;
-
-		float _alpha;
-		byte[] _alphaBackup;
+		public Matrix4x4? vertexMatrix;
+		public Vector3? cameraPosition;
 
 		NTexture _texture;
 		string _shader;
 		Material _material;
+		bool _customMatarial;
 		MaterialManager _manager;
 		Mesh mesh;
+		string[] _materialKeywords;
+
+		float _alpha;
+		//透明度改变需要通过修改顶点颜色实现，但顶点颜色本身可能就带有透明度，所以这里要有一个备份
+		byte[] _alphaBackup;
 
 		//写死的一些三角形顶点组合，避免每次new
 		/** 1---2
@@ -48,9 +56,20 @@ namespace FairyGUI
 			14,10,11,
 			11,15,14
         };
+		public static int[] TRIANGLES_4_GRID = new int[] { 
+			4, 0, 5,
+			4, 5, 1, 
+			4, 1, 6, 
+			4, 6, 2,
+			4, 2, 7,
+			4, 7, 3,
+			4, 3, 8, 
+			4, 8, 0
+		};
 
 		public NGraphics(GameObject gameObject)
 		{
+			this.gameObject = gameObject;
 			_alpha = 1f;
 			_shader = ShaderConfig.imageShader;
 			meshFilter = gameObject.AddComponent<MeshFilter>();
@@ -77,18 +96,9 @@ namespace FairyGUI
 				if (_texture != value)
 				{
 					_texture = value;
-					if (_texture != null)
-					{
-						_manager = MaterialManager.GetInstance(_texture, _shader);
-						if (_material != null)
-							_material.mainTexture = _texture.nativeTexture;
-					}
-					else
-					{
-						if (_material != null)
-							_material.mainTexture = null;
-						_manager = null;
-					}
+					if (_customMatarial && _material != null)
+						_material.mainTexture = _texture != null ? _texture.nativeTexture : null;
+					UpdateManager();
 				}
 			}
 		}
@@ -99,8 +109,7 @@ namespace FairyGUI
 			set
 			{
 				_shader = value;
-				if (_texture != null)
-					_manager = MaterialManager.GetInstance(_texture, _shader);
+				UpdateManager();
 			}
 		}
 
@@ -108,41 +117,59 @@ namespace FairyGUI
 		{
 			_shader = shader;
 			_texture = texture;
-			if (_texture != null)
-			{
-				_manager = MaterialManager.GetInstance(_texture, _shader);
-				if (_material != null)
-					_material.mainTexture = _texture.nativeTexture;
-			}
-			else
-			{
-				if (_material != null)
-					_material.mainTexture = null;
-				_manager = null;
-			}
+			if (_customMatarial && _material != null)
+				_material.mainTexture = _texture != null ? _texture.nativeTexture : null;
+			UpdateManager();
 		}
 
 		public Material material
 		{
-			get
-			{
-				if (meshRenderer.sharedMaterial != null)
-					return meshRenderer.sharedMaterial;
-				else if (_manager != null)
-					return _manager.sharedMaterial;
-				else
-					return null;
-			}
+			get { return _material; }
 			set
 			{
+				if (_customMatarial && _material != null)
+				{
+					if (Application.isPlaying)
+						Material.Destroy(_material);
+					else
+						Material.DestroyImmediate(_material);
+				}
+
 				_material = value;
 				if (_material != null)
 				{
+					_customMatarial = true;
+					meshRenderer.sharedMaterial = _material;
 					if (_texture != null)
 						_material.mainTexture = _texture.nativeTexture;
 				}
-				meshRenderer.sharedMaterial = _material;
+				else
+				{
+					_customMatarial = false;
+					meshRenderer.sharedMaterial = null;
+				}
 			}
+		}
+
+		public string[] materialKeywords
+		{
+			get { return _materialKeywords; }
+			set
+			{
+				_materialKeywords = value;
+				UpdateManager();
+			}
+		}
+
+		void UpdateManager()
+		{
+			if (_manager != null)
+				_manager.Release();
+
+			if (_texture != null)
+				_manager = MaterialManager.GetInstance(_texture, _shader, _materialKeywords);
+			else
+				_manager = null;
 		}
 
 		public bool enabled
@@ -167,24 +194,90 @@ namespace FairyGUI
 					Mesh.DestroyImmediate(mesh);
 				mesh = null;
 			}
-			_manager = null;
+			if (_manager != null)
+			{
+				_manager.Release();
+				_manager = null;
+			}
+			if (_customMatarial && _material != null)
+			{
+				if (Application.isPlaying)
+					Material.Destroy(_material);
+				else
+					Material.DestroyImmediate(_material);
+			}
 			_material = null;
 			meshRenderer = null;
 			meshFilter = null;
 		}
 
-		virtual public void Update(UpdateContext context)
+		public void UpdateMaterial(UpdateContext context)
 		{
-			if (_manager == null)
-				return;
+			if (_manager != null && !_customMatarial)
+			{
+				_material = _manager.GetMaterial(this, context);
+				if ((object)_material != (object)meshRenderer.sharedMaterial && (object)_material.mainTexture != null)
+					meshRenderer.sharedMaterial = _material;
+			}
 
-			Material mat;
-			if ((object)_material != null)
-				mat = _material;
-			else
-				mat = _manager.GetContextMaterial(this, context);
-			if ((object)mat != (object)meshRenderer.sharedMaterial && (object)mat.mainTexture != null)
-				meshRenderer.sharedMaterial = mat;
+			if (_material != null)
+			{
+				if (blendMode != BlendMode.Normal) //GetMateria已经保证了不同的blendMode会返回不同的共享材质，所以这里可以放心设置
+					BlendModeUtils.Apply(_material, blendMode);
+
+				if (context.clipped)
+				{
+					if (maskFrameId != UpdateContext.frameId && context.rectMaskDepth > 0)
+					{
+						_material.SetVector("_ClipBox", context.clipInfo.clipBox);
+						if (context.clipInfo.soft)
+							_material.SetVector("_ClipSoftness", context.clipInfo.softness);
+					}
+
+					if (context.stencilReferenceValue > 0)
+					{
+						if (maskFrameId == UpdateContext.frameId)
+						{
+							if (context.stencilReferenceValue == 1)
+							{
+								_material.SetInt("_StencilComp", (int)UnityEngine.Rendering.CompareFunction.Always);
+								_material.SetInt("_Stencil", 1);
+								_material.SetInt("_StencilOp", (int)UnityEngine.Rendering.StencilOp.Replace);
+								_material.SetInt("_StencilReadMask", 255);
+								_material.SetInt("_ColorMask", 0);
+							}
+							else
+							{
+								_material.SetInt("_StencilComp", (int)UnityEngine.Rendering.CompareFunction.Equal);
+								_material.SetInt("_Stencil", context.stencilReferenceValue | (context.stencilReferenceValue - 1));
+								_material.SetInt("_StencilOp", (int)UnityEngine.Rendering.StencilOp.Replace);
+								_material.SetInt("_StencilReadMask", context.stencilReferenceValue - 1);
+								_material.SetInt("_ColorMask", 0);
+							}
+						}
+						else
+						{
+							_material.SetInt("_StencilComp", (int)UnityEngine.Rendering.CompareFunction.Equal);
+							_material.SetInt("_Stencil", context.stencilReferenceValue | (context.stencilReferenceValue - 1));
+							_material.SetInt("_StencilOp", (int)UnityEngine.Rendering.StencilOp.Keep);
+							_material.SetInt("_StencilReadMask", context.stencilReferenceValue | (context.stencilReferenceValue - 1));
+							_material.SetInt("_ColorMask", 15);
+						}
+						if (_material is NMaterial)
+							((NMaterial)_material).stencilSet = true;
+					}
+					else if ((_material is NMaterial) && ((NMaterial)_material).stencilSet)
+					{
+						_material.SetInt("_StencilComp", (int)UnityEngine.Rendering.CompareFunction.Always);
+						_material.SetInt("_Stencil", 0);
+						_material.SetInt("_StencilOp", (int)UnityEngine.Rendering.StencilOp.Keep);
+						_material.SetInt("_StencilReadMask", 255);
+						_material.SetInt("_ColorMask", 15);
+
+						((NMaterial)_material).stencilSet = false;
+					}
+				}
+			}
 		}
 
 		public void Alloc(int vertCount)
@@ -200,6 +293,26 @@ namespace FairyGUI
 		public void UpdateMesh()
 		{
 			vertCount = vertices.Length;
+			if (vertexMatrix != null)
+			{
+				Matrix4x4 mm = (Matrix4x4)vertexMatrix;
+				Vector3 camPos = cameraPosition != null ? (Vector3)cameraPosition : Vector3.zero;
+				Vector3 center = new Vector3(camPos.x, camPos.y, 0);
+				center -= mm.MultiplyPoint(center);
+				for (int i = 0; i < vertCount; i++)
+				{
+					Vector3 pt = vertices[i];
+					pt = mm.MultiplyPoint(pt);
+					pt += center;
+					Vector3 vec = pt - camPos;
+					float lambda = -camPos.z / vec.z;
+					pt.x = camPos.x + lambda * vec.x;
+					pt.y = camPos.y + lambda * vec.y;
+					pt.z = 0;
+
+					vertices[i] = pt;
+				}
+			}
 
 			for (int i = 0; i < vertCount; i++)
 			{
@@ -232,12 +345,47 @@ namespace FairyGUI
 
 		public void SetOneQuadMesh(Rect drawRect, Rect uvRect, Color color)
 		{
-			Alloc(4);
-			FillVerts(0, drawRect);
-			FillUV(0, uvRect);
-			FillColors(color);
-			this.triangles = TRIANGLES;
-			UpdateMesh();
+			//当四边形发生形变时，只用两个三角面表达会造成图形的变形较严重，这里做一个优化，自动增加更多的面
+			if (vertexMatrix != null)
+			{
+				Alloc(9);
+
+				FillVerts(0, drawRect);
+				FillUV(0, uvRect);
+
+				Vector2 camPos = cameraPosition != null ? (Vector2)cameraPosition : Vector2.zero;
+				if (camPos.x == 0)
+					camPos.x = drawRect.x + drawRect.width / 2;
+				if (camPos.y == 0)
+					camPos.y = -(drawRect.y + drawRect.height / 2);
+				float cx = uvRect.x + (camPos.x - drawRect.x) / drawRect.width * uvRect.width;
+				float cy = uvRect.y - (camPos.y - drawRect.y) / drawRect.height * uvRect.height;
+
+				vertices[4] = new Vector3(camPos.x, camPos.y, 0);
+				vertices[5] = new Vector3(drawRect.xMin, camPos.y, 0);
+				vertices[6] = new Vector3(camPos.x, -drawRect.yMin, 0);
+				vertices[7] = new Vector3(drawRect.xMax, camPos.y, 0);
+				vertices[8] = new Vector3(camPos.x, -drawRect.yMax, 0);
+
+				uv[4] = new Vector2(cx, cy);
+				uv[5] = new Vector2(uvRect.xMin, cy);
+				uv[6] = new Vector2(cx, uvRect.yMax);
+				uv[7] = new Vector2(uvRect.xMax, cy);
+				uv[8] = new Vector2(cx, uvRect.yMin);
+
+				FillColors(color);
+				this.triangles = TRIANGLES_4_GRID;
+				UpdateMesh();
+			}
+			else
+			{
+				Alloc(4);
+				FillVerts(0, drawRect);
+				FillUV(0, uvRect);
+				FillColors(color);
+				this.triangles = TRIANGLES;
+				UpdateMesh();
+			}
 		}
 
 		public void DrawRect(Rect vertRect, int lineSize, Color lineColor, Color fillColor)
@@ -304,12 +452,7 @@ namespace FairyGUI
 				angle += angleDelta;
 			}
 
-			int triangleCount = numSides * 3;
-			if (this.triangles != null && this.triangles.Length == triangleCount
-				&& this.triangles != TRIANGLES && this.triangles != TRIANGLES_9_GRID)
-				triangles = this.triangles;
-			else
-				triangles = new int[triangleCount];
+			AllocTriangleArray(numSides * 3);
 
 			int k = 0;
 			for (int i = 1; i < numSides; i++)
@@ -382,15 +525,20 @@ namespace FairyGUI
 				this.colors[i] = col32;
 		}
 
+		void AllocTriangleArray(int requestSize)
+		{
+			if (this.triangles == null
+				|| this.triangles.Length != requestSize
+				|| this.triangles == TRIANGLES
+				|| this.triangles == TRIANGLES_9_GRID
+				|| this.triangles == TRIANGLES_4_GRID)
+				this.triangles = new int[requestSize];
+		}
+
 		public void FillTriangles()
 		{
 			int vertCount = this.vertices.Length;
-			int triangleCount = (vertCount >> 1) * 3;
-			if (this.triangles != null && this.triangles.Length == triangleCount
-				&& this.triangles != TRIANGLES && this.triangles != TRIANGLES_9_GRID)
-				triangles = this.triangles;
-			else
-				triangles = new int[triangleCount];
+			AllocTriangleArray((vertCount >> 1) * 3);
 
 			int k = 0;
 			for (int i = 0; i < vertCount; i += 4)
@@ -410,12 +558,15 @@ namespace FairyGUI
 			this.triangles = triangles;
 		}
 
-		public void Clear()
+		public void ClearMesh()
 		{
-			vertCount = 0;
+			if (vertCount > 0)
+			{
+				vertCount = 0;
 
-			mesh.Clear();
-			meshFilter.mesh = mesh;
+				mesh.Clear();
+				meshFilter.mesh = mesh;
+			}
 		}
 
 		public void Tint(Color value)

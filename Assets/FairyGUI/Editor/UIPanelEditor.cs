@@ -91,6 +91,7 @@ namespace FairyGUIEditor
 			EditorGUILayout.PropertyField(renderMode);
 			if ((RenderMode)renderMode.enumValueIndex != RenderMode.ScreenSpaceOverlay)
 				EditorGUILayout.PropertyField(renderCamera);
+			int oldSortingOrder = panel.sortingOrder;
 			EditorGUILayout.PropertyField(sortingOrder);
 			EditorGUILayout.PropertyField(fairyBatching);
 			EditorGUILayout.PropertyField(hitTestMode);
@@ -109,9 +110,7 @@ namespace FairyGUIEditor
 			{
 				if (PrefabUtility.GetPrefabType(panel) != PrefabType.Prefab)
 				{
-					panel.SendMessage("ApplyModifiedProperties");
-					if ((FitScreen)fitScreen.enumValueIndex != oldFitScreen)
-						panel.SendMessage("ApplyFitSceenChanged");
+					panel.ApplyModifiedProperties(sortingOrder.intValue != oldSortingOrder, (FitScreen)fitScreen.enumValueIndex != oldFitScreen);
 				}
 			}
 		}
