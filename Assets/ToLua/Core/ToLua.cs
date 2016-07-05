@@ -156,7 +156,7 @@ namespace LuaInterface
                     }
                 }
 
-                Debugger.Log(sb.ToString());
+                Debugger.Log(StringBuilderCache.GetStringAndRelease(sb));
                 return 0;
             }
             catch (Exception e)
@@ -610,6 +610,20 @@ namespace LuaInterface
                 default:
                     return null;
             }
+        }
+
+        public static object ToVarObject(IntPtr L, int stackPos, Type t)
+        {
+            LuaTypes type = LuaDLL.lua_type(L, stackPos);
+
+            if (type == LuaTypes.LUA_TNUMBER)
+            {
+                object o = LuaDLL.lua_tonumber(L, stackPos);
+                o = Convert.ChangeType(o, t);
+                return o;
+            }
+
+            return ToVarObject(L, stackPos);
         }
 
         public static object ToVarTable(IntPtr L, int stackPos)
@@ -1359,8 +1373,8 @@ namespace LuaInterface
 
             while (pos < count)
             {
-                object temp = ToVarObject(L, stackPos++);
-                list[pos++] = (T)Convert.ChangeType(temp, type);                                                
+                object temp = ToVarObject(L, stackPos++);                
+                list[pos++] = TypeChecker.ChangeType<T>(temp, type);
             }
 
             return list;
@@ -1509,8 +1523,8 @@ namespace LuaInterface
 
             while (pos < count)
             {
-                object temp = CheckVarObject(L, stackPos++, type);
-                list[pos++] = (T)Convert.ChangeType(temp, type);                                
+                object temp = CheckVarObject(L, stackPos++, type);                
+                list[pos++] = TypeChecker.ChangeType<T>(temp, type);
             }
 
             return list;
