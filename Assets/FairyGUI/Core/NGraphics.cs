@@ -571,7 +571,7 @@ namespace FairyGUI
 
 		public void Tint(Color value)
 		{
-			if (this.colors == null)
+			if (this.colors == null || vertCount == 0)
 				return;
 
 			Color32 value32 = value;

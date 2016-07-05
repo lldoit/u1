@@ -123,8 +123,33 @@ namespace FairyGUI.Utils
 							string color = XMLIterator.GetAttribute("color");
 							if (color != null)
 							{
-								_format.color = ToolSet.ConvertFromHtmlColor(color);
-								_format.colorChanged = true;
+								string[] parts = color.Split(',');
+								if (parts.Length == 1)
+								{
+									_format.color = ToolSet.ConvertFromHtmlColor(color);
+									_format.gradientColor = null;
+									_format.colorChanged = true;
+								}
+								else
+								{
+									if (_format.gradientColor == null)
+										_format.gradientColor = new Color32[4];
+									_format.gradientColor[0] = ToolSet.ConvertFromHtmlColor(parts[0]);
+									_format.gradientColor[1] = ToolSet.ConvertFromHtmlColor(parts[1]);
+									if (parts.Length > 2)
+									{
+										_format.gradientColor[2] = ToolSet.ConvertFromHtmlColor(parts[2]);
+										if (parts.Length > 3)
+											_format.gradientColor[3] = ToolSet.ConvertFromHtmlColor(parts[3]);
+										else
+											_format.gradientColor[3] = _format.gradientColor[2];
+									}
+									else
+									{
+										_format.gradientColor[2] = _format.gradientColor[0];
+										_format.gradientColor[3] = _format.gradientColor[1];
+									}
+								}
 							}
 						}
 						else if (XMLIterator.tagType == XMLTagType.End)

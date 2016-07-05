@@ -11,11 +11,6 @@ namespace FairyGUI
 		public static bool disableAllTweenEffect = false;
 
 		/// <summary>
-		/// Pages involed in this gear.
-		/// </summary>
-		public PageOptionSet pageSet { get; private set; }
-
-		/// <summary>
 		/// Use tween to apply change.
 		/// </summary>
 		public bool tween;
@@ -38,13 +33,9 @@ namespace FairyGUI
 		protected GObject _owner;
 		protected Controller _controller;
 
-		protected static char[] jointChar0 = new char[] { ',' };
-		protected static char[] jointChar1 = new char[] { '|' };
-
 		public GearBase(GObject owner)
 		{
 			_owner = owner;
-			pageSet = new PageOptionSet();
 			easeType = Ease.OutQuad;
 			tweenTime = 0.3f;
 			delay = 0;
@@ -65,8 +56,6 @@ namespace FairyGUI
 				if (value != _controller)
 				{
 					_controller = value;
-					pageSet.controller = value;
-					pageSet.Clear();
 					if (_controller != null)
 						Init();
 				}
@@ -82,13 +71,6 @@ namespace FairyGUI
 				return;
 
 			Init();
-
-			string[] pages = xml.GetAttributeArray("pages");
-			if (pages != null)
-			{
-				foreach (string s in pages)
-					pageSet.AddById(s);
-			}
 
 			str = xml.GetAttribute("tween");
 			if (str != null)
@@ -106,33 +88,29 @@ namespace FairyGUI
 			if (str != null)
 				delay = float.Parse(str);
 
-			str = xml.GetAttribute("values");
-			string[] values = null;
-			if (str != null)
-				values = str.Split(jointChar1);
-
-			if (pages != null && values != null)
+			if (this is GearDisplay)
 			{
-				for (int i = 0; i < values.Length; i++)
-				{
-					str = values[i];
-					if (str != "-")
-						AddStatus(pages[i], str);
-				}
+				string[] pages = xml.GetAttributeArray("pages");
+				if (pages != null)
+					((GearDisplay)this).pages.AddRange(pages);
 			}
-			str = xml.GetAttribute("default");
-			if (str != null)
-				AddStatus(null, str);
-		}
-
-		virtual protected bool connected
-		{
-			get
+			else
 			{
-				if (_controller != null && !pageSet.isEmpty)
-					return pageSet.ContainsId(_controller.selectedPageId);
-				else
-					return false;
+				string[] pages = xml.GetAttributeArray("pages");
+				string[] values = xml.GetAttributeArray("values", '|');
+
+				if (pages != null && values != null)
+				{
+					for (int i = 0; i < values.Length; i++)
+					{
+						str = values[i];
+						if (str != "-")
+							AddStatus(pages[i], str);
+					}
+				}
+				str = xml.GetAttribute("default");
+				if (str != null)
+					AddStatus(null, str);
 			}
 		}
 

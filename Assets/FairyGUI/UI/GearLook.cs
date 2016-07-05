@@ -41,7 +41,7 @@ namespace FairyGUI
 
 		override protected void AddStatus(string pageId, string value)
 		{
-			string[] arr = value.Split(jointChar0);
+			string[] arr = value.Split(',');
 			if (pageId == null)
 			{
 				_default.alpha = float.Parse(arr[0]);
@@ -55,20 +55,13 @@ namespace FairyGUI
 		override public void Apply()
 		{
 			GearLookValue gv;
-			bool ct = this.connected;
-			if (ct)
-			{
-				if (!_storage.TryGetValue(_controller.selectedPageId, out gv))
-					gv = _default;
-			}
-			else
+			if (!_storage.TryGetValue(_controller.selectedPageId, out gv))
 				gv = _default;
 
 			if (_tweener != null)
 				_tweener.Kill(true);
 
-			if (tween && UIPackage._constructing == 0 && !disableAllTweenEffect
-				&& ct && pageSet.ContainsId(_controller.previousPageId))
+			if (tween && UIPackage._constructing == 0 && !disableAllTweenEffect)
 			{
 				_owner._gearLocked = true;
 				_owner.grayed = gv.grayed;
@@ -115,23 +108,14 @@ namespace FairyGUI
 			if (_owner._gearLocked)
 				return;
 
-			if (connected)
-			{
-				GearLookValue gv;
-				if (!_storage.TryGetValue(_controller.selectedPageId, out gv))
-					_storage[_controller.selectedPageId] = new GearLookValue(_owner.alpha, _owner.rotation, _owner.grayed);
-				else
-				{
-					gv.alpha = _owner.alpha;
-					gv.rotation = _owner.rotation;
-					gv.grayed = _owner.grayed;
-				}
-			}
+			GearLookValue gv;
+			if (!_storage.TryGetValue(_controller.selectedPageId, out gv))
+				_storage[_controller.selectedPageId] = new GearLookValue(_owner.alpha, _owner.rotation, _owner.grayed);
 			else
 			{
-				_default.alpha = _owner.alpha;
-				_default.rotation = _owner.rotation;
-				_default.grayed = _owner.grayed;
+				gv.alpha = _owner.alpha;
+				gv.rotation = _owner.rotation;
+				gv.grayed = _owner.grayed;
 			}
 		}
 	}

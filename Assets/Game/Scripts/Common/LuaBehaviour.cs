@@ -214,8 +214,11 @@ namespace LuaFramework
             SafeRelease(ref mLuaTable);
 
 #if ASYNC_MODE
-            string abName = name.ToLower();
-            ResManager.UnloadAssetBundle(abName + AppConst.ExtName);
+            if (!AppConst.DebugMode)
+            {
+                string abName = name.ToLower();
+                ResManager.UnloadAssetBundle(abName + AppConst.ExtName);
+            }
 #endif
 
             Util.ClearMemory();

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEditor;
-#if (UNITY_5_3 || UNITY_5_4)
+#if UNITY_5_3_OR_NEWER
 using UnityEditor.SceneManagement;
 #endif
 using FairyGUI;
@@ -161,7 +161,7 @@ namespace FairyGUIEditor
 				Selection.activeGameObject.SendMessage("OnUpdateSource",
 					new object[] { selectedPkg.name, packagePath, selectedComponentName, !isPrefab }, 
 					SendMessageOptions.DontRequireReceiver);
-#if (UNITY_5_3 || UNITY_5_4)
+#if UNITY_5_3_OR_NEWER
 				EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
 #elif UNITY_5
 				EditorApplication.MarkSceneDirty();

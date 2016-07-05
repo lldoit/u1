@@ -39,7 +39,7 @@ namespace FairyGUI
 
 		override protected void AddStatus(string pageId, string value)
 		{
-			string[] arr = value.Split(jointChar0);
+			string[] arr = value.Split(',');
 			if (pageId == null)
 			{
 				_default.x = int.Parse(arr[0]);
@@ -52,20 +52,13 @@ namespace FairyGUI
 		override public void Apply()
 		{
 			GearXYValue gv;
-			bool ct = this.connected;
-			if (ct)
-			{
-				if (!_storage.TryGetValue(_controller.selectedPageId, out gv))
-					gv = _default;
-			}
-			else
+			if (!_storage.TryGetValue(_controller.selectedPageId, out gv))
 				gv = _default;
 
 			if (_tweener != null)
 				_tweener.Kill(true);
 
-			if (tween && UIPackage._constructing == 0 && !disableAllTweenEffect
-				&& ct && pageSet.ContainsId(_controller.previousPageId))
+			if (tween && UIPackage._constructing == 0 && !disableAllTweenEffect)
 			{
 				if (_owner.x != gv.x || _owner.y != gv.y)
 				{
@@ -102,21 +95,13 @@ namespace FairyGUI
 			if (_owner._gearLocked)
 				return;
 
-			if (connected)
-			{
-				GearXYValue gv;
-				if (!_storage.TryGetValue(_controller.selectedPageId, out gv))
-					_storage[_controller.selectedPageId] = new GearXYValue(_owner.x, _owner.y);
-				else
-				{
-					gv.x = _owner.x;
-					gv.y = _owner.y;
-				}
-			}
+			GearXYValue gv;
+			if (!_storage.TryGetValue(_controller.selectedPageId, out gv))
+				_storage[_controller.selectedPageId] = new GearXYValue(_owner.x, _owner.y);
 			else
 			{
-				_default.x = _owner.x;
-				_default.y = _owner.y;
+				gv.x = _owner.x;
+				gv.y = _owner.y;
 			}
 		}
 

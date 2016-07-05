@@ -46,6 +46,60 @@ namespace FairyGUI
 			}
 		}
 
+		/// <summary>
+		/// 
+		/// </summary>
+		override public bool displayAsPassword
+		{
+			get { return false; }
+			set {  /* not support */  }
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		override public AlignType align
+		{
+			get { return _richTextField.align; }
+			set { _richTextField.align = value; }
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		override public bool singleLine
+		{
+			get { return false; }
+			set { /* not support */ }
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		override public int stroke
+		{
+			get { return _richTextField.stroke; }
+			set { _richTextField.stroke = value; }
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		override public Color strokeColor
+		{
+			get { return _richTextField.strokeColor; }
+			set { _richTextField.strokeColor = value; }
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		override public Vector2 shadowOffset
+		{
+			get { return _richTextField.shadowOffset; }
+			set { _richTextField.shadowOffset = value; }
+		}
+
 		public IHtmlObject GetHtmlObject(string name)
 		{
 			return _richTextField.GetHtmlObject(name);
@@ -118,21 +172,13 @@ namespace FairyGUI
 				tf.CopyFrom(_textFormat);
 				_richTextField.textFormat = tf;
 			}
-			_richTextField.stroke = _stroke;
-			_richTextField.strokeColor = _strokeColor;
 
 			if (!underConstruct)
 				UpdateSize();
 		}
 
-		override protected void UpdateTextFieldPassword()
-		{
-			//not supported
-		}
-
 		override protected void DoAlign()
 		{
-			_richTextField.align = _align;
 			if (_verticalAlign == VertAlignType.Top || _textHeight == 0)
 				_yOffset = 0;
 			else

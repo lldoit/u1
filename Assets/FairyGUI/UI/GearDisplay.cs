@@ -7,20 +7,14 @@ namespace FairyGUI
 	/// </summary>
 	public class GearDisplay : GearBase
 	{
+		/// <summary>
+		/// Pages involed in this gear.
+		/// </summary>
+		public List<string> pages { get; private set; }
+
 		public GearDisplay(GObject owner)
 			: base(owner)
 		{
-		}
-
-		override protected bool connected
-		{
-			get
-			{
-				if (_controller != null && !pageSet.isEmpty)
-					return pageSet.ContainsId(_controller.selectedPageId);
-				else
-					return true;
-			}
 		}
 
 		override protected void AddStatus(string pageId, string value)
@@ -29,10 +23,15 @@ namespace FairyGUI
 
 		override protected void Init()
 		{
+			if (pages != null)
+				pages.Clear();
+			else
+				pages = new List<string>();
 		}
+
 		override public void Apply()
 		{
-			if (connected)
+			if (_controller == null || pages == null || pages.Count == 0 || pages.Contains(_controller.selectedPageId))
 				_owner.internalVisible++;
 			else
 				_owner.internalVisible = 0;

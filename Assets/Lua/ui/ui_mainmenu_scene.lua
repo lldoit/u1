@@ -37,10 +37,10 @@ function ui_mainmenu_scene:on_post_load()
       _view_ctrl.selectedIndex = 0;
       btn_Back.visible = false;
   end)
-  
+
   local btn_Button = self.ui:GetChild("btn_Button")
   self.lua_behaviour:AddClick(btn_Button, function(go)
-      ui_bag:show(nil)
+    ui_bag.show(nil)
   end)
 end
 

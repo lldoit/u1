@@ -28,17 +28,23 @@ namespace FairyGUI
 		Highlighter _highlighter;
 		int _stroke;
 		Color _strokeColor;
+		Vector2 _shadowOffset;
 
 		List<HtmlElement> _elements;
 		List<LineInfo> _lines;
 		internal RichTextField _richTextField;
 
+#pragma warning disable 0649
 		IMobileInputAdapter _mobileInputAdapter;
+#pragma warning restore 0649
 
 		BaseFont _font;
 		float _textWidth;
 		float _textHeight;
 		bool _textChanged;
+
+		EventCallback1 _touchMoveDelegate;
+		EventCallback1 _touchEndDelegate;
 
 		const int GUTTER_X = 2;
 		const int GUTTER_Y = 2;
@@ -77,6 +83,9 @@ namespace FairyGUI
 			onFocusIn = new EventListener(this, "onFocusIn");
 			onFocusOut = new EventListener(this, "onFocusOut");
 			onChanged = new EventListener(this, "onChanged");
+
+			_touchMoveDelegate = __touchMove;
+			_touchEndDelegate = __touchEnd;
 		}
 
 		public TextFormat textFormat
@@ -247,6 +256,19 @@ namespace FairyGUI
 					_strokeColor = value;
 					_requireUpdateMesh = true;
 				}
+			}
+		}
+
+		public Vector2 shadowOffset
+		{
+			get
+			{
+				return _shadowOffset;
+			}
+			set
+			{
+				_shadowOffset = value;
+				_requireUpdateMesh = true;
 			}
 		}
 
@@ -764,6 +786,7 @@ namespace FairyGUI
 			TextFormat format = _textFormat;
 			_font.SetFormat(format);
 			Color32 color = format.color;
+			Color32[] gradientColor = format.gradientColor;
 			bool customBold = _font.customBold;
 			if (_input)
 			{
@@ -817,6 +840,7 @@ namespace FairyGUI
 							format = element.format;
 							_font.SetFormat(format);
 							color = format.color;
+							gradientColor = format.gradientColor;
 						}
 						else if (element.type == HtmlElementType.LinkStart)
 						{
@@ -897,7 +921,20 @@ namespace FairyGUI
 							vertList.Add(new Vector3(v1.x, v0.y));
 							line.quadCount++;
 
-							colList.Add(color);
+							if (gradientColor != null)
+							{
+								colList.Add(gradientColor[1]);
+								colList.Add(gradientColor[0]);
+								colList.Add(gradientColor[2]);
+								colList.Add(gradientColor[3]);
+							}
+							else
+							{
+								colList.Add(color);
+								colList.Add(color);
+								colList.Add(color);
+								colList.Add(color);
+							}
 						}
 						else
 						{
@@ -917,7 +954,20 @@ namespace FairyGUI
 								vertList.Add(new Vector3(v1.x + fx, v0.y + fy));
 								line.quadCount++;
 
-								colList.Add(color);
+								if (gradientColor != null)
+								{
+									colList.Add(gradientColor[1]);
+									colList.Add(gradientColor[0]);
+									colList.Add(gradientColor[2]);
+									colList.Add(gradientColor[3]);
+								}
+								else
+								{
+									colList.Add(color);
+									colList.Add(color);
+									colList.Add(color);
+									colList.Add(color);
+								}
 							}
 						}
 
@@ -956,6 +1006,9 @@ namespace FairyGUI
 							line.quadCount++;
 
 							colList.Add(color);
+							colList.Add(color);
+							colList.Add(color);
+							colList.Add(color);
 						}
 					}
 					else //if (glyph != null)
@@ -977,27 +1030,37 @@ namespace FairyGUI
 						line.quadCount++;
 
 						colList.Add(color);
+						colList.Add(color);
+						colList.Add(color);
+						colList.Add(color);
 
 						charX += letterSpacing;
 					}
 				}//text loop
 			}//line loop
 
-			if (!_input && _stroke != 0 && _font.canOutline)
+			bool hasShadow = _shadowOffset.x != 0 || _shadowOffset.y != 0;
+			if (!_input && (_stroke != 0 || hasShadow) && _font.canOutline)
 			{
 				int count = vertList.Count;
-				graphics.Alloc(count * 5);
+				int allocCount = count;
+				if (_stroke != 0)
+					allocCount += count * 4;
+				if (hasShadow)
+					allocCount += count;
+				graphics.Alloc(allocCount);
+
 				Vector3[] vertBuf = graphics.vertices;
 				Vector2[] uvBuf = graphics.uv;
 				Color32[] colBuf = graphics.colors;
 
-				int start = count * 4;
+				int start = allocCount - count;
 				vertList.CopyTo(0, vertBuf, start, count);
 				uvList.CopyTo(0, uvBuf, start, count);
 				if (_font.canTint)
 				{
 					for (int i = 0; i < count; i++)
-						colBuf[start + i] = colList[i / 4];
+						colBuf[start + i] = colList[i];
 				}
 				else
 				{
@@ -1005,11 +1068,31 @@ namespace FairyGUI
 						colBuf[start + i] = Color.white;
 				}
 
-				Color32 col = _strokeColor;
-				int offset;
-				for (int j = 0; j < 4; j++)
+				Color32 strokeColor = _strokeColor;
+				if (_stroke != 0)
 				{
-					offset = j * count;
+					for (int j = 0; j < 4; j++)
+					{
+						start = j * count;
+						for (int i = 0; i < count; i++)
+						{
+							Vector3 vert = vertList[i];
+							Vector2 u = uvList[i];
+
+							//使用这个特殊的设置告诉着色器这个是描边
+							if (_font.canOutline)
+								u.y = 10 + u.y;
+							uvBuf[start] = u;
+							vertBuf[start] = new Vector3(vert.x + STROKE_OFFSET[j * 2] * _stroke, vert.y + STROKE_OFFSET[j * 2 + 1] * _stroke, 0);
+							colBuf[start] = strokeColor;
+							start++;
+						}
+					}
+				}
+
+				if (hasShadow)
+				{
+					start = allocCount - count - count;
 					for (int i = 0; i < count; i++)
 					{
 						Vector3 vert = vertList[i];
@@ -1018,10 +1101,10 @@ namespace FairyGUI
 						//使用这个特殊的设置告诉着色器这个是描边
 						if (_font.canOutline)
 							u.y = 10 + u.y;
-						uvBuf[offset] = u;
-						vertBuf[offset] = new Vector3(vert.x + STROKE_OFFSET[j * 2] * _stroke, vert.y + STROKE_OFFSET[j * 2 + 1] * _stroke, 0);
-						colBuf[offset] = col;
-						offset++;
+						uvBuf[start] = u;
+						vertBuf[start] = new Vector3(vert.x + _shadowOffset.x, vert.y - _shadowOffset.y, 0);
+						colBuf[start] = strokeColor;
+						start++;
 					}
 				}
 			}
@@ -1034,7 +1117,7 @@ namespace FairyGUI
 				if (_font.canTint)
 				{
 					for (int i = 0; i < count; i++)
-						graphics.colors[i] = colList[i / 4];
+						graphics.colors[i] = colList[i];
 				}
 				else
 				{
@@ -1679,12 +1762,15 @@ namespace FairyGUI
 
 			AdjustCaret(cp);
 			_selectionStart = cp;
-			Stage.inst.onTouchMove.AddCapture(__touchMove);
-			Stage.inst.onTouchEnd.AddCapture(__touchEnd);
+			Stage.inst.onTouchMove.AddCapture(_touchMoveDelegate);
+			Stage.inst.onTouchEnd.AddCapture(_touchEndDelegate);
 		}
 
 		void __touchMove(EventContext context)
 		{
+			if (isDisposed)
+				return;
+
 			if (_selectionStart == null)
 				return;
 
@@ -1702,10 +1788,14 @@ namespace FairyGUI
 
 		void __touchEnd(EventContext context)
 		{
+			Stage.inst.onTouchMove.RemoveCapture(_touchMoveDelegate);
+			Stage.inst.onTouchEnd.RemoveCapture(_touchEndDelegate);
+
+			if (isDisposed)
+				return;
+
 			if (_selectionStart != null && ((CharPosition)_selectionStart).charIndex == _caretPosition)
 				_selectionStart = null;
-			Stage.inst.onTouchMove.RemoveCapture(__touchMove);
-			Stage.inst.onTouchEnd.RemoveCapture(__touchEnd);
 		}
 
 		class LineInfo

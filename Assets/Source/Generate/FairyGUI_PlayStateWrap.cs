@@ -15,7 +15,6 @@ public class FairyGUI_PlayStateWrap
 		L.RegFunction("__tostring", Lua_ToString);
 		L.RegVar("ignoreTimeScale", get_ignoreTimeScale, set_ignoreTimeScale);
 		L.RegVar("reachEnding", get_reachEnding, null);
-		L.RegVar("frameStarting", get_frameStarting, null);
 		L.RegVar("reversed", get_reversed, null);
 		L.RegVar("repeatedCount", get_repeatedCount, null);
 		L.RegVar("currrentFrame", get_currrentFrame, set_currrentFrame);
@@ -165,25 +164,6 @@ public class FairyGUI_PlayStateWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index reachEnding on a nil value" : e.Message);
-		}
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int get_frameStarting(IntPtr L)
-	{
-		object o = null;
-
-		try
-		{
-			o = ToLua.ToObject(L, 1);
-			FairyGUI.PlayState obj = (FairyGUI.PlayState)o;
-			bool ret = obj.frameStarting;
-			LuaDLL.lua_pushboolean(L, ret);
-			return 1;
-		}
-		catch(Exception e)
-		{
-			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index frameStarting on a nil value" : e.Message);
 		}
 	}
 

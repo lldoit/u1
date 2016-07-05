@@ -11,8 +11,6 @@ namespace FairyGUI
 		public int top;
 		public int bottom;
 
-		static char[] sep0 = new char[] { ',' };
-
 		public void Parse(string str)
 		{
 			if (str == null)
@@ -21,7 +19,7 @@ namespace FairyGUI
 				return;
 			}
 
-			string[] arr = str.Split(sep0);
+			string[] arr = str.Split(',');
 			if (arr.Length <= 1)
 			{
 				int k = int.Parse(arr[0]);

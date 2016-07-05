@@ -36,7 +36,7 @@ namespace FairyGUI
 
 		override protected void AddStatus(string pageId, string value)
 		{
-			string[] arr = value.Split(jointChar0);
+			string[] arr = value.Split(',');
 			int frame = int.Parse(arr[0]);
 			bool playing = arr[1] == "p";
 			if (pageId == null)
@@ -53,12 +53,7 @@ namespace FairyGUI
 			_owner._gearLocked = true;
 
 			GearAnimationValue gv;
-			if (connected)
-			{
-				if (!_storage.TryGetValue(_controller.selectedPageId, out gv))
-					gv = _default;
-			}
-			else
+			if (!_storage.TryGetValue(_controller.selectedPageId, out gv))
 				gv = _default;
 
 			IAnimationGear mc = (IAnimationGear)_owner;
@@ -74,21 +69,13 @@ namespace FairyGUI
 				return;
 
 			IAnimationGear mc = (IAnimationGear)_owner;
-			if (connected)
-			{
-				GearAnimationValue gv;
-				if (!_storage.TryGetValue(_controller.selectedPageId, out gv))
-					_storage[_controller.selectedPageId] = new GearAnimationValue(mc.playing, mc.frame);
-				else
-				{
-					gv.playing = mc.playing;
-					gv.frame = mc.frame;
-				}
-			}
+			GearAnimationValue gv;
+			if (!_storage.TryGetValue(_controller.selectedPageId, out gv))
+				_storage[_controller.selectedPageId] = new GearAnimationValue(mc.playing, mc.frame);
 			else
 			{
-				_default.playing = mc.playing;
-				_default.frame = mc.frame;
+				gv.playing = mc.playing;
+				gv.frame = mc.frame;
 			}
 		}
 	}

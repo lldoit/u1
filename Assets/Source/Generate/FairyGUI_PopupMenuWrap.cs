@@ -19,6 +19,7 @@ public class FairyGUI_PopupMenuWrap
 		L.RegFunction("isItemChecked", isItemChecked);
 		L.RegFunction("RemoveItem", RemoveItem);
 		L.RegFunction("ClearItems", ClearItems);
+		L.RegFunction("Dispose", Dispose);
 		L.RegFunction("Show", Show);
 		L.RegFunction("New", _CreateFairyGUI_PopupMenu);
 		L.RegFunction("__tostring", Lua_ToString);
@@ -349,6 +350,22 @@ public class FairyGUI_PopupMenuWrap
 			ToLua.CheckArgsCount(L, 1);
 			FairyGUI.PopupMenu obj = (FairyGUI.PopupMenu)ToLua.CheckObject(L, 1, typeof(FairyGUI.PopupMenu));
 			obj.ClearItems();
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int Dispose(IntPtr L)
+	{
+		try
+		{
+			ToLua.CheckArgsCount(L, 1);
+			FairyGUI.PopupMenu obj = (FairyGUI.PopupMenu)ToLua.CheckObject(L, 1, typeof(FairyGUI.PopupMenu));
+			obj.Dispose();
 			return 0;
 		}
 		catch(Exception e)

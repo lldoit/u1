@@ -95,7 +95,8 @@ namespace LuaFramework
             win.contentPane = UIPackage.CreateObject(assetName, resName).asCom;
             win.Center();
             win.modal = true;
-            
+            win.displayObject.gameObject.name = assetName;
+
             LuaBehaviour tmpBehaviour = win.displayObject.gameObject.AddComponent<LuaBehaviour>();
             tmpBehaviour.Init(luaTable, win);
             

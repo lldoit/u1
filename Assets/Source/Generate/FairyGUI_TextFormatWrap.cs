@@ -20,6 +20,7 @@ public class FairyGUI_TextFormatWrap
 		L.RegVar("bold", get_bold, set_bold);
 		L.RegVar("underline", get_underline, set_underline);
 		L.RegVar("italic", get_italic, set_italic);
+		L.RegVar("gradientColor", get_gradientColor, set_gradientColor);
 		L.EndClass();
 	}
 
@@ -269,6 +270,25 @@ public class FairyGUI_TextFormatWrap
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_gradientColor(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.TextFormat obj = (FairyGUI.TextFormat)o;
+			UnityEngine.Color32[] ret = obj.gradientColor;
+			ToLua.Push(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index gradientColor on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
 	static int set_size(IntPtr L)
 	{
 		object o = null;
@@ -417,6 +437,25 @@ public class FairyGUI_TextFormatWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index italic on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int set_gradientColor(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.TextFormat obj = (FairyGUI.TextFormat)o;
+			UnityEngine.Color32[] arg0 = ToLua.CheckObjectArray<UnityEngine.Color32>(L, 2);
+			obj.gradientColor = arg0;
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index gradientColor on a nil value" : e.Message);
 		}
 	}
 }

@@ -59,6 +59,8 @@ namespace FairyGUI
 		int _tweening;
 
 		EventCallback0 _refreshDelegate;
+		EventCallback1 _touchEndDelegate;
+		EventCallback1 _touchMoveDelegate;
 
 		GComponent _owner;
 		Container _container;
@@ -77,6 +79,8 @@ namespace FairyGUI
 		{
 			onScroll = new EventListener(this, "onScroll");
 			_refreshDelegate = Refresh;
+			_touchEndDelegate = __touchEnd;
+			_touchMoveDelegate = __touchMove;
 
 			_throwTween = new ThrowTween();
 			_owner = owner;
@@ -1173,12 +1177,15 @@ namespace FairyGUI
 			_isHoldAreaDone = false;
 			_isMouseMoved = false;
 
-			Stage.inst.onTouchMove.Add(__touchMove);
-			Stage.inst.onTouchEnd.Add(__touchEnd);
+			Stage.inst.onTouchMove.Add(_touchMoveDelegate);
+			Stage.inst.onTouchEnd.Add(_touchEndDelegate);
 		}
 
 		private void __touchMove(EventContext context)
 		{
+			if (_owner.displayObject == null || _owner.displayObject.isDisposed)
+				return;
+
 			InputEvent evt = context.inputEvent;
 			if (_touchId != evt.touchId)
 				return;
@@ -1314,18 +1321,21 @@ namespace FairyGUI
 
 		private void __touchEnd(EventContext context)
 		{
+			InputEvent evt = context.inputEvent;
+			if (_touchId != evt.touchId)
+				return;
+
+			Stage.inst.onTouchMove.Remove(_touchMoveDelegate);
+			Stage.inst.onTouchEnd.Remove(_touchEndDelegate);
+
+			if (_owner.displayObject == null || _owner.displayObject.isDisposed)
+				return;
+
 			if (!_touchEffect)
 			{
 				_isMouseMoved = false;
 				return;
 			}
-
-			InputEvent evt = context.inputEvent;
-			if (_touchId != evt.touchId)
-				return;
-
-			Stage.inst.onTouchMove.Remove(__touchMove);
-			Stage.inst.onTouchEnd.Remove(__touchEnd);
 
 			if (!_isMouseMoved)
 				return;

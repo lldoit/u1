@@ -8,7 +8,6 @@ namespace FairyGUI
 	public class PlayState
 	{
 		public bool reachEnding { get; private set; } //是否已播放到结尾
-		public bool frameStarting { get; private set; } //是否刚开始新的一帧
 		public bool reversed { get; private set; } //是否已反向播放
 		public int repeatedCount { get; private set; } //重复次数
 		public bool ignoreTimeScale; //是否忽略TimeScale的影响，即在TimeScale改变后依然保持原有的播放速度
@@ -35,26 +34,44 @@ namespace FairyGUI
 			_lastTime = time;
 
 			reachEnding = false;
-			frameStarting = false;
 			_curFrameDelay += elapsed;
-			int realFrame = reversed ? mc.frameCount - _curFrame - 1 : _curFrame;
-			float interval = mc.interval + mc.frames[realFrame].addDelay + ((realFrame == 0 && repeatedCount > 0) ? mc.repeatDelay : 0);
+			float interval = mc.interval + mc.frames[_curFrame].addDelay + ((_curFrame == 0 && repeatedCount > 0) ? mc.repeatDelay : 0);
 			if (_curFrameDelay < interval)
 				return;
 
 			_curFrameDelay = 0;
-			_curFrame++;
-			frameStarting = true;
-
-			if (_curFrame > mc.frameCount - 1)
+			if (mc.swing)
 			{
-				_curFrame = 0;
-				repeatedCount++;
-				reachEnding = true;
-				if (mc.swing)
+				if (reversed)
 				{
-					reversed = !reversed;
+					_curFrame--;
+					if (_curFrame < 0)
+					{
+						_curFrame = Mathf.Min(1, mc.frameCount - 1);
+						repeatedCount++;
+						reversed = !reversed;
+					}
+				}
+				else
+				{
 					_curFrame++;
+					if (_curFrame > mc.frameCount - 1)
+					{
+						_curFrame = Mathf.Max(0, mc.frameCount - 2);
+						repeatedCount++;
+						reachEnding = true;
+						reversed = !reversed;
+					}
+				}
+			}
+			else
+			{
+				_curFrame++;
+				if (_curFrame > mc.frameCount - 1)
+				{
+					_curFrame = 0;
+					repeatedCount++;
+					reachEnding = true;
 				}
 			}
 		}

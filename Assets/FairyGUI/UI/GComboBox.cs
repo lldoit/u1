@@ -37,6 +37,8 @@ namespace FairyGUI
 		bool _down;
 		bool _over;
 
+		EventCallback1 _touchEndDelegate;
+
 		public GComboBox()
 		{
 			visibleItemCount = UIConfig.defaultComboBoxVisibleItemCount;
@@ -46,6 +48,7 @@ namespace FairyGUI
 			_values = new string[0];
 
 			onChanged = new EventListener(this, "onChanged");
+			_touchEndDelegate = __touchEnd;
 		}
 
 		/// <summary>
@@ -177,6 +180,16 @@ namespace FairyGUI
 		{
 			if (_buttonController != null)
 				_buttonController.selectedPage = value;
+		}
+
+		public override void Dispose()
+		{
+			if (dropdown != null)
+			{
+				dropdown.Dispose();
+				dropdown = null;
+			}
+			base.Dispose();
 		}
 
 		override public void ConstructFromXML(XML cxml)
@@ -335,7 +348,7 @@ namespace FairyGUI
 		{
 			_down = true;
 
-			Stage.inst.onTouchEnd.Add(__touchEnd);
+			Stage.inst.onTouchEnd.Add(_touchEndDelegate);
 
 			if (dropdown != null)
 				ShowDropdown();
@@ -345,8 +358,11 @@ namespace FairyGUI
 		{
 			if (_down)
 			{
-				Stage.inst.onTouchEnd.Remove(__touchEnd);
+				Stage.inst.onTouchEnd.Remove(_touchEndDelegate);
 				_down = false;
+
+				if (this.displayObject == null || this.displayObject.isDisposed)
+					return;
 
 				if (dropdown != null && dropdown.parent != null)
 				{

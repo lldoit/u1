@@ -18,13 +18,17 @@ namespace FairyGUI
 		float _scrollPerc;
 		bool _fixedGripSize;
 
-		bool _dragging;
 		Vector2 _dragOffset;
 		int _touchId;
+
+		EventCallback1 _touchEndDelegate;
+		EventCallback1 _touchMoveDelegate;
 
 		public GScrollBar()
 		{
 			_scrollPerc = 0;
+			_touchEndDelegate = __stageTouchEnd;
+			_touchMoveDelegate = __stageTouchMove;
 		}
 
 		/// <summary>
@@ -132,14 +136,16 @@ namespace FairyGUI
 			_touchId = evt.touchId;
 
 			_dragOffset = this.GlobalToLocal(new Vector2(evt.x, evt.y)) - _grip.xy;
-			_dragging = true;
 
-			Stage.inst.onTouchMove.Add(__stageTouchMove);
-			Stage.inst.onTouchEnd.Add(__stageTouchEnd);
+			Stage.inst.onTouchMove.Add(_touchMoveDelegate);
+			Stage.inst.onTouchEnd.Add(_touchEndDelegate);
 		}
 
 		void __stageTouchMove(EventContext context)
 		{
+			if (displayObject == null || displayObject.isDisposed)
+				return;
+
 			InputEvent evt = context.inputEvent;
 			if (_touchId != evt.touchId)
 				return;
@@ -174,13 +180,8 @@ namespace FairyGUI
 			if (_touchId != evt.touchId)
 				return;
 
-			if (_dragging)
-			{
-				_dragging = false;
-
-				Stage.inst.onTouchMove.Remove(__stageTouchMove);
-				Stage.inst.onTouchEnd.Remove(__stageTouchEnd);
-			}
+			Stage.inst.onTouchMove.Remove(_touchMoveDelegate);
+			Stage.inst.onTouchEnd.Remove(_touchEndDelegate);
 		}
 
 		void __arrowButton1Click(EventContext context)

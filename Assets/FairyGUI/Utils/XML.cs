@@ -16,8 +16,6 @@ namespace FairyGUI.Utils
 		Dictionary<string, string> _attributes;
 		XMLList _children;
 
-		static char[] commaSplitter = new char[] { ',' };
-
 		public XML(string text)
 		{
 			Parse(text);
@@ -110,7 +108,26 @@ namespace FairyGUI.Utils
 		{
 			string value = GetAttribute(attrName);
 			if (value != null)
-				return value.Split(commaSplitter);
+			{
+				if (value.Length == 0)
+					return new string[] { };
+				else
+					return value.Split(',');
+			}
+			else
+				return null;
+		}
+
+		public string[] GetAttributeArray(string attrName, char seperator)
+		{
+			string value = GetAttribute(attrName);
+			if (value != null)
+			{
+				if (value.Length == 0)
+					return new string[] { };
+				else
+					return value.Split(seperator);
+			}
 			else
 				return null;
 		}
@@ -122,6 +139,18 @@ namespace FairyGUI.Utils
 				return defValue;
 
 			return ToolSet.ConvertFromHtmlColor(value);
+		}
+
+		public Vector2 GetAttributeVector(string attrName)
+		{
+			string value = GetAttribute(attrName);
+			if (value != null)
+			{
+				string[] arr = value.Split(',');
+				return new Vector2(float.Parse(arr[0]), float.Parse(arr[1]));
+			}
+			else
+				return Vector2.zero;
 		}
 
 		public void SetAttribute(string attrName, string attrValue)

@@ -303,6 +303,7 @@ namespace FairyGUI
 
 		virtual protected void OnSizeChanged()
 		{
+			ApplyPivot();
 			_paintingFlag = 1;
 			if (graphics != null)
 				_requireUpdateMesh = true;
@@ -601,14 +602,23 @@ namespace FairyGUI
 		}
 
 		/// <summary>
-		/// 
+		/// This is the pivot position
 		/// </summary>
-		/// <param name="xv"></param>
-		/// <param name="yv"></param>
-		/// <param name="zv"></param>
-		public void Locate(float xv, float yv, float zv)
+		public Vector3 location
 		{
-			this.SetPosition(xv - _pivotOffset.x, yv + _pivotOffset.y, zv - _pivotOffset.z);
+			get
+			{
+				Vector3 pos = this.position;
+				pos.x += _pivotOffset.x;
+				pos.y -= _pivotOffset.y;
+				pos.z += _pivotOffset.z;
+				return pos;
+			}
+
+			set
+			{
+				this.SetPosition(value.x - _pivotOffset.x, value.y + _pivotOffset.y, value.z - _pivotOffset.z);
+			}
 		}
 
 		/// <summary>

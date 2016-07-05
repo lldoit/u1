@@ -56,7 +56,7 @@ namespace FairyGUI
 			{
 				if (name.IndexOf(",") != -1)
 				{
-					string[] arr = name.Split(new char[] { ',' });
+					string[] arr = name.Split(',');
 					int cnt = arr.Length;
 					for (int i = 0; i < cnt; i++)
 						arr[i] = arr[i].Trim();

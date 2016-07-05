@@ -58,6 +58,8 @@ namespace FairyGUI
 		bool _down;
 		bool _over;
 
+		EventCallback0 _touchEndDelegate;
+
 		public const string UP = "up";
 		public const string DOWN = "down";
 		public const string OVER = "over";
@@ -75,6 +77,7 @@ namespace FairyGUI
 			_downEffectValue = 0.8f;
 
 			onChanged = new EventListener(this, "onChanged");
+			_touchEndDelegate = __touchEnd;
 		}
 
 		/// <summary>
@@ -317,7 +320,7 @@ namespace FairyGUI
 					for (int i = 0; i < cnt; i++)
 					{
 						GObject obj = this.GetChildAt(i);
-						if (obj is IColorGear)
+						if ((obj is IColorGear) && !(obj is GTextField))
 							((IColorGear)obj).color = color;
 					}
 				}
@@ -326,7 +329,7 @@ namespace FairyGUI
 					for (int i = 0; i < cnt; i++)
 					{
 						GObject obj = this.GetChildAt(i);
-						if (obj is IColorGear)
+						if ((obj is IColorGear) && !(obj is GTextField))
 							((IColorGear)obj).color = Color.white;
 					}
 				}
@@ -508,7 +511,7 @@ namespace FairyGUI
 		private void __touchBegin()
 		{
 			_down = true;
-			Stage.inst.onTouchEnd.Add(__touchEnd);
+			Stage.inst.onTouchEnd.Add(_touchEndDelegate);
 
 			if (_mode == ButtonMode.Common)
 			{
@@ -531,8 +534,11 @@ namespace FairyGUI
 		{
 			if (_down)
 			{
-				Stage.inst.onTouchEnd.Remove(__touchEnd);
+				Stage.inst.onTouchEnd.Remove(_touchEndDelegate);
 				_down = false;
+
+				if (this.displayObject == null || this.displayObject.isDisposed)
+					return;
 
 				if (_mode == ButtonMode.Common)
 				{

@@ -35,12 +35,7 @@ namespace FairyGUI
 		protected bool _widthAutoSize;
 		protected bool _heightAutoSize;
 		protected TextFormat _textFormat;
-		protected AlignType _align;
 		protected VertAlignType _verticalAlign;
-		protected int _stroke;
-		protected Color _strokeColor;
-		protected bool _singleLine;
-		protected bool _displayAsPassword;
 
 		protected bool _updatingSize;
 		protected int _textWidth;
@@ -57,11 +52,9 @@ namespace FairyGUI
 			_textFormat.color = Color.black;
 			_textFormat.lineSpacing = 3;
 			_textFormat.letterSpacing = 0;
-			_strokeColor = new Color(0, 0, 0, 1);
 			UpdateTextFormat();
 
 			_text = string.Empty;
-			_align = AlignType.Left;
 			_verticalAlign = VertAlignType.Top;
 
 			this.autoSize = AutoSizeType.Both;
@@ -110,25 +103,14 @@ namespace FairyGUI
 				_textField.text = _text;
 		}
 
+
 		/// <summary>
 		/// 
 		/// </summary>
-		public bool displayAsPassword
+		virtual public bool displayAsPassword
 		{
-			get { return _displayAsPassword; }
-			set
-			{
-				if (_displayAsPassword != value)
-				{
-					_displayAsPassword = value;
-					UpdateTextFieldPassword();
-				}
-			}
-		}
-
-		virtual protected void UpdateTextFieldPassword()
-		{
-			_textField.displayAsPassword = _displayAsPassword;
+			get { return _textField.displayAsPassword; }
+			set { _textField.displayAsPassword = value; }
 		}
 
 		/// <summary>
@@ -173,20 +155,10 @@ namespace FairyGUI
 		/// <summary>
 		/// 
 		/// </summary>
-		public AlignType align
+		virtual public AlignType align
 		{
-			get
-			{
-				return _align;
-			}
-			set
-			{
-				if (_align != value)
-				{
-					_align = value;
-					DoAlign();
-				}
-			}
+			get { return _textField.align; }
+			set { _textField.align = value; }
 		}
 
 		/// <summary>
@@ -211,55 +183,37 @@ namespace FairyGUI
 		/// <summary>
 		/// 
 		/// </summary>
-		public bool singleLine
+		virtual public bool singleLine
 		{
-			get { return _singleLine; }
-			set
-			{
-				if (_singleLine != value)
-				{
-					_singleLine = value;
-					UpdateTextFormat();
-				}
-			}
+			get { return _textField.singleLine; }
+			set { _textField.singleLine = value; }
 		}
 
 		/// <summary>
 		/// 
 		/// </summary>
-		public int stroke
+		virtual public int stroke
 		{
-			get
-			{
-				return _stroke;
-			}
-			set
-			{
-				if (_stroke != value)
-				{
-					_stroke = value;
-					UpdateTextFormat();
-				}
-			}
+			get { return _textField.stroke; }
+			set { _textField.stroke = value; }
 		}
 
 		/// <summary>
 		/// 
 		/// </summary>
-		public Color strokeColor
+		virtual public Color strokeColor
 		{
-			get
-			{
-				return _strokeColor;
-			}
-			set
-			{
-				if (_strokeColor != value)
-				{
-					_strokeColor = value;
-					UpdateTextFormat();
-				}
-			}
+			get { return _textField.strokeColor; }
+			set { _textField.strokeColor = value; }
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		virtual public Vector2 shadowOffset
+		{
+			get { return _textField.shadowOffset; }
+			set { _textField.shadowOffset = value; }
 		}
 
 		/// <summary>
@@ -393,10 +347,6 @@ namespace FairyGUI
 				tf.CopyFrom(_textFormat);
 				_textField.textFormat = _textFormat;
 			}
-			_textField.align = _align;
-			_textField.stroke = _stroke;
-			_textField.strokeColor = _strokeColor;
-			_textField.singleLine = _singleLine;
 
 			if (!underConstruct)
 				UpdateSize();
@@ -404,7 +354,6 @@ namespace FairyGUI
 
 		virtual protected void DoAlign()
 		{
-			_textField.align = _align;
 			if (_verticalAlign == VertAlignType.Top)
 				_yOffset = 0;
 			else
@@ -467,7 +416,7 @@ namespace FairyGUI
 
 			str = xml.GetAttribute("align");
 			if (str != null)
-				_align = FieldTypes.ParseAlign(str);
+				this.align = FieldTypes.ParseAlign(str);
 
 			str = xml.GetAttribute("vAlign");
 			if (str != null)
@@ -490,12 +439,19 @@ namespace FairyGUI
 			_textFormat.underline = xml.GetAttributeBool("underline", false);
 			_textFormat.italic = xml.GetAttributeBool("italic", false);
 			_textFormat.bold = xml.GetAttributeBool("bold", false);
-			_singleLine = xml.GetAttributeBool("singleLine", false);
+			this.singleLine = xml.GetAttributeBool("singleLine", false);
 			str = xml.GetAttribute("strokeColor");
 			if (str != null)
 			{
-				_strokeColor = ToolSet.ConvertFromHtmlColor(str);
-				_stroke = xml.GetAttributeInt("strokeSize", 1);
+				this.strokeColor = ToolSet.ConvertFromHtmlColor(str);
+				this.stroke = xml.GetAttributeInt("strokeSize", 1);
+			}
+
+			str = xml.GetAttribute("shadowColor");
+			if (str != null)
+			{
+				this.strokeColor = ToolSet.ConvertFromHtmlColor(str);
+				this.shadowOffset = xml.GetAttributeVector("shadowOffset");
 			}
 		}
 

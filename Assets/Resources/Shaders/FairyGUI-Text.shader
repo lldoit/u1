@@ -151,8 +151,7 @@ Shader "FairyGUI/Text"
 
 					#ifdef CLIPPED
 					half2 factor = abs(i.clipPos);
-					half val = 1.0 - max(factor.x, factor.y);
-					if (val < 0.0) col.a = 0.0;
+					col.a *= step(max(factor.x, factor.y), 1);
 					#endif
 
 					return col;

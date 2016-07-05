@@ -22,7 +22,7 @@ namespace FairyGUI
 		static void OnCopy(EventContext context)
 		{
 			TextEditor te = new TextEditor();
-#if (UNITY_5_3 || UNITY_5_4)
+#if UNITY_5_3_OR_NEWER
 			te.text = (string)context.data;
 #else
 			te.content = new GUIContent((string)context.data);
@@ -36,7 +36,7 @@ namespace FairyGUI
 			TextField target = (TextField)context.data;
 			TextEditor te = new TextEditor();
 			te.Paste();
-#if (UNITY_5_3 || UNITY_5_4)
+#if UNITY_5_3_OR_NEWER
 			string value = te.text;
 #else
 			string value = te.content.text;

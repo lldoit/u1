@@ -1165,6 +1165,14 @@ namespace FairyGUI
 
 			SetSize(sourceWidth, sourceHeight);
 
+			arr = xml.GetAttributeArray("pivot");
+			if (arr != null)
+			{
+				float f1 = float.Parse(arr[0]);
+				float f2 = float.Parse(arr[1]);
+				this.SetPivot(f1, f2, xml.GetAttributeBool("anchor"));
+			}
+
 			this.opaque = xml.GetAttributeBool("opaque", true);
 			arr = xml.GetAttributeArray("hitTest");
 			if (arr != null)

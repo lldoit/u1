@@ -8,6 +8,7 @@ namespace FairyGUI
 	public class GTextInput : GTextField
 	{
 		string _promptText;
+		bool _displayAsPassword;
 
 		public GTextInput()
 		{
@@ -30,7 +31,7 @@ namespace FairyGUI
 			}
 			set
 			{
-				_textField.input = false;
+				_textField.input = value;
 			}
 		}
 
@@ -46,6 +47,22 @@ namespace FairyGUI
 			set
 			{
 				_textField.maxLength = value;
+			}
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		override public bool displayAsPassword
+		{
+			get 
+			{
+				return _displayAsPassword;
+			}
+			set
+			{
+				_displayAsPassword = value;
+				_textField.displayAsPassword = value;
 			}
 		}
 

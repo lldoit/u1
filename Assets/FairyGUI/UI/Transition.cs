@@ -54,8 +54,6 @@ namespace FairyGUI
 		float _maxTime;
 
 		const int FRAME_RATE = 24;
-		static char[] jointChar0 = new char[] { ',' };
-		static char[] jointChar2 = new char[] { '=' };
 
 		const int OPTION_IGNORE_DISPLAY_CONTROLLER = 1;
 
@@ -817,10 +815,10 @@ namespace FairyGUI
 					break;
 
 				case TransitionActionType.Controller:
-					string[] arr = value.s.Split(jointChar0);
+					string[] arr = value.s.Split(',');
 					foreach (string str in arr)
 					{
-						string[] arr2 = str.Split(jointChar2);
+						string[] arr2 = str.Split('=');
 						Controller cc = ((GComponent)item.target).GetController(arr2[0]);
 						if (cc != null)
 						{
@@ -968,7 +966,7 @@ namespace FairyGUI
 				case TransitionActionType.XY:
 				case TransitionActionType.Size:
 				case TransitionActionType.Pivot:
-					arr = str.Split(jointChar0);
+					arr = str.Split(',');
 					if (arr[0] == "-")
 					{
 						value.b1 = false;
@@ -998,7 +996,7 @@ namespace FairyGUI
 					break;
 
 				case TransitionActionType.Scale:
-					arr = str.Split(jointChar0);
+					arr = str.Split(',');
 					value.f1 = float.Parse(arr[0]);
 					value.f2 = float.Parse(arr[1]);
 					break;
@@ -1008,7 +1006,7 @@ namespace FairyGUI
 					break;
 
 				case TransitionActionType.Animation:
-					arr = str.Split(jointChar0);
+					arr = str.Split(',');
 					if (arr[0] == "-")
 					{
 						value.b1 = false;
@@ -1030,7 +1028,7 @@ namespace FairyGUI
 					break;
 
 				case TransitionActionType.Sound:
-					arr = str.Split(jointChar0);
+					arr = str.Split(',');
 					value.s = arr[0];
 					if (arr.Length > 1)
 					{
@@ -1045,7 +1043,7 @@ namespace FairyGUI
 					break;
 
 				case TransitionActionType.Transition:
-					arr = str.Split(jointChar0);
+					arr = str.Split(',');
 					value.s = arr[0];
 					if (arr.Length > 1)
 						value.i = int.Parse(arr[1]);
@@ -1054,7 +1052,7 @@ namespace FairyGUI
 					break;
 
 				case TransitionActionType.Shake:
-					arr = str.Split(jointChar0);
+					arr = str.Split(',');
 					value.f1 = float.Parse(arr[0]);
 					value.f2 = float.Parse(arr[1]);
 					break;

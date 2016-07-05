@@ -335,12 +335,12 @@ namespace FairyGUI
 						break;
 
 					case FitScreen.FitWidthAndSetMiddle:
-						this._ui.SetXY(0, (height - this._ui.height) / 2);
+						this._ui.SetXY(0, (height - this._ui.sourceHeight) / 2);
 						this._ui.SetSize(width, this._ui.sourceHeight);
 						break;
 
 					case FitScreen.FitHeightAndSetCenter:
-						this._ui.SetXY((width - this._ui.width) / 2, 0);
+						this._ui.SetXY((width - this._ui.sourceWidth) / 2, 0);
 						this._ui.SetSize(this._ui.sourceWidth, height);
 						break;
 				}

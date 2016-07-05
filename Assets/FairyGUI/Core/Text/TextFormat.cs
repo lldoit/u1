@@ -13,6 +13,8 @@ namespace FairyGUI
 		public bool underline;
 		public bool italic;
 
+		public Color32[] gradientColor;
+
 		public void SetColor(uint value)
 		{
 			uint rr = (value >> 16) & 0x0000ff;
@@ -28,7 +30,8 @@ namespace FairyGUI
 		{
 			return size == aFormat.size && color.Equals(aFormat.color)
 				&& bold == aFormat.bold && underline == aFormat.underline
-				&& italic == aFormat.italic;
+				&& italic == aFormat.italic
+				&& gradientColor == aFormat.gradientColor;
 		}
 
 		public void CopyFrom(TextFormat source)
@@ -41,6 +44,13 @@ namespace FairyGUI
 			this.bold = source.bold;
 			this.underline = source.underline;
 			this.italic = source.italic;
+			if (source.gradientColor != null)
+			{
+				this.gradientColor = new Color32[4];
+				source.gradientColor.CopyTo(this.gradientColor, 0);
+			}
+			else
+				this.gradientColor = null;
 		}
 	}
 }

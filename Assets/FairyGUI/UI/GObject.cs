@@ -164,6 +164,7 @@ namespace FairyGUI
 		float _height;
 		float _pivotX;
 		float _pivotY;
+		bool _pivotAsAnchor;
 		float _alpha;
 		float _rotation;
 		float _rotationX;
@@ -455,8 +456,16 @@ namespace FairyGUI
 				_height = hv;
 
 				HandleSizeChanged();
-				if (!ignorePivot && (_pivotX != 0 || _pivotY != 0))
-					this.SetXY(_x - _pivotX * dWidth, _y - _pivotY * dHeight);
+				if (_pivotX != 0 || _pivotY != 0)
+				{
+					if (!_pivotAsAnchor)
+					{
+						if (!ignorePivot)
+							this.SetXY(_x - _pivotX * dWidth, _y - _pivotY * dHeight);
+					}
+					else
+						this.HandlePositionChanged();
+				}
 
 				if (gearSize.controller != null)
 					gearSize.UpdateState();
@@ -582,13 +591,25 @@ namespace FairyGUI
 		/// <param name="yv">y value in ratio</param>
 		public void SetPivot(float xv, float yv)
 		{
-			if (_pivotX != xv || _pivotY != yv)
+			SetPivot(xv, yv, false);
+		}
+
+		/// <summary>
+		///  Change the x and y coordinates of the object's origin in its own coordinate space.
+		/// </summary>
+		/// <param name="xv">x value in ratio</param>
+		/// <param name="yv">y value in ratio</param>
+		/// <param name="asAnchor">If use the pivot as the anchor position</param>
+		public void SetPivot(float xv, float yv, bool asAnchor)
+		{
+			if (_pivotX != xv || _pivotY != yv || _pivotAsAnchor != asAnchor)
 			{
 				_pivotX = xv;
 				_pivotY = yv;
-
-				displayObject.pivot = new Vector2(_pivotX, _pivotY);
-				if (_sizeImplType == 1) //displayObject的轴心参考宽高与GObject的参看宽高不一样的情况下，需要调整displayObject的位置
+				_pivotAsAnchor = asAnchor;
+				if (displayObject != null)
+					displayObject.pivot = new Vector2(_pivotX, _pivotY);
+				if (_sizeImplType == 1 || _pivotAsAnchor) //displayObject的轴心参考宽高与GObject的参看宽高不一样的情况下，需要调整displayObject的位置
 					HandlePositionChanged();
 			}
 		}
@@ -1291,7 +1312,12 @@ namespace FairyGUI
 		virtual protected void HandlePositionChanged()
 		{
 			if (displayObject != null)
-				displayObject.Locate((int)(_x + _width * _pivotX), (int)(_y + _height * _pivotY + _yOffset), _z);
+			{
+				if (_pivotAsAnchor)
+					displayObject.location = new Vector3((int)_x, (int)(_y + _yOffset), _z);
+				else
+					displayObject.location = new Vector3((int)(_x + _width * _pivotX), (int)(_y + _height * _pivotY + _yOffset), _z);
+			}
 		}
 
 		virtual protected void HandleSizeChanged()
@@ -1344,7 +1370,7 @@ namespace FairyGUI
 			{
 				initWidth = int.Parse(arr[0]);
 				initHeight = int.Parse(arr[1]);
-				SetSize(initWidth, initHeight);
+				SetSize(initWidth, initHeight, true);
 			}
 
 			arr = xml.GetAttributeArray("scale");
@@ -1379,8 +1405,10 @@ namespace FairyGUI
 					else
 						f2 = 0;
 				}
-				this.SetPivot(f1, f2);
+				this.SetPivot(f1, f2, xml.GetAttributeBool("anchor"));
 			}
+			else
+				this.SetPivot(0, 0, false);
 
 			str = xml.GetAttribute("alpha");
 			if (str != null)

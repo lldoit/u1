@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-#if (UNITY_5_3 || UNITY_5_4)
+#if UNITY_5_3_OR_NEWER
 using UnityEditor.SceneManagement;
 #endif
 using UnityEditor;
@@ -72,7 +72,7 @@ namespace FairyGUIEditor
 				bool isPrefab = PrefabUtility.GetPrefabType(panel) == PrefabType.Prefab;
 				panel.SendMessage("OnUpdateSource", new object[] { null, null, null, !isPrefab });
 
-#if (UNITY_5_3 || UNITY_5_4)
+#if UNITY_5_3_OR_NEWER
 				EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
 #elif UNITY_5
 				EditorApplication.MarkSceneDirty();

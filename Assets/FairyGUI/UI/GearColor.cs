@@ -47,12 +47,7 @@ namespace FairyGUI
 			_owner._gearLocked = true;
 
 			GearColorValue cv;
-			if (connected)
-			{
-				if (!_storage.TryGetValue(_controller.selectedPageId, out cv))
-					cv = _default;
-			}
-			else
+			if (!_storage.TryGetValue(_controller.selectedPageId, out cv))
 				cv = _default;
 
 			((IColorGear)_owner).color = cv.color;
@@ -65,18 +60,11 @@ namespace FairyGUI
 			if (_owner._gearLocked)
 				return;
 
-			if (connected)
-			{
-				GearColorValue cv;
-				if (!_storage.TryGetValue(_controller.selectedPageId, out cv))
-					_storage[_controller.selectedPageId] = new GearColorValue(((IColorGear)_owner).color);
-				else
-					cv.color = ((IColorGear)_owner).color;
-			}
+			GearColorValue cv;
+			if (!_storage.TryGetValue(_controller.selectedPageId, out cv))
+				_storage[_controller.selectedPageId] = new GearColorValue(((IColorGear)_owner).color);
 			else
-			{
-				_default.color = ((IColorGear)_owner).color;
-			}
+				cv.color = ((IColorGear)_owner).color;
 		}
 	}
 }

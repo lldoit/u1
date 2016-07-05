@@ -60,11 +60,6 @@ namespace FairyGUI
 		static List<UIPackage> _packageList = new List<UIPackage>();
 		static Dictionary<string, Dictionary<string, string>> _stringsSource;
 
-		static char[] sep0 = new char[] { ',' };
-		static char[] sep1 = new char[] { '\n' };
-		static char[] sep2 = new char[] { ' ' };
-		static char[] sep3 = new char[] { '=' };
-
 		internal static int _constructing;
 		internal static string URL_PREFIX = "ui://";
 
@@ -234,6 +229,8 @@ namespace FairyGUI
 			UIPackage pkg = new UIPackage();
 			pkg._loadFunc = loadFunc;
 			pkg.Create(asset.text, null, assetPath);
+			if (_packageInstById.ContainsKey(pkg.id))
+				Debug.LogWarning("FairyGUI: Package id conflicts, '" + pkg.name + "' and '" + _packageInstById[pkg.id].name + "'");
 			_packageInstById[pkg.id] = pkg;
 			_packageInstByName[pkg.name] = pkg;
 			_packageInstById[assetPath] = pkg;
@@ -276,7 +273,7 @@ namespace FairyGUI
 
 				foreach (UIPackage pkg in pkgs)
 				{
-					RemovePackage(pkg.id);
+					pkg.Dispose();
 				}
 			}
 			_packageList.Clear();
@@ -520,7 +517,7 @@ namespace FairyGUI
 				Debug.LogError("FairyGUI: cannot load package from " + _assetNamePrefix);
 				return;
 			}
-			arr = str.Split(sep1);
+			arr = str.Split('\n');
 			int cnt = arr.Length;
 			for (int i = 1; i < cnt; i++)
 			{
@@ -528,7 +525,7 @@ namespace FairyGUI
 				if (str.Length == 0)
 					continue;
 
-				string[] arr2 = str.Split(sep2);
+				string[] arr2 = str.Split(' ');
 				AtlasSprite sprite = new AtlasSprite();
 				string itemId = arr2[0];
 				int binIndex = int.Parse(arr2[1]);
@@ -590,7 +587,7 @@ namespace FairyGUI
 				str = cxml.GetAttribute("size");
 				if (str != null)
 				{
-					arr = str.Split(sep0);
+					arr = str.Split(',');
 					pi.width = int.Parse(arr[0]);
 					pi.height = int.Parse(arr[1]);
 				}
@@ -666,24 +663,20 @@ namespace FairyGUI
 				PackageItem pi = _items[i];
 				if (pi.texture != null)
 				{
-					if (Application.isPlaying)
-					{
-						if (pi.texture.alphaTexture != null)
-							Texture.Destroy(pi.texture.alphaTexture);
-						if (pi.texture != NTexture.Empty)
-							pi.texture.Dispose();
-					}
+					pi.texture.alphaTexture = null;
+					if (pi.texture != NTexture.Empty)
+						pi.texture.Dispose();
 					else
 						pi.texture.DestroyMaterials();
 				}
 				else if (pi.audioClip != null)
 				{
-					if (Application.isPlaying)
-						AudioClip.Destroy(pi.audioClip);
+					pi.audioClip = null;
 				}
 				else if (pi.bitmapFont != null)
 					FontManager.UnregisterFont(pi.bitmapFont);
 			}
+			_items.Clear();
 
 			if (_resBundle != null)
 				_resBundle.Unload(true);
@@ -1081,7 +1074,7 @@ namespace FairyGUI
 			BitmapFont font = item.bitmapFont;
 
 			string str = _descPack[item.id + ".fnt"];
-			string[] arr = str.Split(sep1);
+			string[] arr = str.Split('\n');
 			int cnt = arr.Length;
 			Dictionary<string, string> kv = new Dictionary<string, string>();
 			NTexture mainTexture = null;
@@ -1092,6 +1085,9 @@ namespace FairyGUI
 			bool resizable = false;
 			BitmapFont.BMGlyph bg = null;
 
+			char[] splitter0 = new char[] { ' ' };
+			char[] splitter1 = new char[] { '=' };
+
 			for (int i = 0; i < cnt; i++)
 			{
 				str = arr[i];
@@ -1100,10 +1096,10 @@ namespace FairyGUI
 
 				str = str.Trim();
 
-				string[] arr2 = str.Split(sep2, StringSplitOptions.RemoveEmptyEntries);
+				string[] arr2 = str.Split(splitter0, StringSplitOptions.RemoveEmptyEntries);
 				for (int j = 1; j < arr2.Length; j++)
 				{
-					string[] arr3 = arr2[j].Split(sep3, StringSplitOptions.RemoveEmptyEntries);
+					string[] arr3 = arr2[j].Split(splitter1, StringSplitOptions.RemoveEmptyEntries);
 					kv[arr3[0]] = arr3[1];
 				}
 

@@ -296,12 +296,29 @@ public class FairyGUI_GObjectWrap
 	{
 		try
 		{
-			ToLua.CheckArgsCount(L, 3);
-			FairyGUI.GObject obj = (FairyGUI.GObject)ToLua.CheckObject(L, 1, typeof(FairyGUI.GObject));
-			float arg0 = (float)LuaDLL.luaL_checknumber(L, 2);
-			float arg1 = (float)LuaDLL.luaL_checknumber(L, 3);
-			obj.SetPivot(arg0, arg1);
-			return 0;
+			int count = LuaDLL.lua_gettop(L);
+
+			if (count == 3 && TypeChecker.CheckTypes(L, 1, typeof(FairyGUI.GObject), typeof(float), typeof(float)))
+			{
+				FairyGUI.GObject obj = (FairyGUI.GObject)ToLua.ToObject(L, 1);
+				float arg0 = (float)LuaDLL.lua_tonumber(L, 2);
+				float arg1 = (float)LuaDLL.lua_tonumber(L, 3);
+				obj.SetPivot(arg0, arg1);
+				return 0;
+			}
+			else if (count == 4 && TypeChecker.CheckTypes(L, 1, typeof(FairyGUI.GObject), typeof(float), typeof(float), typeof(bool)))
+			{
+				FairyGUI.GObject obj = (FairyGUI.GObject)ToLua.ToObject(L, 1);
+				float arg0 = (float)LuaDLL.lua_tonumber(L, 2);
+				float arg1 = (float)LuaDLL.lua_tonumber(L, 3);
+				bool arg2 = LuaDLL.lua_toboolean(L, 4);
+				obj.SetPivot(arg0, arg1, arg2);
+				return 0;
+			}
+			else
+			{
+				return LuaDLL.luaL_throw(L, "invalid arguments to method: FairyGUI.GObject.SetPivot");
+			}
 		}
 		catch(Exception e)
 		{

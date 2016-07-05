@@ -60,20 +60,22 @@ namespace FairyGUI
 			if (screenWidth == 0 || screenHeight == 0)
 				return;
 
+			float upp;
 			if (constantSize)
 			{
 				cachedCamera.orthographicSize = DefaultCameraSize;
-				UnitsPerPixel = cachedCamera.orthographicSize * 2 / screenHeight;
+				upp = cachedCamera.orthographicSize * 2 / screenHeight;
 			}
 			else
 			{
-				UnitsPerPixel = 0.02f;
+				upp = 0.02f;
 				cachedCamera.orthographicSize = screenHeight / 2 * UnitsPerPixel;
 			}
-			cachedTransform.localPosition = new Vector3(cachedCamera.orthographicSize * cachedCamera.aspect, -cachedCamera.orthographicSize);
+			cachedTransform.localPosition = new Vector3(cachedCamera.orthographicSize * screenWidth / screenHeight, -cachedCamera.orthographicSize);
 
 			if (isMain)
 			{
+				UnitsPerPixel = upp;
 				screenSizeVer++;
 				if (Application.isPlaying)
 					Stage.inst.HandleScreenSizeChanged();
@@ -90,7 +92,7 @@ namespace FairyGUI
 
 		void OnRenderObject()
 		{
-			//call only edit mode
+			//Update和OnGUI在EditMode的调用都不那么及时，OnRenderObject则比较频繁，可以保证界面及时刷新。所以使用OnRenderObject
 			if (isMain && !Application.isPlaying)
 			{
 				EMRenderSupport.Update();
@@ -131,7 +133,7 @@ namespace FairyGUI
 			camera.cullingMask = cullingMask;
 			camera.clearFlags = CameraClearFlags.Depth;
 			camera.orthographic = true;
-			camera.orthographicSize =DefaultCameraSize;
+			camera.orthographicSize = DefaultCameraSize;
 			camera.nearClipPlane = -30;
 			camera.farClipPlane = 30;
 

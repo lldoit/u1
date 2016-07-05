@@ -17,9 +17,15 @@ function ui_bag.close()
     end
 end
 
-function ui_bag:initialize(sessionData)
-    ui_session.initialize(self, session_data)
-    self.session_id = ui_session_id.UI_MESSAGEBOX
+function ui_bag:initialize(session_data)
+  ui_session.initialize(self, session_data)
+  self.session_id = ui_session_id.UI_MESSAGEBOX
+end
+
+function ui_bag:on_post_load()
+  self.lua_behaviour:AddClick(self.ui.closeButton, function(go)
+    ui_bag.close()
+  end)
 end
 
 function ui_bag:reset_window(args)

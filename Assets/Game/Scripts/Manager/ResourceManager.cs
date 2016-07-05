@@ -258,11 +258,14 @@ namespace LuaFramework
 
         public void UnloadAssetBundle(string abName) 
         {
-            abName = GetRealAssetPath(abName);
-            Debug.Log(m_LoadedAssetBundles.Count + " assetbundle(s) in memory before unloading " + abName);
-            UnloadAssetBundleInternal(abName);
-            UnloadDependencies(abName);
-            Debug.Log(m_LoadedAssetBundles.Count + " assetbundle(s) in memory after unloading " + abName);
+            if (m_AssetBundleManifest)
+            {
+                abName = GetRealAssetPath(abName);
+                Debug.Log(m_LoadedAssetBundles.Count + " assetbundle(s) in memory before unloading " + abName);
+                UnloadAssetBundleInternal(abName);
+                UnloadDependencies(abName);
+                Debug.Log(m_LoadedAssetBundles.Count + " assetbundle(s) in memory after unloading " + abName);
+            }
         }
 
         void UnloadDependencies(string abName) 

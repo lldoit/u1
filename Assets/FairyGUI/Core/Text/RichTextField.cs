@@ -76,6 +76,12 @@ namespace FairyGUI
 			set { _textField.strokeColor = value; }
 		}
 
+		public Vector2 shadowOffset
+		{
+			get { return _textField.shadowOffset; }
+			set { _textField.shadowOffset = value; }
+		}
+
 		public float textWidth
 		{
 			get { return _textField.textWidth; }

@@ -11,7 +11,6 @@ public class FairyGUI_DisplayObjectWrap
 		L.RegFunction("SetPosition", SetPosition);
 		L.RegFunction("SetSize", SetSize);
 		L.RegFunction("SetScale", SetScale);
-		L.RegFunction("Locate", Locate);
 		L.RegFunction("EnterPaintingMode", EnterPaintingMode);
 		L.RegFunction("LeavePaintingMode", LeavePaintingMode);
 		L.RegFunction("GetBounds", GetBounds);
@@ -67,6 +66,7 @@ public class FairyGUI_DisplayObjectWrap
 		L.RegVar("perspective", get_perspective, set_perspective);
 		L.RegVar("focalLength", get_focalLength, set_focalLength);
 		L.RegVar("pivot", get_pivot, set_pivot);
+		L.RegVar("location", get_location, set_location);
 		L.RegVar("material", get_material, set_material);
 		L.RegVar("shader", get_shader, set_shader);
 		L.RegVar("renderingOrder", get_renderingOrder, set_renderingOrder);
@@ -171,25 +171,6 @@ public class FairyGUI_DisplayObjectWrap
 			float arg0 = (float)LuaDLL.luaL_checknumber(L, 2);
 			float arg1 = (float)LuaDLL.luaL_checknumber(L, 3);
 			obj.SetScale(arg0, arg1);
-			return 0;
-		}
-		catch(Exception e)
-		{
-			return LuaDLL.toluaL_exception(L, e);
-		}
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int Locate(IntPtr L)
-	{
-		try
-		{
-			ToLua.CheckArgsCount(L, 4);
-			FairyGUI.DisplayObject obj = (FairyGUI.DisplayObject)ToLua.CheckObject(L, 1, typeof(FairyGUI.DisplayObject));
-			float arg0 = (float)LuaDLL.luaL_checknumber(L, 2);
-			float arg1 = (float)LuaDLL.luaL_checknumber(L, 3);
-			float arg2 = (float)LuaDLL.luaL_checknumber(L, 4);
-			obj.Locate(arg0, arg1, arg2);
 			return 0;
 		}
 		catch(Exception e)
@@ -1206,6 +1187,25 @@ public class FairyGUI_DisplayObjectWrap
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_location(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.DisplayObject obj = (FairyGUI.DisplayObject)o;
+			UnityEngine.Vector3 ret = obj.location;
+			ToLua.Push(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index location on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
 	static int get_material(IntPtr L)
 	{
 		object o = null;
@@ -1917,6 +1917,25 @@ public class FairyGUI_DisplayObjectWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index pivot on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int set_location(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.DisplayObject obj = (FairyGUI.DisplayObject)o;
+			UnityEngine.Vector3 arg0 = ToLua.ToVector3(L, 2);
+			obj.location = arg0;
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index location on a nil value" : e.Message);
 		}
 	}
 

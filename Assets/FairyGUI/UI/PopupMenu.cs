@@ -295,6 +295,11 @@ namespace FairyGUI
 			get { return _list; }
 		}
 
+		public void Dispose()
+		{
+			_contentPane.Dispose();
+		}
+
 		/// <summary>
 		/// 
 		/// </summary>

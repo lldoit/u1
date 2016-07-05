@@ -25,6 +25,7 @@ public class FairyGUI_GTextFieldWrap
 		L.RegVar("singleLine", get_singleLine, set_singleLine);
 		L.RegVar("stroke", get_stroke, set_stroke);
 		L.RegVar("strokeColor", get_strokeColor, set_strokeColor);
+		L.RegVar("shadowOffset", get_shadowOffset, set_shadowOffset);
 		L.RegVar("UBBEnabled", get_UBBEnabled, set_UBBEnabled);
 		L.RegVar("autoSize", get_autoSize, set_autoSize);
 		L.RegVar("textWidth", get_textWidth, null);
@@ -372,6 +373,25 @@ public class FairyGUI_GTextFieldWrap
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_shadowOffset(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GTextField obj = (FairyGUI.GTextField)o;
+			UnityEngine.Vector2 ret = obj.shadowOffset;
+			ToLua.Push(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index shadowOffset on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
 	static int get_UBBEnabled(IntPtr L)
 	{
 		object o = null;
@@ -615,6 +635,25 @@ public class FairyGUI_GTextFieldWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index strokeColor on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int set_shadowOffset(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GTextField obj = (FairyGUI.GTextField)o;
+			UnityEngine.Vector2 arg0 = ToLua.ToVector2(L, 2);
+			obj.shadowOffset = arg0;
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index shadowOffset on a nil value" : e.Message);
 		}
 	}
 

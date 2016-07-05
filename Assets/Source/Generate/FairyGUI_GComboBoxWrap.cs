@@ -7,6 +7,7 @@ public class FairyGUI_GComboBoxWrap
 	public static void Register(LuaState L)
 	{
 		L.BeginClass(typeof(FairyGUI.GComboBox), typeof(FairyGUI.GComponent));
+		L.RegFunction("Dispose", Dispose);
 		L.RegFunction("ConstructFromXML", ConstructFromXML);
 		L.RegFunction("Setup_AfterAdd", Setup_AfterAdd);
 		L.RegFunction("New", _CreateFairyGUI_GComboBox);
@@ -40,6 +41,22 @@ public class FairyGUI_GComboBoxWrap
 			{
 				return LuaDLL.luaL_throw(L, "invalid arguments to ctor method: FairyGUI.GComboBox.New");
 			}
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int Dispose(IntPtr L)
+	{
+		try
+		{
+			ToLua.CheckArgsCount(L, 1);
+			FairyGUI.GComboBox obj = (FairyGUI.GComboBox)ToLua.CheckObject(L, 1, typeof(FairyGUI.GComboBox));
+			obj.Dispose();
+			return 0;
 		}
 		catch(Exception e)
 		{

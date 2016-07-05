@@ -134,13 +134,8 @@ namespace FairyGUI
 				disposed = true;
 
 				DestroyMaterials();
-				if (nativeTexture != null)
-				{
-					if (root == this)
-						Texture.Destroy(nativeTexture);
-					nativeTexture = null;
-					root = null;
-				}
+				nativeTexture = null;
+				root = null;
 			}
 		}
 	}

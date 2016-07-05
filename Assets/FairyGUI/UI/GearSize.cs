@@ -44,7 +44,7 @@ namespace FairyGUI
 
 		override protected void AddStatus(string pageId, string value)
 		{
-			string[] arr = value.Split(jointChar0);
+			string[] arr = value.Split(',');
 			GearSizeValue gv;
 			if (pageId == null)
 				gv = _default;
@@ -65,20 +65,13 @@ namespace FairyGUI
 		override public void Apply()
 		{
 			GearSizeValue gv;
-			bool ct = this.connected;
-			if (ct)
-			{
-				if (!_storage.TryGetValue(_controller.selectedPageId, out gv))
-					gv = _default;
-			}
-			else
+			if (!_storage.TryGetValue(_controller.selectedPageId, out gv))
 				gv = _default;
 
 			if (_tweener != null)
 				_tweener.Kill(true);
 
-			if (tween && UIPackage._constructing == 0 && !disableAllTweenEffect
-				&& ct && pageSet.ContainsId(_controller.previousPageId))
+			if (tween && UIPackage._constructing == 0 && !disableAllTweenEffect)
 			{
 				bool a = gv.width != _owner.width || gv.height != _owner.height;
 				bool b = gv.scaleX != _owner.scaleX || gv.scaleY != _owner.scaleY;
@@ -121,25 +114,15 @@ namespace FairyGUI
 			if (_owner._gearLocked)
 				return;
 
-			if (connected)
-			{
-				GearSizeValue gv;
-				if (!_storage.TryGetValue(_controller.selectedPageId, out gv))
-					_storage[_controller.selectedPageId] = new GearSizeValue(_owner.width, _owner.height, _owner.scaleX, _owner.scaleY);
-				else
-				{
-					gv.width = _owner.width;
-					gv.height = _owner.height;
-					gv.scaleX = _owner.scaleX;
-					gv.scaleY = _owner.scaleY;
-				}
-			}
+			GearSizeValue gv;
+			if (!_storage.TryGetValue(_controller.selectedPageId, out gv))
+				_storage[_controller.selectedPageId] = new GearSizeValue(_owner.width, _owner.height, _owner.scaleX, _owner.scaleY);
 			else
 			{
-				_default.width = _owner.width;
-				_default.height = _owner.height;
-				_default.scaleX = _owner.scaleX;
-				_default.scaleY = _owner.scaleY;
+				gv.width = _owner.width;
+				gv.height = _owner.height;
+				gv.scaleX = _owner.scaleX;
+				gv.scaleY = _owner.scaleY;
 			}
 		}
 

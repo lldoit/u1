@@ -42,8 +42,6 @@ namespace FairyGUI
 			"bottomext-bottom"//23
 		};
 
-		static char[] jointChar0 = new char[] { ',' };
-
 		public Relations(GObject owner)
 		{
 			_owner = owner;
@@ -84,7 +82,7 @@ namespace FairyGUI
 
 		void AddItems(GObject target, string sidePairs)
 		{
-			string[] arr = sidePairs.Split(jointChar0);
+			string[] arr = sidePairs.Split(',');
 			string s;
 			bool usePercent;
 			int tid;

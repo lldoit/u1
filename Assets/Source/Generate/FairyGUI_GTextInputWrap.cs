@@ -14,6 +14,7 @@ public class FairyGUI_GTextInputWrap
 		L.RegFunction("__tostring", Lua_ToString);
 		L.RegVar("editable", get_editable, set_editable);
 		L.RegVar("maxLength", get_maxLength, set_maxLength);
+		L.RegVar("displayAsPassword", get_displayAsPassword, set_displayAsPassword);
 		L.RegVar("caretPosition", get_caretPosition, set_caretPosition);
 		L.RegVar("promptText", get_promptText, set_promptText);
 		L.RegVar("keyboardType", get_keyboardType, set_keyboardType);
@@ -151,6 +152,25 @@ public class FairyGUI_GTextInputWrap
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_displayAsPassword(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GTextInput obj = (FairyGUI.GTextInput)o;
+			bool ret = obj.displayAsPassword;
+			LuaDLL.lua_pushboolean(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index displayAsPassword on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
 	static int get_caretPosition(IntPtr L)
 	{
 		object o = null;
@@ -242,6 +262,25 @@ public class FairyGUI_GTextInputWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index maxLength on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int set_displayAsPassword(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GTextInput obj = (FairyGUI.GTextInput)o;
+			bool arg0 = LuaDLL.luaL_checkboolean(L, 2);
+			obj.displayAsPassword = arg0;
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index displayAsPassword on a nil value" : e.Message);
 		}
 	}
 
