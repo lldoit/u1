@@ -1,6 +1,11 @@
-event_manager = class()
+-- region *.lua
+-- Date
+-- 此文件由[BabeLua]插件自动生成
+local class = require("common/middleclass")
 
-function event_manager:init()
+local event_manager = class("event_manager")
+
+function event_manager:initialize()
     self._events_map = { }
 end
 
@@ -36,3 +41,5 @@ function event_manager:trigger_event(event_type, ...)
         tmp_event(args)
     end
 end
+
+return event_manager

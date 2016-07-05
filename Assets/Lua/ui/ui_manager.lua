@@ -1,6 +1,8 @@
-local ui_manager = class()
+local class = require("common/middleclass")
 
-function ui_manager:init()
+local ui_manager = class("ui_manager")
+
+function ui_manager:initialize()
     -- 所有已加载的 Session
     self._all_sessions = { }
     -- 当前正在显示的 Session

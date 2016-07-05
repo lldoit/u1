@@ -1,9 +1,11 @@
-local person_pb = require "protol/person_pb"
-local ui_bag = require "ui/ui_bag"
-local ui_teammanage_scene = require "ui/ui_teammanage_scene"
+local class = require("common/middleclass")
 
-local ui_mainmenu_cellbtn = class(ui_session)
-function ui_mainmenu_cellbtn:init()
+local person_pb = require("protol/person_pb")
+local ui_bag = require("ui/ui_bag")
+local ui_teammanage_scene = require("ui/ui_teammanage_scene")
+
+local ui_mainmenu_cellbtn = class("ui_mainmenu_cellbtn", ui_session)
+function ui_mainmenu_cellbtn:initialize()
 
 end
 
@@ -11,7 +13,7 @@ function ui_mainmenu_cellbtn:refresh()
 
 end
 
-local ui_mainmenu_scene = class(ui_session)
+local ui_mainmenu_scene = class("ui_mainmenu_scene", ui_session)
 
 function ui_mainmenu_scene.show()
     local sd = ui_session_data(ui_session_type.NORMAL, ui_session_id.UI_MAINMENU_SCENE, "Main", true)
@@ -21,8 +23,8 @@ function ui_mainmenu_scene.show()
     end
 end
 
-function ui_mainmenu_scene:init(session_data)
-    self._base.init(self, session_data)
+function ui_mainmenu_scene:initialize(session_data)
+    ui_session.initialize(self, session_data)
     self.session_id = ui_session_id.UI_MAINMENU_SCENE
 end
 

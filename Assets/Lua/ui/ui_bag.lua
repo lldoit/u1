@@ -1,4 +1,6 @@
-local ui_bag = class(ui_session)
+local class = require("common/middleclass")
+
+local ui_bag = class("ui_bag", ui_session)
 
 function ui_bag.show(args)
     local sd = ui_session_data(ui_session_type.POPUP, "Bag", "BagWin", true)
@@ -15,8 +17,8 @@ function ui_bag.close()
     end
 end
 
-function ui_bag:init(sessionData)
-    self._base.init(self, sessionData)
+function ui_bag:initialize(sessionData)
+    ui_session.initialize(self, session_data)
     self.session_id = ui_session_id.UI_MESSAGEBOX
 end
 

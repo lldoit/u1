@@ -1,6 +1,11 @@
-local fw_controller = class()
+-- region *.lua
+-- Date
+-- 此文件由[BabeLua]插件自动生成
+local class = require("common/middleclass")
 
-function fw_controller:init()
+local fw_controller = class("fw_controller")
+
+function fw_controller:initialize()
     self.command_map = { }
 end
 

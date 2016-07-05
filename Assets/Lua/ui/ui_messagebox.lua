@@ -1,4 +1,6 @@
-local ui_messagebox = class(ui_session)
+local class = require("common/middleclass")
+
+local ui_messagebox = class("ui_messagebox", ui_session)
 
 function ui_messagebox.show(args)
     local ui_manager = fw_facade:instance():get_mgr(mgr_name.UI_MGR)
@@ -14,8 +16,8 @@ function ui_messagebox.close()
     end
 end
 
-function ui_messagebox:init(sessionData)
-    self._base.init(self, sessionData)
+function ui_messagebox:initialize(sessionData)
+    ui_session.initialize(self, session_data)
     self.session_id = ui_session_id.UI_MESSAGEBOX
 end
 
