@@ -81,7 +81,7 @@ namespace FairyGUI
 				glyhInfo.height = Mathf.CeilToInt(size * scale);
 				glyhInfo.vert.xMin = 0;
 				glyhInfo.vert.xMax = glyhInfo.width * scale;
-				glyhInfo.vert.yMin = glyhInfo.height * scale;
+				glyhInfo.vert.yMin = -glyhInfo.height * scale;
 				glyhInfo.vert.yMax = 0;
 				glyhInfo.uvTopLeft = Vector2.zero;
 				glyhInfo.uvBottomLeft = Vector2.zero;

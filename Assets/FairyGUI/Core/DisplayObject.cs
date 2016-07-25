@@ -827,7 +827,7 @@ namespace FairyGUI
 		/// <param name="requestId"></param>
 		public void LeavePaintingMode(int requestorId)
 		{
-			if (_paintingMode == 0)
+			if (_paintingMode == 0 || _disposed)
 				return;
 
 			_paintingMode ^= requestorId;

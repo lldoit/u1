@@ -51,10 +51,11 @@ public class FairyGUI_GProgressBarWrap
 		{
 			ToLua.CheckArgsCount(L, 3);
 			FairyGUI.GProgressBar obj = (FairyGUI.GProgressBar)ToLua.CheckObject(L, 1, typeof(FairyGUI.GProgressBar));
-			int arg0 = (int)LuaDLL.luaL_checknumber(L, 2);
+			float arg0 = (float)LuaDLL.luaL_checknumber(L, 2);
 			float arg1 = (float)LuaDLL.luaL_checknumber(L, 3);
-			obj.TweenValue(arg0, arg1);
-			return 0;
+			DG.Tweening.Tweener o = obj.TweenValue(arg0, arg1);
+			ToLua.PushObject(L, o);
+			return 1;
 		}
 		catch(Exception e)
 		{
@@ -69,7 +70,7 @@ public class FairyGUI_GProgressBarWrap
 		{
 			ToLua.CheckArgsCount(L, 2);
 			FairyGUI.GProgressBar obj = (FairyGUI.GProgressBar)ToLua.CheckObject(L, 1, typeof(FairyGUI.GProgressBar));
-			int arg0 = (int)LuaDLL.luaL_checknumber(L, 2);
+			float arg0 = (float)LuaDLL.luaL_checknumber(L, 2);
 			obj.Update(arg0);
 			return 0;
 		}
@@ -174,8 +175,8 @@ public class FairyGUI_GProgressBarWrap
 		{
 			o = ToLua.ToObject(L, 1);
 			FairyGUI.GProgressBar obj = (FairyGUI.GProgressBar)o;
-			int ret = obj.max;
-			LuaDLL.lua_pushinteger(L, ret);
+			float ret = obj.max;
+			LuaDLL.lua_pushnumber(L, ret);
 			return 1;
 		}
 		catch(Exception e)
@@ -193,8 +194,8 @@ public class FairyGUI_GProgressBarWrap
 		{
 			o = ToLua.ToObject(L, 1);
 			FairyGUI.GProgressBar obj = (FairyGUI.GProgressBar)o;
-			int ret = obj.value;
-			LuaDLL.lua_pushinteger(L, ret);
+			float ret = obj.value;
+			LuaDLL.lua_pushnumber(L, ret);
 			return 1;
 		}
 		catch(Exception e)
@@ -231,7 +232,7 @@ public class FairyGUI_GProgressBarWrap
 		{
 			o = ToLua.ToObject(L, 1);
 			FairyGUI.GProgressBar obj = (FairyGUI.GProgressBar)o;
-			int arg0 = (int)LuaDLL.luaL_checknumber(L, 2);
+			float arg0 = (float)LuaDLL.luaL_checknumber(L, 2);
 			obj.max = arg0;
 			return 0;
 		}
@@ -250,7 +251,7 @@ public class FairyGUI_GProgressBarWrap
 		{
 			o = ToLua.ToObject(L, 1);
 			FairyGUI.GProgressBar obj = (FairyGUI.GProgressBar)o;
-			int arg0 = (int)LuaDLL.luaL_checknumber(L, 2);
+			float arg0 = (float)LuaDLL.luaL_checknumber(L, 2);
 			obj.value = arg0;
 			return 0;
 		}

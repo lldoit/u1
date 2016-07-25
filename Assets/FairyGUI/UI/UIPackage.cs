@@ -514,7 +514,7 @@ namespace FairyGUI
 			str = LoadString("sprites.bytes");
 			if (str == null)
 			{
-				Debug.LogError("FairyGUI: cannot load package from " + _assetNamePrefix);
+				Debug.LogError("FairyGUI: cannot load package from '" + _assetNamePrefix + "'");
 				return;
 			}
 			arr = str.Split('\n');
@@ -559,7 +559,9 @@ namespace FairyGUI
 				}
 			}
 
-			str = _descPack["package.xml"];
+			if (!_descPack.TryGetValue("package.xml", out str))
+				throw new Exception("FairyGUI: invalid package '" + _assetNamePrefix + "'");
+
 			XML xml = new XML(str);
 
 			id = xml.GetAttribute("id");
@@ -567,7 +569,7 @@ namespace FairyGUI
 
 			XML rxml = xml.GetNode("resources");
 			if (rxml == null)
-				throw new Exception("Invalid package xml");
+				throw new Exception("FairyGUI: invalid package xml '" + _assetNamePrefix + "'");
 
 			XMLList resources = rxml.Elements();
 

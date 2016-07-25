@@ -70,16 +70,24 @@ namespace FairyGUIEditor
 			EditorToolSet.LoadPackages();
 			List<UIPackage> pkgs = UIPackage.GetPackages();
 			int cnt = pkgs.Count;
-			for (int i = 0; i < cnt; i++)
+			if (cnt == 0)
 			{
-				EditorGUILayout.BeginHorizontal();
-				GUILayout.Space(4);
-				if (GUILayout.Toggle(selectedPackageName == pkgs[i].name, pkgs[i].name, itemStyle, GUILayout.ExpandWidth(true)))
+				selectedPackage = -1;
+				selectedPackageName = null;
+			}
+			else
+			{
+				for (int i = 0; i < cnt; i++)
 				{
-					selectedPackage = i;
-					selectedPackageName = pkgs[i].name;
+					EditorGUILayout.BeginHorizontal();
+					GUILayout.Space(4);
+					if (GUILayout.Toggle(selectedPackageName == pkgs[i].name, pkgs[i].name, itemStyle, GUILayout.ExpandWidth(true)))
+					{
+						selectedPackage = i;
+						selectedPackageName = pkgs[i].name;
+					}
+					EditorGUILayout.EndHorizontal();
 				}
-				EditorGUILayout.EndHorizontal();
 			}
 			EditorGUILayout.EndScrollView();
 
@@ -146,7 +154,7 @@ namespace FairyGUIEditor
 				this.Close();
 
 			GUILayout.Space(20);
-			if (GUILayout.Button("OK", GUILayout.Width(100)))
+			if (GUILayout.Button("OK", GUILayout.Width(100)) && selectedPackage >= 0)
 			{
 				UIPackage selectedPkg = pkgs[selectedPackage];
 				string tmp = selectedPkg.assetPath.ToLower();
@@ -159,7 +167,7 @@ namespace FairyGUIEditor
 				bool isPrefab = PrefabUtility.GetPrefabType(Selection.activeGameObject) == PrefabType.Prefab;
 
 				Selection.activeGameObject.SendMessage("OnUpdateSource",
-					new object[] { selectedPkg.name, packagePath, selectedComponentName, !isPrefab }, 
+					new object[] { selectedPkg.name, packagePath, selectedComponentName, !isPrefab },
 					SendMessageOptions.DontRequireReceiver);
 #if UNITY_5_3_OR_NEWER
 				EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());

@@ -962,12 +962,6 @@ namespace FairyGUI
 				for (int i = 0; i < cnt; ++i)
 				{
 					GObject child = _children[i];
-					child.EnsureSizeCorrect();
-				}
-
-				for (int i = 0; i < cnt; ++i)
-				{
-					GObject child = _children[i];
 					tmp = child.x;
 					if (tmp < ax)
 						ax = tmp;

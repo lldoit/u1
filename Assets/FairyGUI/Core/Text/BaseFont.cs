@@ -44,6 +44,11 @@ namespace FairyGUI
 		public bool customBold;
 
 		/// <summary>
+		/// If true, it will use extra vertices to enhance bold effect ONLY when it is in italic style.
+		/// </summary>
+		public bool customBoldAndItalic;
+
+		/// <summary>
 		/// The shader for this font object.
 		/// </summary>
 		public string shader;

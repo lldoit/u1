@@ -10,8 +10,8 @@ namespace FairyGUI
 	/// </summary>
 	public class GProgressBar : GComponent
 	{
-		int _max;
-		int _value;
+		float _max;
+		float _value;
 		ProgressTitleType _titleType;
 		bool _reverse;
 
@@ -57,7 +57,7 @@ namespace FairyGUI
 		/// <summary>
 		/// 
 		/// </summary>
-		public int max
+		public float max
 		{
 			get
 			{
@@ -76,7 +76,7 @@ namespace FairyGUI
 		/// <summary>
 		/// 
 		/// </summary>
-		public int value
+		public float value
 		{
 			get
 			{
@@ -103,27 +103,31 @@ namespace FairyGUI
 		/// </summary>
 		/// <param name="value"></param>
 		/// <param name="duration"></param>
-		public void TweenValue(int value, float duration)
+		public Tweener TweenValue(float value, float duration)
 		{
-			if (_value != value)
+			if (!Mathf.Approximately(_value, value))
 			{
 				if (_tweener != null)
 					_tweener.Kill(false);
 
-				int oldValue = _value;
+				float oldValue = _value;
 				_value = value;
 				_tweener = DOTween.To(() => oldValue, v => { Update(v); }, value, duration)
 					.SetEase(Ease.Linear).OnComplete(() => { _tweener = null; });
+
+				return _tweener;
 			}
+			else
+				return null;
 		}
 
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="newValue"></param>
-		public void Update(int newValue)
+		public void Update(float newValue)
 		{
-			float percent = Math.Min((float)newValue / _max, 1);
+			float percent = Math.Min(newValue / _max, 1);
 			if (_titleObject != null)
 			{
 				switch (_titleType)

@@ -15,7 +15,6 @@ public class FairyGUI_RelationsWrap
 		L.RegFunction("CopyFrom", CopyFrom);
 		L.RegFunction("Dispose", Dispose);
 		L.RegFunction("OnOwnerSizeChanged", OnOwnerSizeChanged);
-		L.RegFunction("EnsureRelationsSizeCorrect", EnsureRelationsSizeCorrect);
 		L.RegFunction("Setup", Setup);
 		L.RegFunction("New", _CreateFairyGUI_Relations);
 		L.RegFunction("__tostring", Lua_ToString);
@@ -195,22 +194,6 @@ public class FairyGUI_RelationsWrap
 			float arg0 = (float)LuaDLL.luaL_checknumber(L, 2);
 			float arg1 = (float)LuaDLL.luaL_checknumber(L, 3);
 			obj.OnOwnerSizeChanged(arg0, arg1);
-			return 0;
-		}
-		catch(Exception e)
-		{
-			return LuaDLL.toluaL_exception(L, e);
-		}
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int EnsureRelationsSizeCorrect(IntPtr L)
-	{
-		try
-		{
-			ToLua.CheckArgsCount(L, 1);
-			FairyGUI.Relations obj = (FairyGUI.Relations)ToLua.CheckObject(L, 1, typeof(FairyGUI.Relations));
-			obj.EnsureRelationsSizeCorrect();
 			return 0;
 		}
 		catch(Exception e)

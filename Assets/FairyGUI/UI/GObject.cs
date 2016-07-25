@@ -363,9 +363,6 @@ namespace FairyGUI
 		{
 			get
 			{
-				EnsureSizeCorrect();
-				if (relations.sizeDirty)
-					relations.EnsureRelationsSizeCorrect();
 				return _width;
 			}
 			set
@@ -381,9 +378,6 @@ namespace FairyGUI
 		{
 			get
 			{
-				EnsureSizeCorrect();
-				if (relations.sizeDirty)
-					relations.EnsureRelationsSizeCorrect();
 				return _height;
 			}
 			set
@@ -415,13 +409,6 @@ namespace FairyGUI
 		public float actualHeight
 		{
 			get { return this.height * _scaleY; }
-		}
-
-		/// <summary>
-		/// Apply size changed immediately, if there any.
-		/// </summary>
-		virtual public void EnsureSizeCorrect()
-		{
 		}
 
 		/// <summary>

@@ -524,10 +524,5 @@ namespace FairyGUI
 
 			_owner.relations.handling = null;
 		}
-
-		void __targetSizeWillChange()
-		{
-			_owner.relations.sizeDirty = true;
-		}
 	}
 }

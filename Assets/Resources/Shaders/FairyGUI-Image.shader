@@ -119,7 +119,7 @@ Shader "FairyGUI/Image"
 					fixed4 col = tex2D(_MainTex, i.texcoord) * i.color;
 
 					#ifdef COMBINED
-					col.a *= tex2D(_AlphaTex, i.texcoord).g;
+					col.a = tex2D(_AlphaTex, i.texcoord).g;
 					#endif
 
 					#ifdef GRAYED

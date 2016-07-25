@@ -24,9 +24,10 @@ namespace FairyGUI
 	/// </summary>
 	public class GearLook : GearBase
 	{
+		public Tweener tweener { get; private set; }
+
 		Dictionary<string, GearLookValue> _storage;
 		GearLookValue _default;
-		Tweener _tweener;
 
 		public GearLook(GObject owner)
 			: base(owner)
@@ -58,8 +59,11 @@ namespace FairyGUI
 			if (!_storage.TryGetValue(_controller.selectedPageId, out gv))
 				gv = _default;
 
-			if (_tweener != null)
-				_tweener.Kill(true);
+			if (tweener != null)
+			{
+				tweener.Kill(true);
+				tweener = null;
+			}
 
 			if (tween && UIPackage._constructing == 0 && !disableAllTweenEffect)
 			{
@@ -72,7 +76,7 @@ namespace FairyGUI
 				if (a || b)
 				{
 					_owner.internalVisible++;
-					_tweener = DOTween.To(() => new Vector2(_owner.alpha, _owner.rotation), val =>
+					tweener = DOTween.To(() => new Vector2(_owner.alpha, _owner.rotation), val =>
 					{
 						_owner._gearLocked = true;
 						if (a)
@@ -85,12 +89,12 @@ namespace FairyGUI
 					.SetUpdate(true)
 					.OnComplete(() =>
 					{
-						_tweener = null;
+						tweener = null;
 						_owner.internalVisible--;
 					});
 
 					if (delay > 0)
-						_tweener.SetDelay(delay);
+						tweener.SetDelay(delay);
 				}
 			}
 			else

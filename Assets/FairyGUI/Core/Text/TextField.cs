@@ -71,7 +71,7 @@ namespace FairyGUI
 
 			_wordWrap = true;
 			_displayAsPassword = false;
-			_maxLength = int.MaxValue;
+			_maxLength = 10;// int.MaxValue;
 			_text = string.Empty;
 
 			_elements = new List<HtmlElement>(1);
@@ -374,7 +374,7 @@ namespace FairyGUI
 					{
 						s = sb.ToString();
 						if (_text.Length + s.Length > _maxLength)
-							s = s.Substring(0, _text.Length - maxLength);
+							s = s.Substring(0, Math.Max(0, _maxLength - _text.Length));
 						InsertText(s);
 					}
 				}
@@ -436,24 +436,6 @@ namespace FairyGUI
 					_font.PrepareCharacters(element.text);
 					_font.PrepareCharacters("_-*");
 				}
-			}
-		}
-
-		FontStyle GetFontStyle(TextFormat format)
-		{
-			if (format.bold)
-			{
-				if (format.italic)
-					return FontStyle.BoldAndItalic;
-				else
-					return FontStyle.Bold;
-			}
-			else
-			{
-				if (format.italic)
-					return FontStyle.Italic;
-				else
-					return FontStyle.Normal;
 			}
 		}
 
@@ -787,12 +769,9 @@ namespace FairyGUI
 			_font.SetFormat(format);
 			Color32 color = format.color;
 			Color32[] gradientColor = format.gradientColor;
-			bool customBold = _font.customBold;
+			bool boldVertice = format.bold && (_font.customBold || (format.italic && _font.customBoldAndItalic)) && !_input;
 			if (_input)
-			{
 				letterSpacing++;
-				customBold = false;
-			}
 
 			Vector3 v0 = Vector3.zero, v1 = Vector3.zero;
 			Vector2 u0, u1, u2, u3;
@@ -841,6 +820,7 @@ namespace FairyGUI
 							_font.SetFormat(format);
 							color = format.color;
 							gradientColor = format.gradientColor;
+							boldVertice = format.bold && (_font.customBold || (format.italic && _font.customBoldAndItalic)) && !_input;
 						}
 						else if (element.type == HtmlElementType.LinkStart)
 						{
@@ -908,7 +888,7 @@ namespace FairyGUI
 							u3.x += specFlag;
 						}
 
-						if (!format.bold || !customBold)
+						if (!boldVertice)
 						{
 							uvList.Add(u0);
 							uvList.Add(u1);
@@ -1285,6 +1265,10 @@ namespace FairyGUI
 		{
 			if (_selectionStart != null)
 				DeleteSelection();
+
+			if (_text.Length + value.Length > _maxLength)
+				value = value.Substring(0, Math.Max(0, _maxLength - _text.Length));
+
 			this.text = _text.Substring(0, _caretPosition) + value + _text.Substring(_caretPosition);
 			_caretPosition += value.Length;
 			onChanged.Call();

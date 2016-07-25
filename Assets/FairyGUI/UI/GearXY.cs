@@ -22,9 +22,10 @@ namespace FairyGUI
 	/// </summary>
 	public class GearXY : GearBase
 	{
+		public Tweener tweener { get; private set; }
+
 		Dictionary<string, GearXYValue> _storage;
 		GearXYValue _default;
-		Tweener _tweener;
 
 		public GearXY(GObject owner)
 			: base(owner)
@@ -55,15 +56,18 @@ namespace FairyGUI
 			if (!_storage.TryGetValue(_controller.selectedPageId, out gv))
 				gv = _default;
 
-			if (_tweener != null)
-				_tweener.Kill(true);
+			if (tweener != null)
+			{
+				tweener.Kill(true);
+				tweener = null;
+			}
 
 			if (tween && UIPackage._constructing == 0 && !disableAllTweenEffect)
 			{
 				if (_owner.x != gv.x || _owner.y != gv.y)
 				{
 					_owner.internalVisible++;
-					_tweener = DOTween.To(() => new Vector2(_owner.x, _owner.y), v =>
+					tweener = DOTween.To(() => new Vector2(_owner.x, _owner.y), v =>
 					{
 						_owner._gearLocked = true;
 						_owner.SetXY(v.x, v.y);
@@ -73,13 +77,13 @@ namespace FairyGUI
 					.SetUpdate(true)
 					.OnComplete(() =>
 					{
-						_tweener = null;
+						tweener = null;
 						_owner.internalVisible--;
 						_owner.InvalidateBatchingState();
 					});
 
 					if (delay > 0)
-						_tweener.SetDelay(delay);
+						tweener.SetDelay(delay);
 				}
 			}
 			else

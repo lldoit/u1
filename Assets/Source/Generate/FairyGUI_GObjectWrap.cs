@@ -10,7 +10,6 @@ public class FairyGUI_GObjectWrap
 		L.RegFunction("SetXY", SetXY);
 		L.RegFunction("SetPosition", SetPosition);
 		L.RegFunction("Center", Center);
-		L.RegFunction("EnsureSizeCorrect", EnsureSizeCorrect);
 		L.RegFunction("SetSize", SetSize);
 		L.RegFunction("SetScale", SetScale);
 		L.RegFunction("SetPivot", SetPivot);
@@ -215,22 +214,6 @@ public class FairyGUI_GObjectWrap
 			{
 				return LuaDLL.luaL_throw(L, "invalid arguments to method: FairyGUI.GObject.Center");
 			}
-		}
-		catch(Exception e)
-		{
-			return LuaDLL.toluaL_exception(L, e);
-		}
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int EnsureSizeCorrect(IntPtr L)
-	{
-		try
-		{
-			ToLua.CheckArgsCount(L, 1);
-			FairyGUI.GObject obj = (FairyGUI.GObject)ToLua.CheckObject(L, 1, typeof(FairyGUI.GObject));
-			obj.EnsureSizeCorrect();
-			return 0;
 		}
 		catch(Exception e)
 		{

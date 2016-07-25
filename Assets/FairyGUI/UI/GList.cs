@@ -43,6 +43,11 @@ namespace FairyGUI
 		/// </summary>
 		public EventListener onClickItem { get; private set; }
 
+		/// <summary>
+		/// 
+		/// </summary>
+		public bool scrollItemToViewOnClick;
+
 		ListLayoutType _layout;
 		int _lineItemCount;
 		int _lineGap;
@@ -69,6 +74,7 @@ namespace FairyGUI
 			_trackBounds = true;
 			autoResizeItem = true;
 			this.opaque = true;
+			scrollItemToViewOnClick = true;
 
 			onClickItem = new EventListener(this, "onClickItem");
 		}
@@ -365,6 +371,8 @@ namespace FairyGUI
 			if (selectionMode == ListSelectionMode.None)
 				return;
 
+			CheckVirtualList();
+
 			if (selectionMode == ListSelectionMode.Single)
 				ClearSelection();
 
@@ -435,6 +443,8 @@ namespace FairyGUI
 		/// </summary>
 		public void SelectAll()
 		{
+			CheckVirtualList();
+
 			int cnt = _children.Count;
 			for (int i = 0; i < cnt; i++)
 			{
@@ -463,6 +473,8 @@ namespace FairyGUI
 		/// </summary>
 		public void SelectReverse()
 		{
+			CheckVirtualList();
+
 			int cnt = _children.Count;
 			for (int i = 0; i < cnt; i++)
 			{
@@ -671,7 +683,7 @@ namespace FairyGUI
 				SetSelectionOnEvent(item, (InputEvent)context.data);
 			_selectionHandled = false;
 
-			if (scrollPane != null)
+			if (scrollPane != null && scrollItemToViewOnClick)
 				scrollPane.ScrollToView(item, true);
 
 			onClickItem.Call(item);
@@ -893,7 +905,7 @@ namespace FairyGUI
 		/// <param name="ani">True to scroll smoothly, othewise immdediately.</param>
 		public void ScrollToView(int index, bool ani)
 		{
-			ScrollToView(index, false, false);
+			ScrollToView(index, ani, false);
 		}
 
 		/// <summary>
@@ -906,6 +918,8 @@ namespace FairyGUI
 		{
 			if (_virtual)
 			{
+				CheckVirtualList();
+
 				if (this.scrollPane != null)
 					scrollPane.ScrollToView(GetItemRect(index), ani, setFirst);
 				else if (parent != null && parent.scrollPane != null)
@@ -1036,9 +1050,23 @@ namespace FairyGUI
 			}
 		}
 
+		public void RefreshVirtualList()
+		{
+			SetVirtualListChangedFlag(false);
+		}
+
 		void __parentSizeChanged()
 		{
 			SetVirtualListChangedFlag(true);
+		}
+
+		void CheckVirtualList()
+		{
+			if (this._virtualListChanged != 0)
+			{
+				this.RefreshVirtualList(null);
+				Timers.inst.Remove(this.RefreshVirtualList);
+			}
 		}
 
 		void SetVirtualListChangedFlag(bool layoutChanged)
@@ -1431,12 +1459,6 @@ namespace FairyGUI
 			float cw, ch;
 			float maxWidth = 0;
 			float maxHeight = 0;
-
-			for (i = 0; i < cnt; i++)
-			{
-				child = GetChildAt(i);
-				child.EnsureSizeCorrect();
-			}
 
 			if (_layout == ListLayoutType.SingleColumn)
 			{

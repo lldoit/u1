@@ -9,8 +9,8 @@ namespace FairyGUI
 	/// </summary>
 	public class GSlider : GComponent
 	{
-		int _max;
-		int _value;
+		float _max;
+		float _value;
 		ProgressTitleType _titleType;
 
 		GTextField _titleObject;
@@ -34,12 +34,19 @@ namespace FairyGUI
 		/// </summary>
 		public EventListener onChanged { get; private set; }
 
+		/// <summary>
+		/// 
+		/// </summary>
+		public EventListener onGripTouchEnd { get; private set; }
+
 		public GSlider()
 		{
 			_value = 50;
 			_max = 100;
 
 			onChanged = new EventListener(this, "onChanged");
+			onGripTouchEnd = new EventListener(this, "onGripTouchEnd");
+
 			_touchEndDelegate = __gripTouchEnd;
 			_touchMoveDelegate = __gripTouchMove;
 		}
@@ -66,7 +73,7 @@ namespace FairyGUI
 		/// <summary>
 		/// 
 		/// </summary>
-		public int max
+		public float max
 		{
 			get
 			{
@@ -85,7 +92,7 @@ namespace FairyGUI
 		/// <summary>
 		/// 
 		/// </summary>
-		public int value
+		public float value
 		{
 			get
 			{
@@ -103,7 +110,7 @@ namespace FairyGUI
 
 		private void Update()
 		{
-			float percent = Math.Min((float)_value / _max, 1);
+			float percent = Math.Min(_value / _max, 1);
 			UpdateWidthPercent(percent);
 		}
 
@@ -118,15 +125,15 @@ namespace FairyGUI
 						break;
 
 					case ProgressTitleType.ValueAndMax:
-						_titleObject.text = _value + "/" + max;
+						_titleObject.text = Mathf.RoundToInt(_value) + "/" + Mathf.RoundToInt(max);
 						break;
 
 					case ProgressTitleType.Value:
-						_titleObject.text = "" + _value;
+						_titleObject.text = "" + Mathf.RoundToInt(_value);
 						break;
 
 					case ProgressTitleType.Max:
-						_titleObject.text = "" + _max;
+						_titleObject.text = "" + Mathf.RoundToInt(_max);
 						break;
 				}
 			}
@@ -257,6 +264,8 @@ namespace FairyGUI
 
 			float percent = (float)_value / _max;
 			UpdateWidthPercent(percent);
+
+			onGripTouchEnd.Call();
 		}
 	}
 }

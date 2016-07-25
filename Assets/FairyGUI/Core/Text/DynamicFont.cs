@@ -104,7 +104,12 @@ namespace FairyGUI
 			if (format.bold && !customBold)
 			{
 				if (format.italic)
-					_style = FontStyle.BoldAndItalic;
+				{
+					if (customBoldAndItalic)
+						_style = FontStyle.Italic;
+					else
+						_style = FontStyle.BoldAndItalic;
+				}
 				else
 					_style = FontStyle.Bold;
 			}

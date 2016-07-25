@@ -11,6 +11,7 @@ public class FairyGUI_EventListenerWrap
 		L.RegFunction("RemoveCapture", RemoveCapture);
 		L.RegFunction("Add", Add);
 		L.RegFunction("Remove", Remove);
+		L.RegFunction("Set", Set);
 		L.RegFunction("Clear", Clear);
 		L.RegFunction("Call", Call);
 		L.RegFunction("BubbleCall", BubbleCall);
@@ -212,6 +213,62 @@ public class FairyGUI_EventListenerWrap
 			else
 			{
 				return LuaDLL.luaL_throw(L, "invalid arguments to method: FairyGUI.EventListener.Remove");
+			}
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int Set(IntPtr L)
+	{
+		try
+		{
+			int count = LuaDLL.lua_gettop(L);
+
+			if (count == 2 && TypeChecker.CheckTypes(L, 1, typeof(FairyGUI.EventListener), typeof(FairyGUI.EventCallback1)))
+			{
+				FairyGUI.EventListener obj = (FairyGUI.EventListener)ToLua.ToObject(L, 1);
+				FairyGUI.EventCallback1 arg0 = null;
+				LuaTypes funcType2 = LuaDLL.lua_type(L, 2);
+
+				if (funcType2 != LuaTypes.LUA_TFUNCTION)
+				{
+					 arg0 = (FairyGUI.EventCallback1)ToLua.ToObject(L, 2);
+				}
+				else
+				{
+					LuaFunction func = ToLua.ToLuaFunction(L, 2);
+					arg0 = DelegateFactory.CreateDelegate(typeof(FairyGUI.EventCallback1), func) as FairyGUI.EventCallback1;
+				}
+
+				obj.Set(arg0);
+				return 0;
+			}
+			else if (count == 2 && TypeChecker.CheckTypes(L, 1, typeof(FairyGUI.EventListener), typeof(FairyGUI.EventCallback0)))
+			{
+				FairyGUI.EventListener obj = (FairyGUI.EventListener)ToLua.ToObject(L, 1);
+				FairyGUI.EventCallback0 arg0 = null;
+				LuaTypes funcType2 = LuaDLL.lua_type(L, 2);
+
+				if (funcType2 != LuaTypes.LUA_TFUNCTION)
+				{
+					 arg0 = (FairyGUI.EventCallback0)ToLua.ToObject(L, 2);
+				}
+				else
+				{
+					LuaFunction func = ToLua.ToLuaFunction(L, 2);
+					arg0 = DelegateFactory.CreateDelegate(typeof(FairyGUI.EventCallback0), func) as FairyGUI.EventCallback0;
+				}
+
+				obj.Set(arg0);
+				return 0;
+			}
+			else
+			{
+				return LuaDLL.luaL_throw(L, "invalid arguments to method: FairyGUI.EventListener.Set");
 			}
 		}
 		catch(Exception e)

@@ -78,6 +78,9 @@ namespace FairyGUI
 
 		void OnRenderImage()
 		{
+			if (blurSize < 0.01)
+				return;
+
 			RenderTexture sourceTexture = (RenderTexture)_target.paintingGraphics.texture.nativeTexture;
 			int rtW = sourceTexture.width / 8;
 			int rtH = sourceTexture.height / 8;

@@ -103,6 +103,34 @@ namespace FairyGUI
 		/// <summary>
 		/// 
 		/// </summary>
+		/// <param name="callback"></param>
+		public void Set(EventCallback0 callback)
+		{
+			if (_bridge == null)
+				_bridge = this.owner.GetEventBridge(_type);
+
+			_bridge.Clear();
+			if (callback != null)
+				_bridge.Add(callback);
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="callback"></param>
+		public void Set(EventCallback1 callback)
+		{
+			if (_bridge == null)
+				_bridge = this.owner.GetEventBridge(_type);
+
+			_bridge.Clear();
+			if (callback != null)
+				_bridge.Add(callback);
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
 		public bool isEmpty
 		{
 			get

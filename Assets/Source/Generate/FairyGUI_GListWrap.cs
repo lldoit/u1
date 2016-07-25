@@ -29,6 +29,7 @@ public class FairyGUI_GListWrap
 		L.RegFunction("GetFirstChildInView", GetFirstChildInView);
 		L.RegFunction("SetVirtual", SetVirtual);
 		L.RegFunction("SetVirtualAndLoop", SetVirtualAndLoop);
+		L.RegFunction("RefreshVirtualList", RefreshVirtualList);
 		L.RegFunction("Setup_BeforeAdd", Setup_BeforeAdd);
 		L.RegFunction("New", _CreateFairyGUI_GList);
 		L.RegFunction("__tostring", Lua_ToString);
@@ -36,6 +37,7 @@ public class FairyGUI_GListWrap
 		L.RegVar("autoResizeItem", get_autoResizeItem, set_autoResizeItem);
 		L.RegVar("selectionMode", get_selectionMode, set_selectionMode);
 		L.RegVar("itemRenderer", get_itemRenderer, set_itemRenderer);
+		L.RegVar("scrollItemToViewOnClick", get_scrollItemToViewOnClick, set_scrollItemToViewOnClick);
 		L.RegVar("onClickItem", get_onClickItem, null);
 		L.RegVar("layout", get_layout, set_layout);
 		L.RegVar("lineItemCount", get_lineItemCount, set_lineItemCount);
@@ -533,6 +535,22 @@ public class FairyGUI_GListWrap
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int RefreshVirtualList(IntPtr L)
+	{
+		try
+		{
+			ToLua.CheckArgsCount(L, 1);
+			FairyGUI.GList obj = (FairyGUI.GList)ToLua.CheckObject(L, 1, typeof(FairyGUI.GList));
+			obj.RefreshVirtualList();
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
 	static int Setup_BeforeAdd(IntPtr L)
 	{
 		try
@@ -639,6 +657,25 @@ public class FairyGUI_GListWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index itemRenderer on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_scrollItemToViewOnClick(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GList obj = (FairyGUI.GList)o;
+			bool ret = obj.scrollItemToViewOnClick;
+			LuaDLL.lua_pushboolean(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index scrollItemToViewOnClick on a nil value" : e.Message);
 		}
 	}
 
@@ -898,6 +935,25 @@ public class FairyGUI_GListWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index itemRenderer on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int set_scrollItemToViewOnClick(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GList obj = (FairyGUI.GList)o;
+			bool arg0 = LuaDLL.luaL_checkboolean(L, 2);
+			obj.scrollItemToViewOnClick = arg0;
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index scrollItemToViewOnClick on a nil value" : e.Message);
 		}
 	}
 

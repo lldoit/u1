@@ -21,6 +21,7 @@ public class FairyGUI_GComboBoxWrap
 		L.RegVar("values", get_values, set_values);
 		L.RegVar("selectedIndex", get_selectedIndex, set_selectedIndex);
 		L.RegVar("value", get_value, set_value);
+		L.RegVar("popupDirection", get_popupDirection, set_popupDirection);
 		L.EndClass();
 	}
 
@@ -287,6 +288,25 @@ public class FairyGUI_GComboBoxWrap
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_popupDirection(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GComboBox obj = (FairyGUI.GComboBox)o;
+			string ret = obj.popupDirection;
+			LuaDLL.lua_pushstring(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index popupDirection on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
 	static int set_visibleItemCount(IntPtr L)
 	{
 		object o = null;
@@ -435,6 +455,25 @@ public class FairyGUI_GComboBoxWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index value on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int set_popupDirection(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GComboBox obj = (FairyGUI.GComboBox)o;
+			string arg0 = ToLua.CheckString(L, 2);
+			obj.popupDirection = arg0;
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index popupDirection on a nil value" : e.Message);
 		}
 	}
 }

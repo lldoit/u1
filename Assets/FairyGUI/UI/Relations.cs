@@ -13,7 +13,6 @@ namespace FairyGUI
 		List<RelationItem> _items;
 
 		internal GObject handling;
-		internal bool sizeDirty;
 
 		static string[] RELATION_NAMES = new string[] {
 			"left-left",//0
@@ -235,21 +234,6 @@ namespace FairyGUI
 			foreach (RelationItem item in _items)
 			{
 				item.ApplyOnSelfSizeChanged(dWidth, dHeight);
-			}
-		}
-
-		/// <summary>
-		/// 
-		/// </summary>
-		public void EnsureRelationsSizeCorrect()
-		{
-			if (_items.Count == 0)
-				return;
-
-			sizeDirty = false;
-			foreach (RelationItem item in _items)
-			{
-				item.target.EnsureSizeCorrect();
 			}
 		}
 

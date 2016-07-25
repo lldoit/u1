@@ -12,6 +12,7 @@ public class FairyGUI_GSliderWrap
 		L.RegFunction("New", _CreateFairyGUI_GSlider);
 		L.RegFunction("__tostring", Lua_ToString);
 		L.RegVar("onChanged", get_onChanged, null);
+		L.RegVar("onGripTouchEnd", get_onGripTouchEnd, null);
 		L.RegVar("titleType", get_titleType, set_titleType);
 		L.RegVar("max", get_max, set_max);
 		L.RegVar("value", get_value, set_value);
@@ -113,6 +114,25 @@ public class FairyGUI_GSliderWrap
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_onGripTouchEnd(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GSlider obj = (FairyGUI.GSlider)o;
+			FairyGUI.EventListener ret = obj.onGripTouchEnd;
+			ToLua.PushObject(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index onGripTouchEnd on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
 	static int get_titleType(IntPtr L)
 	{
 		object o = null;
@@ -140,8 +160,8 @@ public class FairyGUI_GSliderWrap
 		{
 			o = ToLua.ToObject(L, 1);
 			FairyGUI.GSlider obj = (FairyGUI.GSlider)o;
-			int ret = obj.max;
-			LuaDLL.lua_pushinteger(L, ret);
+			float ret = obj.max;
+			LuaDLL.lua_pushnumber(L, ret);
 			return 1;
 		}
 		catch(Exception e)
@@ -159,8 +179,8 @@ public class FairyGUI_GSliderWrap
 		{
 			o = ToLua.ToObject(L, 1);
 			FairyGUI.GSlider obj = (FairyGUI.GSlider)o;
-			int ret = obj.value;
-			LuaDLL.lua_pushinteger(L, ret);
+			float ret = obj.value;
+			LuaDLL.lua_pushnumber(L, ret);
 			return 1;
 		}
 		catch(Exception e)
@@ -197,7 +217,7 @@ public class FairyGUI_GSliderWrap
 		{
 			o = ToLua.ToObject(L, 1);
 			FairyGUI.GSlider obj = (FairyGUI.GSlider)o;
-			int arg0 = (int)LuaDLL.luaL_checknumber(L, 2);
+			float arg0 = (float)LuaDLL.luaL_checknumber(L, 2);
 			obj.max = arg0;
 			return 0;
 		}
@@ -216,7 +236,7 @@ public class FairyGUI_GSliderWrap
 		{
 			o = ToLua.ToObject(L, 1);
 			FairyGUI.GSlider obj = (FairyGUI.GSlider)o;
-			int arg0 = (int)LuaDLL.luaL_checknumber(L, 2);
+			float arg0 = (float)LuaDLL.luaL_checknumber(L, 2);
 			obj.value = arg0;
 			return 0;
 		}

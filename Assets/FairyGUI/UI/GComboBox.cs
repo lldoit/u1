@@ -29,6 +29,7 @@ namespace FairyGUI
 
 		protected string[] _items;
 		protected string[] _values;
+		protected string _popupDirection;
 
 		bool _itemsUpdated;
 		int _selectedIndex;
@@ -46,6 +47,7 @@ namespace FairyGUI
 			_selectedIndex = -1;
 			_items = new string[0];
 			_values = new string[0];
+			_popupDirection = "down";
 
 			onChanged = new EventListener(this, "onChanged");
 			_touchEndDelegate = __touchEnd;
@@ -176,6 +178,15 @@ namespace FairyGUI
 			}
 		}
 
+		/// <summary>
+		/// 
+		/// </summary>
+		public string popupDirection
+		{
+			get { return _popupDirection; }
+			set { _popupDirection = value; }
+		}
+
 		protected void SetState(string value)
 		{
 			if (_buttonController != null)
@@ -246,6 +257,7 @@ namespace FairyGUI
 			if (str != null)
 				this.titleColor = ToolSet.ConvertFromHtmlColor(str);
 			visibleItemCount = xml.GetAttributeInt("visibleItemCount", visibleItemCount);
+			_popupDirection = xml.GetAttribute("direction", _popupDirection);
 
 			XMLList col = xml.Elements("item");
 			_items = new string[col.Count];
@@ -284,7 +296,7 @@ namespace FairyGUI
 			_list.selectedIndex = -1;
 			dropdown.width = this.width;
 
-			this.root.TogglePopup(dropdown, this, true);
+			this.root.TogglePopup(dropdown, this, _popupDirection == "up" ? (object)false : (_popupDirection == "auto" ? null : (object)true));
 			if (dropdown.parent != null)
 			{
 				dropdown.displayObject.onRemovedFromStage.Add(__popupWinClosed);
