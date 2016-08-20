@@ -20,11 +20,13 @@ public class FairyGUI_ScrollPaneWrap
 		L.RegFunction("ScrollToView", ScrollToView);
 		L.RegFunction("IsChildInView", IsChildInView);
 		L.RegFunction("New", _CreateFairyGUI_ScrollPane);
-		L.RegFunction("__tostring", Lua_ToString);
+		L.RegFunction("__tostring", ToLua.op_ToString);
 		L.RegVar("onScroll", get_onScroll, null);
+		L.RegVar("onScrollEnd", get_onScrollEnd, null);
 		L.RegVar("owner", get_owner, null);
 		L.RegVar("bouncebackEffect", get_bouncebackEffect, set_bouncebackEffect);
 		L.RegVar("touchEffect", get_touchEffect, set_touchEffect);
+		L.RegVar("inertiaDisabled", get_inertiaDisabled, set_inertiaDisabled);
 		L.RegVar("softnessOnTopOrLeftSide", get_softnessOnTopOrLeftSide, set_softnessOnTopOrLeftSide);
 		L.RegVar("scrollSpeed", get_scrollSpeed, set_scrollSpeed);
 		L.RegVar("snapToItem", get_snapToItem, set_snapToItem);
@@ -407,23 +409,6 @@ public class FairyGUI_ScrollPaneWrap
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int Lua_ToString(IntPtr L)
-	{
-		object obj = ToLua.ToObject(L, 1);
-
-		if (obj != null)
-		{
-			LuaDLL.lua_pushstring(L, obj.ToString());
-		}
-		else
-		{
-			LuaDLL.lua_pushnil(L);
-		}
-
-		return 1;
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
 	static int get_onScroll(IntPtr L)
 	{
 		object o = null;
@@ -439,6 +424,25 @@ public class FairyGUI_ScrollPaneWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index onScroll on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_onScrollEnd(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.ScrollPane obj = (FairyGUI.ScrollPane)o;
+			FairyGUI.EventListener ret = obj.onScrollEnd;
+			ToLua.PushObject(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index onScrollEnd on a nil value" : e.Message);
 		}
 	}
 
@@ -496,6 +500,25 @@ public class FairyGUI_ScrollPaneWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index touchEffect on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_inertiaDisabled(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.ScrollPane obj = (FairyGUI.ScrollPane)o;
+			bool ret = obj.inertiaDisabled;
+			LuaDLL.lua_pushboolean(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index inertiaDisabled on a nil value" : e.Message);
 		}
 	}
 
@@ -838,6 +861,25 @@ public class FairyGUI_ScrollPaneWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index touchEffect on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int set_inertiaDisabled(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.ScrollPane obj = (FairyGUI.ScrollPane)o;
+			bool arg0 = LuaDLL.luaL_checkboolean(L, 2);
+			obj.inertiaDisabled = arg0;
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index inertiaDisabled on a nil value" : e.Message);
 		}
 	}
 

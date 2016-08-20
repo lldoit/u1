@@ -30,7 +30,7 @@ public class FairyGUI_GRootWrap
 		L.RegFunction("DisableSound", DisableSound);
 		L.RegFunction("PlayOneShotSound", PlayOneShotSound);
 		L.RegFunction("New", _CreateFairyGUI_GRoot);
-		L.RegFunction("__tostring", Lua_ToString);
+		L.RegFunction("__tostring", ToLua.op_ToString);
 		L.RegVar("contentScaleFactor", get_contentScaleFactor, null);
 		L.RegVar("inst", get_inst, null);
 		L.RegVar("hasModalWindow", get_hasModalWindow, null);
@@ -548,23 +548,6 @@ public class FairyGUI_GRootWrap
 		{
 			return LuaDLL.toluaL_exception(L, e);
 		}
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int Lua_ToString(IntPtr L)
-	{
-		object obj = ToLua.ToObject(L, 1);
-
-		if (obj != null)
-		{
-			LuaDLL.lua_pushstring(L, obj.ToString());
-		}
-		else
-		{
-			LuaDLL.lua_pushnil(L);
-		}
-
-		return 1;
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]

@@ -17,16 +17,17 @@ namespace FairyGUI.Utils
 
 		RichTextField _owner;
 		HtmlElement _element;
+		EventCallback1 _clickHandler;
 
 		public HtmlButton()
 		{
 			if (resource != null)
 			{
 				button = UIPackage.CreateObjectFromURL(resource).asCom;
-				button.onClick.Add((EventContext context) =>
+				_clickHandler = (EventContext context) =>
 				{
 					_owner.DispatchEvent(CLICK_EVENT, context.data, this);
-				});
+				};
 			}
 			else
 				Debug.LogWarning("FairyGUI: Set HtmlButton.resource first");
@@ -55,6 +56,7 @@ namespace FairyGUI.Utils
 			if (button == null)
 				return;
 
+			button.onClick.Add(_clickHandler);
 			int width = element.GetInt("width", 0);
 			int height = element.GetInt("height", 0);
 
@@ -81,8 +83,13 @@ namespace FairyGUI.Utils
 
 		public void Remove()
 		{
-			if (button != null && button.displayObject.parent != null)
-				_owner.RemoveChild(button.displayObject);
+			if (button != null)
+			{
+				if (button.displayObject.parent != null)
+					_owner.RemoveChild(button.displayObject);
+
+				button.RemoveEventListeners();
+			}
 
 			_owner = null;
 			_element = null;

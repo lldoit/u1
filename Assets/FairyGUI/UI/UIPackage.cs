@@ -44,6 +44,7 @@ namespace FairyGUI
 		AssetBundle _resBundle;
 		string _assetNamePrefix;
 		string _customId;
+		bool _fromBundle;
 
 		class AtlasSprite
 		{
@@ -246,13 +247,23 @@ namespace FairyGUI
 		/// <param name="packageIdOrName"></param>
 		public static void RemovePackage(string packageIdOrName)
 		{
+			RemovePackage(packageIdOrName, false);
+		}
+
+		/// <summary>
+		/// Remove a package. All resources in this package will be disposed.
+		/// </summary>
+		/// <param name="packageIdOrName"></param>
+		/// <param name="allowDestroyingAssets"></param>
+		public static void RemovePackage(string packageIdOrName, bool allowDestroyingAssets)
+		{
 			UIPackage pkg = null;
 			if (!_packageInstById.TryGetValue(packageIdOrName, out pkg))
 			{
 				if (!_packageInstByName.TryGetValue(packageIdOrName, out pkg))
 					throw new Exception("FairyGUI: '" + packageIdOrName + "' is not a valid package id or name.");
 			}
-			pkg.Dispose();
+			pkg.Dispose(allowDestroyingAssets);
 			_packageInstById.Remove(packageIdOrName);
 			if (pkg._customId != null)
 				_packageInstById.Remove(pkg._customId);
@@ -273,7 +284,7 @@ namespace FairyGUI
 
 				foreach (UIPackage pkg in pkgs)
 				{
-					pkg.Dispose();
+					pkg.Dispose(false);
 				}
 			}
 			_packageList.Clear();
@@ -477,10 +488,12 @@ namespace FairyGUI
 					_assetNamePrefix = mainAssetName + "@";
 				else
 					_assetNamePrefix = "";
+				_fromBundle = true;
 			}
 			else
 			{
 				_assetNamePrefix = mainAssetName + "@";
+				_fromBundle = false;
 			}
 
 			LoadPackage();
@@ -657,7 +670,7 @@ namespace FairyGUI
 				return 0;
 		}
 
-		void Dispose()
+		void Dispose(bool allowDestroyingAssets)
 		{
 			int cnt = _items.Count;
 			for (int i = 0; i < cnt; i++)
@@ -665,14 +678,27 @@ namespace FairyGUI
 				PackageItem pi = _items[i];
 				if (pi.texture != null)
 				{
-					pi.texture.alphaTexture = null;
+					if (pi.texture.alphaTexture != null)
+					{
+						pi.texture.alphaTexture.Dispose(allowDestroyingAssets);
+						pi.texture.alphaTexture = null;
+					}
+
 					if (pi.texture != NTexture.Empty)
-						pi.texture.Dispose();
+						pi.texture.Dispose(allowDestroyingAssets);
 					else
 						pi.texture.DestroyMaterials();
+					pi.texture = null;
 				}
 				else if (pi.audioClip != null)
 				{
+					if (allowDestroyingAssets)
+					{
+						if (_fromBundle)
+							AudioClip.DestroyImmediate(pi.audioClip);
+						else
+							Resources.UnloadAsset(pi.audioClip);
+					}
 					pi.audioClip = null;
 				}
 				else if (pi.bitmapFont != null)
@@ -826,6 +852,7 @@ namespace FairyGUI
 							if (tex.mipmapCount > 1)
 								Debug.LogWarning("FairyGUI: texture '" + fileName + "' in " + this.name + " is mipmaps enabled.");
 							item.texture = new NTexture(tex, (float)tex.width / item.width, (float)tex.height / item.height);
+							item.texture.storedODisk = _resBundle == null;
 
 							filePath = filePath + "!a";
 							if (_resBundle != null)
@@ -839,7 +866,10 @@ namespace FairyGUI
 							else
 								tex = (Texture2D)_loadFunc(filePath, ext, typeof(Texture2D));
 							if (tex != null)
-								item.texture.alphaTexture = tex;
+							{
+								item.texture.alphaTexture = new NTexture(tex);
+								item.texture.alphaTexture.storedODisk = _resBundle == null;
+							}
 						}
 					}
 					return item.texture;
@@ -928,6 +958,8 @@ namespace FairyGUI
 				{
 					if (strings.TryGetValue(elementId, out value))
 						cxml.SetAttribute("text", value);
+					if (strings.TryGetValue(elementId + "-prompt", out value))
+						cxml.SetAttribute("prompt", value);
 				}
 				else if (ename == "list")
 				{
@@ -1085,6 +1117,7 @@ namespace FairyGUI
 			int size = 0;
 			int xadvance = 0;
 			bool resizable = false;
+			bool canTint = false;
 			BitmapFont.BMGlyph bg = null;
 
 			char[] splitter0 = new char[] { ' ' };
@@ -1185,6 +1218,7 @@ namespace FairyGUI
 					if (kv.TryGetValue("face", out str))
 					{
 						ttf = true;
+						canTint = true;
 
 						AtlasSprite sprite;
 						if (_sprites.TryGetValue(item.id, out sprite))
@@ -1198,6 +1232,8 @@ namespace FairyGUI
 						size = int.Parse(str);
 					if (kv.TryGetValue("resizable", out str))
 						resizable = str == "true";
+					if (kv.TryGetValue("colored", out str))
+						canTint = str == "true";
 				}
 				else if (str == "common")
 				{
@@ -1212,7 +1248,7 @@ namespace FairyGUI
 				size = bg.height;
 
 			font.hasChannel = ttf;
-			font.canTint = ttf;
+			font.canTint = canTint;
 			font.size = size;
 			font.resizable = resizable;
 			font.mainTexture = mainTexture;

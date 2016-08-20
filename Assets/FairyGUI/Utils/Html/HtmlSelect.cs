@@ -17,16 +17,17 @@ namespace FairyGUI.Utils
 
 		RichTextField _owner;
 		HtmlElement _element;
+		EventCallback0 _changeHandler;
 
 		public HtmlSelect()
 		{
 			if (resource != null)
 			{
 				comboBox = UIPackage.CreateObjectFromURL(resource).asComboBox;
-				comboBox.onChanged.Add(() =>
+				_changeHandler = () =>
 				{
 					_owner.DispatchEvent(CHANGED_EVENT, null, this);
-				});
+				};
 			}
 			else
 				Debug.LogWarning("FairyGUI: Set HtmlSelect.resource first");
@@ -54,6 +55,8 @@ namespace FairyGUI.Utils
 
 			if (comboBox == null)
 				return;
+
+			comboBox.onChanged.Add(_changeHandler);
 
 			int width = element.GetInt("width", 0);
 			int height = element.GetInt("height", 0);
@@ -83,8 +86,13 @@ namespace FairyGUI.Utils
 
 		public void Remove()
 		{
-			if (comboBox != null && comboBox.displayObject.parent != null)
-				_owner.RemoveChild(comboBox.displayObject);
+			if (comboBox != null)
+			{
+				if (comboBox.displayObject.parent != null)
+					_owner.RemoveChild(comboBox.displayObject);
+
+				comboBox.RemoveEventListeners();
+			}
 
 			_owner = null;
 			_element = null;

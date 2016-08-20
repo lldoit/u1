@@ -105,6 +105,7 @@ namespace FairyGUI.Utils
 				_owner.RemoveChild(_border);
 				_owner.RemoveChild(textInput.displayObject);
 			}
+			textInput.RemoveEventListeners();
 			textInput.text = null;
 
 			_owner = null;

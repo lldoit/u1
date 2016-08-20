@@ -32,20 +32,21 @@ public class FairyGUI_GListWrap
 		L.RegFunction("RefreshVirtualList", RefreshVirtualList);
 		L.RegFunction("Setup_BeforeAdd", Setup_BeforeAdd);
 		L.RegFunction("New", _CreateFairyGUI_GList);
-		L.RegFunction("__tostring", Lua_ToString);
+		L.RegFunction("__tostring", ToLua.op_ToString);
 		L.RegVar("defaultItem", get_defaultItem, set_defaultItem);
 		L.RegVar("autoResizeItem", get_autoResizeItem, set_autoResizeItem);
 		L.RegVar("selectionMode", get_selectionMode, set_selectionMode);
 		L.RegVar("itemRenderer", get_itemRenderer, set_itemRenderer);
+		L.RegVar("itemProvider", get_itemProvider, set_itemProvider);
 		L.RegVar("scrollItemToViewOnClick", get_scrollItemToViewOnClick, set_scrollItemToViewOnClick);
 		L.RegVar("onClickItem", get_onClickItem, null);
 		L.RegVar("layout", get_layout, set_layout);
 		L.RegVar("lineItemCount", get_lineItemCount, set_lineItemCount);
 		L.RegVar("lineGap", get_lineGap, set_lineGap);
 		L.RegVar("columnGap", get_columnGap, set_columnGap);
-		L.RegVar("virtualItemSize", get_virtualItemSize, set_virtualItemSize);
 		L.RegVar("itemPool", get_itemPool, null);
 		L.RegVar("selectedIndex", get_selectedIndex, set_selectedIndex);
+		L.RegVar("isVirtual", get_isVirtual, null);
 		L.RegVar("numItems", get_numItems, set_numItems);
 		L.EndClass();
 	}
@@ -568,23 +569,6 @@ public class FairyGUI_GListWrap
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int Lua_ToString(IntPtr L)
-	{
-		object obj = ToLua.ToObject(L, 1);
-
-		if (obj != null)
-		{
-			LuaDLL.lua_pushstring(L, obj.ToString());
-		}
-		else
-		{
-			LuaDLL.lua_pushnil(L);
-		}
-
-		return 1;
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
 	static int get_defaultItem(IntPtr L)
 	{
 		object o = null;
@@ -657,6 +641,25 @@ public class FairyGUI_GListWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index itemRenderer on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_itemProvider(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GList obj = (FairyGUI.GList)o;
+			FairyGUI.ListItemProvider ret = obj.itemProvider;
+			ToLua.Push(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index itemProvider on a nil value" : e.Message);
 		}
 	}
 
@@ -775,25 +778,6 @@ public class FairyGUI_GListWrap
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int get_virtualItemSize(IntPtr L)
-	{
-		object o = null;
-
-		try
-		{
-			o = ToLua.ToObject(L, 1);
-			FairyGUI.GList obj = (FairyGUI.GList)o;
-			UnityEngine.Vector2 ret = obj.virtualItemSize;
-			ToLua.Push(L, ret);
-			return 1;
-		}
-		catch(Exception e)
-		{
-			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index virtualItemSize on a nil value" : e.Message);
-		}
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
 	static int get_itemPool(IntPtr L)
 	{
 		object o = null;
@@ -828,6 +812,25 @@ public class FairyGUI_GListWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index selectedIndex on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_isVirtual(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GList obj = (FairyGUI.GList)o;
+			bool ret = obj.isVirtual;
+			LuaDLL.lua_pushboolean(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index isVirtual on a nil value" : e.Message);
 		}
 	}
 
@@ -939,6 +942,37 @@ public class FairyGUI_GListWrap
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int set_itemProvider(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GList obj = (FairyGUI.GList)o;
+			FairyGUI.ListItemProvider arg0 = null;
+			LuaTypes funcType2 = LuaDLL.lua_type(L, 2);
+
+			if (funcType2 != LuaTypes.LUA_TFUNCTION)
+			{
+				 arg0 = (FairyGUI.ListItemProvider)ToLua.CheckObject(L, 2, typeof(FairyGUI.ListItemProvider));
+			}
+			else
+			{
+				LuaFunction func = ToLua.ToLuaFunction(L, 2);
+				arg0 = DelegateFactory.CreateDelegate(typeof(FairyGUI.ListItemProvider), func) as FairyGUI.ListItemProvider;
+			}
+
+			obj.itemProvider = arg0;
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index itemProvider on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
 	static int set_scrollItemToViewOnClick(IntPtr L)
 	{
 		object o = null;
@@ -1030,25 +1064,6 @@ public class FairyGUI_GListWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index columnGap on a nil value" : e.Message);
-		}
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int set_virtualItemSize(IntPtr L)
-	{
-		object o = null;
-
-		try
-		{
-			o = ToLua.ToObject(L, 1);
-			FairyGUI.GList obj = (FairyGUI.GList)o;
-			UnityEngine.Vector2 arg0 = ToLua.ToVector2(L, 2);
-			obj.virtualItemSize = arg0;
-			return 0;
-		}
-		catch(Exception e)
-		{
-			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index virtualItemSize on a nil value" : e.Message);
 		}
 	}
 

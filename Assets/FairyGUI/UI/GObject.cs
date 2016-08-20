@@ -179,8 +179,8 @@ namespace FairyGUI
 		int _sortingOrder;
 		bool _focusable;
 		string _tooltips;
+		bool _pixelSnapping;
 
-		protected float _yOffset;
 		//Size的实现方式，有两种，0-GObject的w/h等于DisplayObject的w/h。1-GObject的sourceWidth/sourceHeight等于DisplayObject的w/h，剩余部分由scale实现
 		protected int _sizeImplType;
 
@@ -328,6 +328,16 @@ namespace FairyGUI
 			}
 		}
 
+		public bool pixelSnapping
+		{
+			get { return _pixelSnapping; }
+			set
+			{
+				_pixelSnapping = value;
+				HandlePositionChanged();
+			}
+		}
+
 		/// <summary>
 		/// Set the object in middle of the parent or GRoot if the parent is not set.
 		/// </summary>
@@ -437,18 +447,21 @@ namespace FairyGUI
 					wv = 0;
 				if (hv < 0)
 					hv = 0;
-				float dWidth = wv - _width;
-				float dHeight = hv - _height;
+				float oldWidth = _width;
+				float oldHeight = _height;
 				_width = wv;
 				_height = hv;
 
 				HandleSizeChanged();
+
 				if (_pivotX != 0 || _pivotY != 0)
 				{
 					if (!_pivotAsAnchor)
 					{
 						if (!ignorePivot)
-							this.SetXY(_x - _pivotX * dWidth, _y - _pivotY * dHeight);
+							this.SetXY(_x - _pivotX * (_width - oldWidth), _y - _pivotY * (_height - oldHeight));
+						else
+							this.HandlePositionChanged();
 					}
 					else
 						this.HandlePositionChanged();
@@ -459,12 +472,24 @@ namespace FairyGUI
 
 				if (parent != null)
 				{
-					relations.OnOwnerSizeChanged(dWidth, dHeight);
+					relations.OnOwnerSizeChanged(_width - oldWidth, _height - oldHeight);
 					parent.SetBoundsChangedFlag();
 				}
 
 				onSizeChanged.Call();
 			}
+		}
+
+		protected void SetSizeDirectly(float wv, float hv)
+		{
+			_rawWidth = wv;
+			_rawHeight = hv;
+			if (wv < 0)
+				wv = 0;
+			if (hv < 0)
+				hv = 0;
+			_width = wv;
+			_height = hv;
 		}
 
 		/// <summary>
@@ -1300,10 +1325,19 @@ namespace FairyGUI
 		{
 			if (displayObject != null)
 			{
-				if (_pivotAsAnchor)
-					displayObject.location = new Vector3((int)_x, (int)(_y + _yOffset), _z);
-				else
-					displayObject.location = new Vector3((int)(_x + _width * _pivotX), (int)(_y + _height * _pivotY + _yOffset), _z);
+				float xv = _x;
+				float yv = _y;
+				if (!_pivotAsAnchor)
+				{
+					xv += _width * _pivotX;
+					yv += _height * _pivotY;
+				}
+				if (_pixelSnapping)
+				{
+					xv = (int)xv;
+					yv = (int)yv;
+				}
+				displayObject.location = new Vector3(xv, yv, _z);
 			}
 		}
 
@@ -1595,34 +1629,10 @@ namespace FairyGUI
 		#endregion
 
 		#region Tween Support
-		public Tweener TweenMove(Vector2 endValue, float duration, bool snapping)
-		{
-			return DOTween.To(() => this.xy, x => this.xy = x, endValue, duration)
-				.SetOptions(snapping)
-				.SetUpdate(true)
-				.SetTarget(this);
-		}
-
-		public Tweener TweenMoveX(float endValue, float duration, bool snapping)
-		{
-			return DOTween.To(() => this.x, x => this.x = x, endValue, duration)
-				.SetOptions(snapping)
-				.SetUpdate(true)
-				.SetTarget(this);
-		}
-
-		public Tweener TweenMoveY(float endValue, float duration, bool snapping)
-		{
-			return DOTween.To(() => this.y, x => this.y = x, endValue, duration)
-				.SetOptions(snapping)
-				.SetUpdate(true)
-				.SetTarget(this);
-		}
-
 		public Tweener TweenMove(Vector2 endValue, float duration)
 		{
 			return DOTween.To(() => this.xy, x => this.xy = x, endValue, duration)
-				.SetOptions(true)
+				.SetOptions(_pixelSnapping)
 				.SetUpdate(true)
 				.SetTarget(this);
 		}
@@ -1630,7 +1640,7 @@ namespace FairyGUI
 		public Tweener TweenMoveX(float endValue, float duration)
 		{
 			return DOTween.To(() => this.x, x => this.x = x, endValue, duration)
-				.SetOptions(true)
+				.SetOptions(_pixelSnapping)
 				.SetUpdate(true)
 				.SetTarget(this);
 		}
@@ -1638,7 +1648,7 @@ namespace FairyGUI
 		public Tweener TweenMoveY(float endValue, float duration)
 		{
 			return DOTween.To(() => this.y, x => this.y = x, endValue, duration)
-				.SetOptions(true)
+				.SetOptions(_pixelSnapping)
 				.SetUpdate(true)
 				.SetTarget(this);
 		}
@@ -1664,18 +1674,10 @@ namespace FairyGUI
 				.SetTarget(this);
 		}
 
-		public Tweener TweenResize(Vector2 endValue, float duration, bool snapping)
-		{
-			return DOTween.To(() => this.size, x => this.size = x, endValue, duration)
-				.SetOptions(snapping)
-				.SetUpdate(true)
-				.SetTarget(this);
-		}
-
 		public Tweener TweenResize(Vector2 endValue, float duration)
 		{
 			return DOTween.To(() => this.size, x => this.size = x, endValue, duration)
-				.SetOptions(true)
+				.SetOptions(_pixelSnapping)
 				.SetUpdate(true)
 				.SetTarget(this);
 		}

@@ -20,7 +20,7 @@ public class FairyGUI_WindowWrap
 		L.RegFunction("Init", Init);
 		L.RegFunction("Dispose", Dispose);
 		L.RegFunction("New", _CreateFairyGUI_Window);
-		L.RegFunction("__tostring", Lua_ToString);
+		L.RegFunction("__tostring", ToLua.op_ToString);
 		L.RegVar("bringToFontOnClick", get_bringToFontOnClick, set_bringToFontOnClick);
 		L.RegVar("contentPane", get_contentPane, set_contentPane);
 		L.RegVar("frame", get_frame, null);
@@ -285,23 +285,6 @@ public class FairyGUI_WindowWrap
 		{
 			return LuaDLL.toluaL_exception(L, e);
 		}
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int Lua_ToString(IntPtr L)
-	{
-		object obj = ToLua.ToObject(L, 1);
-
-		if (obj != null)
-		{
-			LuaDLL.lua_pushstring(L, obj.ToString());
-		}
-		else
-		{
-			LuaDLL.lua_pushnil(L);
-		}
-
-		return 1;
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]

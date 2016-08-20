@@ -13,6 +13,7 @@ namespace FairyGUI
 		/// Dispatched when scrolling.
 		/// </summary>
 		public EventListener onScroll { get; private set; }
+		public EventListener onScrollEnd { get; private set; }
 
 		float _maskWidth;
 		float _maskHeight;
@@ -36,9 +37,12 @@ namespace FairyGUI
 		bool _softnessOnTopOrLeftSide;
 		bool _pageMode;
 		Vector2 _pageSize;
+		bool _inertiaDisabled;
 
 		float _yPerc;
 		float _xPerc;
+		float _xPos;
+		float _yPos;
 		bool _vScroll;
 		bool _hScroll;
 
@@ -50,7 +54,7 @@ namespace FairyGUI
 		bool _isMouseMoved;
 		Vector2 _holdAreaPoint;
 		bool _isHoldAreaDone;
-		bool _aniFlag;
+		int _aniFlag;
 		bool _scrollBarVisible;
 		int _touchId;
 
@@ -78,6 +82,8 @@ namespace FairyGUI
 									string hzScrollBarRes)
 		{
 			onScroll = new EventListener(this, "onScroll");
+			onScrollEnd = new EventListener(this, "onScrollEnd");
+
 			_refreshDelegate = Refresh;
 			_touchEndDelegate = __touchEnd;
 			_touchMoveDelegate = __touchMove;
@@ -116,10 +122,8 @@ namespace FairyGUI
 				_bouncebackEffect = false;
 			else
 				_bouncebackEffect = UIConfig.defaultScrollBounceEffect;
+			_inertiaDisabled = (flags & 256) != 0;
 
-			_xPerc = 0;
-			_yPerc = 0;
-			_aniFlag = true;
 			_scrollBarVisible = true;
 			_mouseWheelEnabled = true;
 			_holdAreaPoint = new Vector2();
@@ -217,6 +221,15 @@ namespace FairyGUI
 		/// <summary>
 		/// 
 		/// </summary>
+		public bool inertiaDisabled
+		{
+			get { return _inertiaDisabled; }
+			set { _inertiaDisabled = value; }
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
 		public bool softnessOnTopOrLeftSide
 		{
 			get { return _softnessOnTopOrLeftSide; }
@@ -272,13 +285,13 @@ namespace FairyGUI
 		/// <param name="ani"></param>
 		public void SetPercX(float value, bool ani)
 		{
-			if (value > 1)
-				value = 1;
-			else if (value < 0)
-				value = 0;
+			_owner.EnsureBoundsCorrect();
+
+			value = Mathf.Clamp01(value);
 			if (value != _xPerc)
 			{
 				_xPerc = value;
+				_xPos = _xPerc * Mathf.Max(0, _contentWidth - _maskWidth);
 				PosChanged(ani);
 			}
 		}
@@ -299,13 +312,13 @@ namespace FairyGUI
 		/// <param name="ani"></param>
 		public void SetPercY(float value, bool ani)
 		{
-			if (value > 1)
-				value = 1;
-			else if (value < 0)
-				value = 0;
+			_owner.EnsureBoundsCorrect();
+
+			value = Mathf.Clamp01(value);
 			if (value != _yPerc)
 			{
 				_yPerc = value;
+				_yPos = _yPerc * Mathf.Max(0, _contentHeight - _maskHeight);
 				PosChanged(ani);
 			}
 		}
@@ -315,7 +328,7 @@ namespace FairyGUI
 		/// </summary>
 		public float posX
 		{
-			get { return _xPerc * Mathf.Max(0, _contentWidth - _maskWidth); }
+			get { return _xPos; }
 			set { SetPosX(value, false); }
 		}
 
@@ -326,10 +339,25 @@ namespace FairyGUI
 		/// <param name="ani"></param>
 		public void SetPosX(float value, bool ani)
 		{
-			if (_contentWidth > _maskWidth)
-				this.SetPercX(value / (_contentWidth - _maskWidth), ani);
-			else
-				this.SetPercX(0, ani);
+			if (value != _xPos)
+			{
+				if (value <= 0 || _contentWidth < _maskWidth)
+				{
+					_xPerc = 0;
+					_xPos = 0;
+				}
+				else if (value > _contentWidth - _maskWidth)
+				{
+					_xPerc = 1;
+					_xPos = _contentWidth - _maskWidth;
+				}
+				else
+				{
+					_xPerc = value / (_contentWidth - _maskWidth);
+					_xPos = value;
+				}
+				PosChanged(ani);
+			}
 		}
 
 		/// <summary>
@@ -337,7 +365,7 @@ namespace FairyGUI
 		/// </summary>
 		public float posY
 		{
-			get { return _yPerc * Mathf.Max(0, _contentHeight - _maskHeight); }
+			get { return _yPos; }
 			set { SetPosY(value, false); }
 		}
 
@@ -348,10 +376,25 @@ namespace FairyGUI
 		/// <param name="ani"></param>
 		public void SetPosY(float value, bool ani)
 		{
-			if (_contentHeight > _maskHeight)
-				this.SetPercY(value / (_contentHeight - _maskHeight), ani);
-			else
-				this.SetPercY(0, ani);
+			if (value != _yPos)
+			{
+				if (value <= 0 || _contentHeight < _maskHeight)
+				{
+					_yPerc = 0;
+					_yPos = 0;
+				}
+				else if (value > _contentHeight - _maskHeight)
+				{
+					_yPerc = 1;
+					_yPos = _contentHeight - _maskHeight;
+				}
+				else
+				{
+					_yPerc = value / (_contentHeight - _maskHeight);
+					_yPos = value;
+				}
+				PosChanged(ani);
+			}
 		}
 
 		/// <summary>
@@ -372,7 +415,7 @@ namespace FairyGUI
 
 		public int currentPageX
 		{
-			get { return _pageMode ? Mathf.FloorToInt(this.posX / _pageSize.x) : 0; }
+			get { return _pageMode ? Mathf.FloorToInt(_xPos / _pageSize.x) : 0; }
 			set
 			{
 				if (_hScroll)
@@ -382,7 +425,7 @@ namespace FairyGUI
 
 		public int currentPageY
 		{
-			get { return _pageMode ? Mathf.FloorToInt(this.posY / _pageSize.y) : 0; }
+			get { return _pageMode ? Mathf.FloorToInt(_yPos / _pageSize.y) : 0; }
 			set
 			{
 				if (_vScroll)
@@ -442,16 +485,6 @@ namespace FairyGUI
 			}
 		}
 
-		float GetDeltaX(float move)
-		{
-			return (_pageMode ? _pageSize.x : move) / (_contentWidth - _maskWidth);
-		}
-
-		float GetDeltaY(float move)
-		{
-			return (_pageMode ? _pageSize.y : move) / (_contentHeight - _maskHeight);
-		}
-
 		/// <summary>
 		/// 
 		/// </summary>
@@ -501,7 +534,10 @@ namespace FairyGUI
 		/// <param name="ani"></param>
 		public void ScrollUp(float speed, bool ani)
 		{
-			this.SetPercY(_yPerc - GetDeltaY(_scrollSpeed * speed), ani);
+			if (_pageMode)
+				SetPosY(_yPos - _pageSize.y * speed, ani);
+			else
+				SetPosY(_yPos - _scrollSpeed * speed, ani);
 		}
 
 		/// <summary>
@@ -519,7 +555,10 @@ namespace FairyGUI
 		/// <param name="ani"></param>
 		public void ScrollDown(float speed, bool ani)
 		{
-			this.SetPercY(_yPerc + GetDeltaY(_scrollSpeed * speed), ani);
+			if (_pageMode)
+				SetPosY(_yPos + _pageSize.y * speed, ani);
+			else
+				SetPosY(_yPos + _scrollSpeed * speed, ani);
 		}
 
 		/// <summary>
@@ -537,7 +576,10 @@ namespace FairyGUI
 		/// <param name="ani"></param>
 		public void ScrollLeft(float speed, bool ani)
 		{
-			this.SetPercX(_xPerc - GetDeltaX(_scrollSpeed * speed), ani);
+			if (_pageMode)
+				SetPosX(_xPos - _pageSize.x * speed, ani);
+			else
+				SetPosX(_xPos - _scrollSpeed * speed, ani);
 		}
 
 		/// <summary>
@@ -555,7 +597,10 @@ namespace FairyGUI
 		/// <param name="ani"></param>
 		public void ScrollRight(float speed, bool ani)
 		{
-			this.SetPercX(_xPerc + GetDeltaX(_scrollSpeed * speed), ani);
+			if (_pageMode)
+				SetPosX(_xPos + _pageSize.x * speed, ani);
+			else
+				SetPosX(_xPos + _scrollSpeed * speed, ani);
 		}
 
 		/// <summary>
@@ -609,9 +654,8 @@ namespace FairyGUI
 
 			if (_vScroll)
 			{
-				float top = this.posY;
-				float bottom = top + _maskHeight;
-				if (setFirst || rect.y <= top || rect.height >= _maskHeight)
+				float bottom = _yPos + _maskHeight;
+				if (setFirst || rect.y <= _yPos || rect.height >= _maskHeight)
 				{
 					if (_pageMode)
 						this.SetPosY(Mathf.Floor(rect.y / _pageSize.y) * _pageSize.y, ani);
@@ -630,9 +674,8 @@ namespace FairyGUI
 			}
 			if (_hScroll)
 			{
-				float left = this.posX;
-				float right = left + _maskWidth;
-				if (setFirst || rect.x <= left || rect.width >= _maskWidth)
+				float right = _xPos + _maskWidth;
+				if (setFirst || rect.x <= _xPos || rect.width >= _maskWidth)
 				{
 					if (_pageMode)
 						this.SetPosX(Mathf.Floor(rect.x / _pageSize.x) * _pageSize.x, ani);
@@ -742,11 +785,49 @@ namespace FairyGUI
 			_contentWidth = aWidth;
 			_contentHeight = aHeight;
 			HandleSizeChanged();
-			_aniFlag = false;
-			Refresh();
 		}
 
-		void HandleSizeChanged()
+		internal void ChangeContentSizeOnScrolling(float deltaWidth, float deltaHeight, float deltaPosX, float deltaPosY)
+		{
+			_contentWidth += deltaWidth;
+			_contentHeight += deltaHeight;
+
+			if (_isMouseMoved)
+			{
+				if (deltaPosX != 0)
+					_maskContentHolder.x -= deltaPosX;
+				if (deltaPosY != 0)
+					_maskContentHolder.y -= deltaPosY;
+
+				ValidateHolderPos();
+
+				_xOffset += deltaPosX;
+				_yOffset += deltaPosY;
+
+				_y1 = _y2 = _maskContentHolder.y;
+				_x1 = _x2 = _maskContentHolder.x;
+
+				_yPos = -_maskContentHolder.y;
+				_xPos = -_maskContentHolder.x;
+			}
+			else if (_tweening == 2)//备注：事实这里永远不会等于1
+			{
+				if (deltaPosX != 0)
+				{
+					_maskContentHolder.x -= deltaPosX;
+					_throwTween.start.x -= deltaPosX;
+				}
+				if (deltaPosY != 0)
+				{
+					_maskContentHolder.y -= deltaPosY;
+					_throwTween.start.y -= deltaPosY;
+				}
+			}
+
+			HandleSizeChanged(true);
+		}
+
+		void HandleSizeChanged(bool onScrolling = false)
 		{
 			if (_displayInDemand)
 			{
@@ -825,57 +906,116 @@ namespace FairyGUI
 			switch (_scrollType)
 			{
 				case ScrollType.Both:
-
-					if (_contentWidth > _maskWidth && _contentHeight <= _maskHeight)
-					{
-						_hScroll = true;
-						_vScroll = false;
-					}
-					else if (_contentWidth <= _maskWidth && _contentHeight > _maskHeight)
-					{
-						_hScroll = false;
-						_vScroll = true;
-					}
-					else if (_contentWidth > _maskWidth && _contentHeight > _maskHeight)
-					{
-						_hScroll = true;
-						_vScroll = true;
-					}
-					else
-					{
-						_hScroll = false;
-						_vScroll = false;
-					}
+					_hScroll = _contentWidth > _maskWidth;
+					_vScroll = _contentHeight > _maskHeight;
 					break;
 
 				case ScrollType.Vertical:
-
-					if (_contentHeight > _maskHeight)
-					{
-						_hScroll = false;
-						_vScroll = true;
-					}
-					else
-					{
-						_hScroll = false;
-						_vScroll = false;
-					}
+					_hScroll = false;
+					_vScroll = _contentHeight > _maskHeight;
 					break;
 
 				case ScrollType.Horizontal:
-
-					if (_contentWidth > _maskWidth)
-					{
-						_hScroll = true;
-						_vScroll = false;
-					}
-					else
-					{
-						_hScroll = false;
-						_vScroll = false;
-					}
+					_hScroll = _contentWidth > _maskWidth;
+					_vScroll = false;
 					break;
 			}
+
+			if (_tweening == 2)
+			{
+				//如果是在缓动过程中，除发生边界改变，这里不做任何操作，让缓动处理去设置正确的percent和pos
+				if (!_vScroll)
+				{
+					_yPos = 0;
+					_yPerc = 0;
+				}
+
+				if (!_hScroll)
+				{
+					_xPos = 0;
+					_xPerc = 0;
+				}
+			}
+			else if (onScrolling)
+			{
+				//如果改变大小是在滚动的过程中发生的，那么保持位置不变，修改percent，但边界位置除外
+				if (_vScroll)
+				{
+					if (_yPerc == 0 || _yPerc == 1)
+					{
+						_maskContentHolder.y = -Mathf.Max(0, _yPerc * (_contentHeight - _maskHeight));
+						_yPos = -_maskContentHolder.y;
+					}
+					else
+						_yPerc = _yPos / (_contentHeight - _maskHeight);
+				}
+				else
+				{
+					_yPos = 0;
+					_yPerc = 0;
+				}
+
+				if (_hScroll)
+				{
+					if (_xPerc == 0 || _xPerc == 1)
+					{
+						_maskContentHolder.x = -Mathf.Max(0, _xPerc * (_contentWidth - _maskWidth));
+						_xPos = -_maskContentHolder.x;
+					}
+					else
+						_xPerc = _xPos / (_contentWidth - _maskWidth);
+				}
+				else
+				{
+					_xPos = 0;
+					_xPerc = 0;
+				}
+			}
+			else
+			{
+				//保持位置不变，修改percent
+				if (_vScroll)
+				{
+					_yPerc = _yPos / (_contentHeight - _maskHeight);
+				}
+				else
+				{
+					_yPos = 0;
+					_yPerc = 0;
+				}
+
+				if (_hScroll)
+				{
+					_xPerc = _xPos / (_contentWidth - _maskWidth);
+				}
+				else
+				{
+					_xPos = 0;
+					_xPerc = 0;
+				}
+
+				ValidateHolderPos();
+			}
+
+			if (_vtScrollBar != null)
+				_vtScrollBar.scrollPerc = _yPerc;
+			if (_hzScrollBar != null)
+				_hzScrollBar.scrollPerc = _xPerc;
+
+			UpdateClipSoft();
+		}
+
+		void ValidateHolderPos()
+		{
+			if (!_vScroll || _maskContentHolder.y > 0)
+				_maskContentHolder.y = 0;
+			else if (-_maskContentHolder.y > _contentHeight - _maskHeight)
+				_maskContentHolder.y = _maskHeight - _contentHeight;
+
+			if (!_hScroll || _maskContentHolder.x > 0)
+				_maskContentHolder.x = 0;
+			else if (-_maskContentHolder.x > _contentWidth - _maskWidth)
+				_maskContentHolder.x = _maskWidth - _contentWidth;
 		}
 
 		internal void UpdateClipSoft()
@@ -896,8 +1036,10 @@ namespace FairyGUI
 
 		private void PosChanged(bool ani)
 		{
-			if (_aniFlag)
-				_aniFlag = ani;
+			if (_aniFlag == 0)
+				_aniFlag = ani ? 1 : -1;
+			else if (_aniFlag == 1 && !ani)
+				_aniFlag = -1;
 
 			_needRefresh = true;
 
@@ -906,10 +1048,24 @@ namespace FairyGUI
 
 			//如果在甩手指滚动过程中用代码重新设置滚动位置，要停止滚动
 			if (_tweening == 2) //kill throw tween only
+				KillTween();
+		}
+
+		private void KillTween()
+		{
+			if (_tweening == 1)
+			{
+				_tweener.Complete();
+			}
+			else
 			{
 				_tweener.Kill();
 				_tweener = null;
 				_tweening = 0;
+
+				ValidateHolderPos();
+				OnScrollEnd();
+				onScrollEnd.Call();
 			}
 		}
 
@@ -918,72 +1074,62 @@ namespace FairyGUI
 			_needRefresh = false;
 			UpdateContext.OnBegin -= _refreshDelegate;
 
-			float contentXLoc = 0f;
-			float contentYLoc = 0f;
-
-			if (_hScroll)
-				contentXLoc = _xPerc * (_contentWidth - _maskWidth);
-			if (_vScroll)
-				contentYLoc = _yPerc * (_contentHeight - _maskHeight);
-
 			if (_pageMode)
 			{
 				int page;
 				float delta;
 				if (_vScroll && _yPerc != 1 && _yPerc != 0)
 				{
-					page = Mathf.FloorToInt(contentYLoc / _pageSize.y);
-					delta = contentYLoc - page * _pageSize.y;
+					page = Mathf.FloorToInt(_yPos / _pageSize.y);
+					delta = _yPos - page * _pageSize.y;
 					if (delta > _pageSize.y / 2)
 						page++;
-					contentYLoc = page * _pageSize.y;
-					if (contentYLoc > _contentHeight - _maskHeight)
+					_yPos = page * _pageSize.y;
+					if (_yPos > _contentHeight - _maskHeight)
 					{
-						contentYLoc = _contentHeight - _maskHeight;
+						_yPos = _contentHeight - _maskHeight;
 						_yPerc = 1;
 					}
 					else
-						_yPerc = contentYLoc / (_contentHeight - _maskHeight);
+						_yPerc = _yPos / Mathf.Max(0, _contentHeight - _maskHeight);
 				}
 
 				if (_hScroll && _xPerc != 1 && _xPerc != 0)
 				{
-					page = Mathf.FloorToInt(contentXLoc / _pageSize.x);
-					delta = contentXLoc - page * _pageSize.x;
+					page = Mathf.FloorToInt(_xPos / _pageSize.x);
+					delta = _xPos - page * _pageSize.x;
 					if (delta > _pageSize.x / 2)
 						page++;
-					contentXLoc = page * _pageSize.x;
-					if (contentXLoc > _contentWidth - _maskWidth)
+					_xPos = page * _pageSize.x;
+					if (_xPos > _contentWidth - _maskWidth)
 					{
-						contentXLoc = _contentWidth - _maskWidth;
+						_xPos = _contentWidth - _maskWidth;
 						_xPerc = 1;
 					}
 					else
-						_xPerc = contentXLoc / (_contentWidth - _maskWidth);
+						_xPerc = _xPos / Mathf.Max(0, _contentWidth - _maskWidth);
 				}
 			}
 			else if (_snapToItem)
 			{
-				float tmpX = _xPerc == 1 ? 0 : contentXLoc;
-				float tmpY = _yPerc == 1 ? 0 : contentYLoc;
+				float tmpX = _xPerc == 1 ? 0 : _xPos;
+				float tmpY = _yPerc == 1 ? 0 : _yPos;
 				_owner.GetSnappingPosition(ref tmpX, ref tmpY);
-				if (_xPerc != 1 && !Mathf.Approximately(tmpX, contentXLoc))
+				if (_xPerc != 1 && !Mathf.Approximately(tmpX, _xPos))
 				{
 					_xPerc = tmpX / (_contentWidth - _maskWidth);
 					if (_xPerc > 1)
 						_xPerc = 1;
-					contentXLoc = _xPerc * (_contentWidth - _maskWidth);
 				}
-				if (_yPerc != 1 && !Mathf.Approximately(tmpY, contentYLoc))
+				if (_yPerc != 1 && !Mathf.Approximately(tmpY, _yPos))
 				{
 					_yPerc = tmpY / (_contentHeight - _maskHeight);
 					if (_yPerc > 1)
 						_yPerc = 1;
-					contentYLoc = _yPerc * (_contentHeight - _maskHeight);
 				}
 			}
 
-			Refresh2(contentXLoc, contentYLoc);
+			Refresh2();
 
 			onScroll.Call();
 			if (_needRefresh) //user change scroll pos in on scroll
@@ -991,22 +1137,21 @@ namespace FairyGUI
 				_needRefresh = false;
 				UpdateContext.OnBegin -= _refreshDelegate;
 
-				if (_hScroll)
-					contentXLoc = _xPerc * (_contentWidth - _maskWidth);
-				if (_vScroll)
-					contentYLoc = _yPerc * (_contentHeight - _maskHeight);
-				Refresh2(contentXLoc, contentYLoc);
+				Refresh2();
 			}
 
-			_aniFlag = true;
+			_aniFlag = 0;
 		}
 
-		void Refresh2(float contentXLoc, float contentYLoc)
+		void Refresh2()
 		{
-			contentXLoc = (int)contentXLoc;
-			contentYLoc = (int)contentYLoc;
+			float contentXLoc = (int)_xPos;
+			float contentYLoc = (int)_yPos;
 
-			if (_aniFlag && !_isMouseMoved)
+			if ((_owner is GList) && ((GList)_owner).isVirtual)
+				_aniFlag = -1;
+
+			if (_aniFlag == 1 && !_isMouseMoved)
 			{
 				float toX = _maskContentHolder.x;
 				float toY = _maskContentHolder.y;
@@ -1033,11 +1178,8 @@ namespace FairyGUI
 				if (toX != _maskContentHolder.x || toY != _maskContentHolder.y)
 				{
 					if (_tweener != null)
-					{
-						_tweening = 0;
-						_tweener.Complete();
-						_tweener = null;
-					}
+						KillTween();
+
 					_tweener = DOTween.To(() => _maskContentHolder.xy, v => _maskContentHolder.xy = v, new Vector2(toX, toY), 0.5f)
 						.SetEase(Ease.OutCubic)
 						.SetUpdate(true)
@@ -1049,11 +1191,7 @@ namespace FairyGUI
 			else
 			{
 				if (_tweener != null)
-				{
-					_tweening = 0;
-					_tweener.Complete();
-					_tweener = null;
-				}
+					KillTween();
 
 				//如果在拖动的过程中Refresh，这里要进行处理，保证拖动继续正常进行
 				if (_isMouseMoved)
@@ -1077,6 +1215,37 @@ namespace FairyGUI
 					_hzScrollBar.scrollPerc = _xPerc;
 
 				UpdateClipSoft();
+			}
+		}
+
+		void SyncPos()
+		{
+			if (_hScroll)
+			{
+				float diff = _contentWidth - _maskWidth;
+				float mx = _maskContentHolder.x;
+				if (mx > 0)
+					_xPos = 0;
+				else if (-mx > diff)
+					_xPos = diff;
+				else
+					_xPos = -mx;
+
+				_xPerc = Mathf.Clamp01(diff != 0 ? _xPos / diff : 0);
+			}
+
+			if (_vScroll)
+			{
+				float diff = _contentHeight - _maskHeight;
+				float my = _maskContentHolder.y;
+				if (my > 0)
+					_yPos = 0;
+				else if (-my > diff)
+					_yPos = diff;
+				else
+					_yPos = -my;
+
+				_yPerc = Mathf.Clamp01(diff != 0 ? _yPos / diff : 0);
 			}
 		}
 
@@ -1117,6 +1286,7 @@ namespace FairyGUI
 
 		private void OnScrolling()
 		{
+			//这里不能直接使用_xPerc或者_yPerc，因为滚动可能处于过渡状态
 			if (_vtScrollBar != null)
 			{
 				_vtScrollBar.scrollPerc = CalcYPerc();
@@ -1159,9 +1329,7 @@ namespace FairyGUI
 			Vector2 pt = _owner.GlobalToLocal(new Vector2(evt.x, evt.y));
 			if (_tweener != null)
 			{
-				_tweening = 0;
-				_tweener.Complete();
-				_tweener = null;
+				KillTween();
 				Stage.inst.CancelClick(_touchId);
 			}
 
@@ -1254,14 +1422,14 @@ namespace FairyGUI
 				float y = pt.y - _yOffset;
 				if (y > 0)
 				{
-					if (!_bouncebackEffect)
+					if (!_bouncebackEffect || _inertiaDisabled)
 						_maskContentHolder.y = 0;
 					else
 						_maskContentHolder.y = (int)(y * 0.5);
 				}
 				else if (y < -_yOverlap)
 				{
-					if (!_bouncebackEffect)
+					if (!_bouncebackEffect || _inertiaDisabled)
 						_maskContentHolder.y = -(int)_yOverlap;
 					else
 						_maskContentHolder.y = (int)((y - _yOverlap) * 0.5);
@@ -1276,8 +1444,6 @@ namespace FairyGUI
 					_y2 = _y1;
 					_y1 = _maskContentHolder.y;
 				}
-
-				_yPerc = CalcYPerc();
 			}
 
 			if (sh)
@@ -1285,21 +1451,20 @@ namespace FairyGUI
 				float x = pt.x - _xOffset;
 				if (x > 0)
 				{
-					if (!_bouncebackEffect)
+					if (!_bouncebackEffect || _inertiaDisabled)
 						_maskContentHolder.x = 0;
 					else
 						_maskContentHolder.x = (int)(x * 0.5);
 				}
 				else if (x < 0 - _xOverlap)
 				{
-					if (!_bouncebackEffect)
+					if (!_bouncebackEffect || _inertiaDisabled)
 						_maskContentHolder.x = -(int)_xOverlap;
 					else
 						_maskContentHolder.x = (int)((x - _xOverlap) * 0.5);
 				}
 				else
 				{
-
 					_maskContentHolder.x = x;
 				}
 
@@ -1308,9 +1473,9 @@ namespace FairyGUI
 					_x2 = _x1;
 					_x1 = _maskContentHolder.x;
 				}
-
-				_xPerc = CalcXPerc();
 			}
+
+			SyncPos();
 
 			_isHoldAreaDone = true;
 			_isMouseMoved = true;
@@ -1338,6 +1503,9 @@ namespace FairyGUI
 			}
 
 			if (!_isMouseMoved)
+				return;
+
+			if (_inertiaDisabled)
 				return;
 
 			_isMouseMoved = false;
@@ -1459,10 +1627,7 @@ namespace FairyGUI
 			_throwTween.change2 = change2;
 
 			if (_tweener != null)
-			{
-				_tweening = 0;
-				_tweener.Complete();
-			}
+				KillTween();
 
 			_tweening = 2;
 			_tweener = DOTween.To(() => _throwTween.value, v => _throwTween.value = v, 1, duration)
@@ -1479,19 +1644,20 @@ namespace FairyGUI
 
 			InputEvent evt = context.inputEvent;
 			int delta = evt.mouseWheelDelta;
+			delta = Math.Sign(delta);
 			if (_hScroll && !_vScroll)
 			{
-				if (delta < 0)
-					this.SetPercX(_xPerc - GetDeltaX(_mouseWheelSpeed), false);
+				if (_pageMode)
+					SetPosX(_xPos + _pageSize.x * delta, false);
 				else
-					this.SetPercX(_xPerc + GetDeltaX(_mouseWheelSpeed), false);
+					SetPosX(_xPos + _mouseWheelSpeed * delta, false);
 			}
 			else
 			{
-				if (delta < 0)
-					this.SetPercY(_yPerc - GetDeltaY(_mouseWheelSpeed), false);
+				if (_pageMode)
+					SetPosY(_yPos + _pageSize.y * delta, false);
 				else
-					this.SetPercY(_yPerc + GetDeltaY(_mouseWheelSpeed), false);
+					SetPosY(_yPos + _mouseWheelSpeed * delta, false);
 			}
 		}
 
@@ -1534,6 +1700,7 @@ namespace FairyGUI
 		{
 			_tweener = null;
 			_tweening = 0;
+
 			OnScrollEnd();
 		}
 
@@ -1541,41 +1708,21 @@ namespace FairyGUI
 		{
 			_throwTween.Update(_maskContentHolder);
 
-			if (_scrollType == ScrollType.Vertical)
-				_yPerc = CalcYPerc();
-			else if (_scrollType == ScrollType.Horizontal)
-				_xPerc = CalcXPerc();
-			else
-			{
-				_yPerc = CalcYPerc();
-				_xPerc = CalcXPerc();
-			}
-
+			SyncPos();
 			OnScrolling();
 			onScroll.Call();
 		}
 
 		private void __tweenComplete2()
 		{
-			if (_tweening == 0)
-				return;
-
 			_tweener = null;
 			_tweening = 0;
 
-			if (_scrollType == ScrollType.Vertical)
-				_yPerc = CalcYPerc();
-			else if (_scrollType == ScrollType.Horizontal)
-				_xPerc = CalcXPerc();
-			else
-			{
-				_yPerc = CalcYPerc();
-				_xPerc = CalcXPerc();
-			}
-
-			_isMouseMoved = false;
+			ValidateHolderPos();
+			SyncPos();
 			OnScrollEnd();
 			onScroll.Call();
+			onScrollEnd.Call();
 		}
 
 		class ThrowTween

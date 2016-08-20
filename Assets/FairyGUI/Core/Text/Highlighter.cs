@@ -23,7 +23,7 @@ namespace FairyGUI
 			grahpics.texture = NTexture.Empty;
 			grahpics.enabled = false;
 
-			_color = new Color(1f, 223f / 255f, 141f / 255f, 0.5f);
+			_color = UIConfig.inputHighlightColor;
 			_rects = new List<Rect>();
 		}
 

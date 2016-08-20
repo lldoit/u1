@@ -29,7 +29,7 @@ public class LuaFramework_UtilWrap
 		L.RegFunction("CallMethod", CallMethod);
 		L.RegFunction("CheckEnvironment", CheckEnvironment);
 		L.RegFunction("New", _CreateLuaFramework_Util);
-		L.RegFunction("__tostring", Lua_ToString);
+		L.RegFunction("__tostring", ToLua.op_ToString);
 		L.RegVar("DataPath", get_DataPath, null);
 		L.RegVar("NetAvailable", get_NetAvailable, null);
 		L.RegVar("IsWifi", get_IsWifi, null);
@@ -102,7 +102,7 @@ public class LuaFramework_UtilWrap
 			ToLua.CheckArgsCount(L, 1);
 			object arg0 = ToLua.ToVarObject(L, 1);
 			long o = LuaFramework.Util.Long(arg0);
-			LuaDLL.lua_pushnumber(L, o);
+			LuaDLL.tolua_pushint64(L, o);
 			return 1;
 		}
 		catch(Exception e)
@@ -169,7 +169,7 @@ public class LuaFramework_UtilWrap
 		{
 			ToLua.CheckArgsCount(L, 0);
 			long o = LuaFramework.Util.GetTime();
-			LuaDLL.lua_pushnumber(L, o);
+			LuaDLL.tolua_pushint64(L, o);
 			return 1;
 		}
 		catch(Exception e)
@@ -457,23 +457,6 @@ public class LuaFramework_UtilWrap
 		{
 			return LuaDLL.toluaL_exception(L, e);
 		}
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int Lua_ToString(IntPtr L)
-	{
-		object obj = ToLua.ToObject(L, 1);
-
-		if (obj != null)
-		{
-			LuaDLL.lua_pushstring(L, obj.ToString());
-		}
-		else
-		{
-			LuaDLL.lua_pushnil(L);
-		}
-
-		return 1;
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]

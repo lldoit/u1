@@ -12,11 +12,13 @@ namespace FairyGUI
 		List<NMaterial> _blendItems;
 		MaterialManager _manager;
 		string[] _variants;
+		bool _notShared;
 
-		public MaterialPool(MaterialManager manager, string[] variants)
+		public MaterialPool(MaterialManager manager, string[] variants, bool notShared)
 		{
 			_manager = manager;
 			_variants = variants;
+			_notShared = notShared;
 		}
 
 		public NMaterial Get()
@@ -43,7 +45,7 @@ namespace FairyGUI
 				NMaterial mat = items[i];
 				if (mat.frameId == _manager.frameId)
 				{
-					if (mat.clipId == _manager.clipId && mat.blendMode == _manager.blendMode)
+					if (!_notShared && mat.clipId == _manager.clipId && mat.blendMode == _manager.blendMode)
 						return mat;
 				}
 				else if (result == null)
@@ -62,7 +64,7 @@ namespace FairyGUI
 				if (_variants != null)
 				{
 					foreach (string v in _variants)
-						result.EnableKeyword(v);
+						result.material.EnableKeyword(v);
 				}
 				result.frameId = _manager.frameId;
 				result.clipId = _manager.clipId;
@@ -88,13 +90,13 @@ namespace FairyGUI
 			{
 				if (Application.isPlaying)
 				{
-					foreach (NMaterial mat in _items)
-						Material.Destroy(mat);
+					foreach (NMaterial nm in _items)
+						Material.Destroy(nm.material);
 				}
 				else
 				{
-					foreach (NMaterial mat in _items)
-						Material.DestroyImmediate(mat);
+					foreach (NMaterial nm in _items)
+						Material.DestroyImmediate(nm.material);
 				}
 				_items = null;
 			}
@@ -103,13 +105,13 @@ namespace FairyGUI
 			{
 				if (Application.isPlaying)
 				{
-					foreach (NMaterial mat in _blendItems)
-						Material.Destroy(mat);
+					foreach (NMaterial nm in _blendItems)
+						Material.Destroy(nm.material);
 				}
 				else
 				{
-					foreach (NMaterial mat in _blendItems)
-						Material.DestroyImmediate(mat);
+					foreach (NMaterial nm in _blendItems)
+						Material.DestroyImmediate(nm.material);
 				}
 				_blendItems = null;
 			}

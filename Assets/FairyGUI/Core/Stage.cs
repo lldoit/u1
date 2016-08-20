@@ -2,6 +2,10 @@
 using UnityEngine;
 using FairyGUI.Utils;
 
+#if UNITY_5_3_OR_NEWER
+using UnityEngine.SceneManagement;
+#endif
+
 namespace FairyGUI
 {
 	/// <summary>
@@ -13,10 +17,6 @@ namespace FairyGUI
 		/// 
 		/// </summary>
 		public static bool touchScreen { get; private set; }
-
-		internal static bool shiftDown { get; private set; }
-
-		internal static bool textRebuildFlag;
 
 		/// <summary>
 		/// 
@@ -161,7 +161,18 @@ namespace FairyGUI
 #if UNITY_WEBPLAYER || UNITY_WEBGL || UNITY_STANDALONE_WIN || UNITY_STANDALONE_OSX || UNITY_EDITOR
 			CopyPastePatch.Apply();
 #endif
+
+#if UNITY_5_4_OR_NEWER
+			SceneManager.sceneLoaded += SceneManager_sceneLoaded;
+#endif
 		}
+
+#if UNITY_5_4_OR_NEWER
+		void SceneManager_sceneLoaded(Scene scene, LoadSceneMode mode)
+		{
+			StageCamera.CheckMainCamera();
+		}
+#endif
 
 		/// <summary>
 		/// 
@@ -209,8 +220,13 @@ namespace FairyGUI
 
 				if (_focused != null)
 				{
-					if ((_focused is TextField))
-						((TextField)_focused).onFocusOut.Call();
+					if (_focused is TextField)
+					{
+						TextField textField = (TextField)_focused;
+						textField.onFocusOut.Call();
+						if (textField.richTextField != null)
+							textField.richTextField.onFocusOut.Call();
+					}
 
 					_focused.onRemovedFromStage.RemoveCapture(OnFocusRemoved);
 				}
@@ -220,8 +236,19 @@ namespace FairyGUI
 					_focused = null;
 				if (_focused != null)
 				{
-					if ((_focused is TextField))
-						((TextField)_focused).onFocusIn.Call();
+					TextField textField = null;
+					if ((_focused is RichTextField))
+						textField = ((RichTextField)_focused).textField;
+					else if ((_focused is TextField))
+						textField = (TextField)_focused;
+
+					if (textField != null)
+					{
+						_focused = textField;
+						textField.onFocusIn.Call();
+						if (textField.richTextField != null)
+							textField.richTextField.onFocusIn.Call();
+					}
 
 					_focused.onRemovedFromStage.AddCapture(OnFocusRemoved);
 				}
@@ -405,14 +432,14 @@ namespace FairyGUI
 			Update(_updateContext);
 			_updateContext.End();
 
-			if (textRebuildFlag)
+			if (DynamicFont.textRebuildFlag)
 			{
 				//字体贴图更改了，重新渲染一遍，防止本帧文字显示错误
 				_updateContext.Begin();
 				Update(_updateContext);
 				_updateContext.End();
 
-				textRebuildFlag = false;
+				DynamicFont.textRebuildFlag = false;
 			}
 
 			return _updateContext.counter;
@@ -434,7 +461,7 @@ namespace FairyGUI
 				if (touch.x != pos.x || touch.y != pos.y
 					|| _customInputButtonDown)
 				{
-					_touchTarget = HitTest(pos);
+					_touchTarget = HitTest(pos, true);
 					touch.target = _touchTarget;
 				}
 			}
@@ -470,7 +497,7 @@ namespace FairyGUI
 						return;
 
 					touch.touchId = uTouch.fingerId;
-					_touchTarget = HitTest(pos);
+					_touchTarget = HitTest(pos, true);
 					touch.target = _touchTarget;
 				}
 			}
@@ -491,7 +518,7 @@ namespace FairyGUI
 					|| Input.GetMouseButtonUp(0)
 					|| Input.GetMouseButtonDown(1))
 				{
-					_touchTarget = HitTest(pos);
+					_touchTarget = HitTest(pos, true);
 					touch.target = _touchTarget;
 				}
 			}
@@ -550,9 +577,9 @@ namespace FairyGUI
 			GetHitTarget();
 
 			if (Input.GetKeyUp(KeyCode.LeftShift) || Input.GetKeyUp(KeyCode.RightShift))
-				shiftDown = false;
+				InputEvent.shiftDown = false;
 			else if (Input.GetKeyDown(KeyCode.LeftShift) || Input.GetKeyDown(KeyCode.RightShift))
-				shiftDown = true;
+				InputEvent.shiftDown = true;
 
 			UpdateTouchPosition();
 
@@ -641,7 +668,7 @@ namespace FairyGUI
 				if (touch.target != null)
 				{
 					touch.UpdateEvent();
-					touch.target.onTouchEnd.BubbleCall(touch.evt);
+					touch.CallTouchEnd();
 
 					if (!touch.clickCancelled && Mathf.Abs(touch.x - touch.downX) < 50 && Mathf.Abs(touch.y - touch.downY) < 50)
 					{
@@ -704,7 +731,7 @@ namespace FairyGUI
 					if (touch.target != null)
 					{
 						touch.UpdateEvent();
-						touch.target.onTouchEnd.BubbleCall(touch.evt);
+						touch.CallTouchEnd();
 
 						if (!touch.clickCancelled && Mathf.Abs(touch.x - touch.downX) < 50 && Mathf.Abs(touch.y - touch.downY) < 50)
 						{
@@ -796,7 +823,7 @@ namespace FairyGUI
 						if (touch.target != null)
 						{
 							touch.UpdateEvent();
-							touch.target.onTouchEnd.BubbleCall(touch.evt);
+							touch.CallTouchEnd();
 
 							if (!touch.clickCancelled && Mathf.Abs(touch.x - touch.downX) < 50 && Mathf.Abs(touch.y - touch.downY) < 50)
 							{
@@ -934,13 +961,31 @@ namespace FairyGUI
 				}
 				else if (curTime - texture.lastActive > 5)
 				{
-					texture.Dispose();
+					texture.Dispose(true);
 					_toCollectTextures.RemoveAt(i);
 					cnt--;
 				}
 				else
 					i++;
 			}
+		}
+
+		internal void AddTouchEndMonitor(int touchId, EventDispatcher target)
+		{
+			TouchInfo touch = null;
+			if (touchId == -1)
+				touch = _touches[0];
+			else
+			{
+				for (int j = 0; j < 5; j++)
+				{
+					touch = _touches[j];
+					if (touch.touchId == touchId)
+						break;
+				}
+			}
+			if (touch.touchEndMonitors.IndexOf(target) == -1)
+				touch.touchEndMonitors.Add(target);
 		}
 	}
 
@@ -961,12 +1006,14 @@ namespace FairyGUI
 		public float lastClickTime;
 		public DisplayObject target;
 		public DisplayObject lastRollOver;
+		public List<EventDispatcher> touchEndMonitors;
 
 		public InputEvent evt;
 
 		public TouchInfo()
 		{
 			evt = new InputEvent();
+			touchEndMonitors = new List<EventDispatcher>();
 			Reset();
 		}
 
@@ -984,6 +1031,7 @@ namespace FairyGUI
 			target = null;
 			lastRollOver = null;
 			clickCancelled = false;
+			touchEndMonitors.Clear();
 		}
 
 		public void UpdateEvent()
@@ -995,6 +1043,22 @@ namespace FairyGUI
 			evt.keyCode = this.keyCode;
 			evt.modifiers = this.modifiers;
 			evt.mouseWheelDelta = this.mouseWheelDelta;
+		}
+
+		static List<EventBridge> sHelperChain = new List<EventBridge>();
+		public void CallTouchEnd()
+		{
+			if (touchEndMonitors.Count > 0)
+			{
+				int len = touchEndMonitors.Count;
+				for (int i = 0; i < len; i++)
+					touchEndMonitors[i].GetChainBridges("onTouchEnd", sHelperChain, false);
+				target.BubbleEvent("onTouchEnd", evt, sHelperChain);
+				touchEndMonitors.Clear();
+				sHelperChain.Clear();
+			}
+			else
+				target.onTouchEnd.BubbleCall(evt);
 		}
 	}
 }

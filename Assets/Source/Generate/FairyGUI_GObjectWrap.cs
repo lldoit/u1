@@ -42,7 +42,7 @@ public class FairyGUI_GObjectWrap
 		L.RegFunction("TweenFade", TweenFade);
 		L.RegFunction("TweenRotate", TweenRotate);
 		L.RegFunction("New", _CreateFairyGUI_GObject);
-		L.RegFunction("__tostring", Lua_ToString);
+		L.RegFunction("__tostring", ToLua.op_ToString);
 		L.RegVar("name", get_name, set_name);
 		L.RegVar("data", get_data, set_data);
 		L.RegVar("group", get_group, set_group);
@@ -78,6 +78,7 @@ public class FairyGUI_GObjectWrap
 		L.RegVar("z", get_z, set_z);
 		L.RegVar("xy", get_xy, set_xy);
 		L.RegVar("position", get_position, set_position);
+		L.RegVar("pixelSnapping", get_pixelSnapping, set_pixelSnapping);
 		L.RegVar("width", get_width, set_width);
 		L.RegVar("height", get_height, set_height);
 		L.RegVar("size", get_size, set_size);
@@ -725,31 +726,13 @@ public class FairyGUI_GObjectWrap
 	{
 		try
 		{
-			int count = LuaDLL.lua_gettop(L);
-
-			if (count == 3 && TypeChecker.CheckTypes(L, 1, typeof(FairyGUI.GObject), typeof(UnityEngine.Vector2), typeof(float)))
-			{
-				FairyGUI.GObject obj = (FairyGUI.GObject)ToLua.ToObject(L, 1);
-				UnityEngine.Vector2 arg0 = ToLua.ToVector2(L, 2);
-				float arg1 = (float)LuaDLL.lua_tonumber(L, 3);
-				DG.Tweening.Tweener o = obj.TweenMove(arg0, arg1);
-				ToLua.PushObject(L, o);
-				return 1;
-			}
-			else if (count == 4 && TypeChecker.CheckTypes(L, 1, typeof(FairyGUI.GObject), typeof(UnityEngine.Vector2), typeof(float), typeof(bool)))
-			{
-				FairyGUI.GObject obj = (FairyGUI.GObject)ToLua.ToObject(L, 1);
-				UnityEngine.Vector2 arg0 = ToLua.ToVector2(L, 2);
-				float arg1 = (float)LuaDLL.lua_tonumber(L, 3);
-				bool arg2 = LuaDLL.lua_toboolean(L, 4);
-				DG.Tweening.Tweener o = obj.TweenMove(arg0, arg1, arg2);
-				ToLua.PushObject(L, o);
-				return 1;
-			}
-			else
-			{
-				return LuaDLL.luaL_throw(L, "invalid arguments to method: FairyGUI.GObject.TweenMove");
-			}
+			ToLua.CheckArgsCount(L, 3);
+			FairyGUI.GObject obj = (FairyGUI.GObject)ToLua.CheckObject(L, 1, typeof(FairyGUI.GObject));
+			UnityEngine.Vector2 arg0 = ToLua.ToVector2(L, 2);
+			float arg1 = (float)LuaDLL.luaL_checknumber(L, 3);
+			DG.Tweening.Tweener o = obj.TweenMove(arg0, arg1);
+			ToLua.PushObject(L, o);
+			return 1;
 		}
 		catch(Exception e)
 		{
@@ -762,31 +745,13 @@ public class FairyGUI_GObjectWrap
 	{
 		try
 		{
-			int count = LuaDLL.lua_gettop(L);
-
-			if (count == 3 && TypeChecker.CheckTypes(L, 1, typeof(FairyGUI.GObject), typeof(float), typeof(float)))
-			{
-				FairyGUI.GObject obj = (FairyGUI.GObject)ToLua.ToObject(L, 1);
-				float arg0 = (float)LuaDLL.lua_tonumber(L, 2);
-				float arg1 = (float)LuaDLL.lua_tonumber(L, 3);
-				DG.Tweening.Tweener o = obj.TweenMoveX(arg0, arg1);
-				ToLua.PushObject(L, o);
-				return 1;
-			}
-			else if (count == 4 && TypeChecker.CheckTypes(L, 1, typeof(FairyGUI.GObject), typeof(float), typeof(float), typeof(bool)))
-			{
-				FairyGUI.GObject obj = (FairyGUI.GObject)ToLua.ToObject(L, 1);
-				float arg0 = (float)LuaDLL.lua_tonumber(L, 2);
-				float arg1 = (float)LuaDLL.lua_tonumber(L, 3);
-				bool arg2 = LuaDLL.lua_toboolean(L, 4);
-				DG.Tweening.Tweener o = obj.TweenMoveX(arg0, arg1, arg2);
-				ToLua.PushObject(L, o);
-				return 1;
-			}
-			else
-			{
-				return LuaDLL.luaL_throw(L, "invalid arguments to method: FairyGUI.GObject.TweenMoveX");
-			}
+			ToLua.CheckArgsCount(L, 3);
+			FairyGUI.GObject obj = (FairyGUI.GObject)ToLua.CheckObject(L, 1, typeof(FairyGUI.GObject));
+			float arg0 = (float)LuaDLL.luaL_checknumber(L, 2);
+			float arg1 = (float)LuaDLL.luaL_checknumber(L, 3);
+			DG.Tweening.Tweener o = obj.TweenMoveX(arg0, arg1);
+			ToLua.PushObject(L, o);
+			return 1;
 		}
 		catch(Exception e)
 		{
@@ -799,31 +764,13 @@ public class FairyGUI_GObjectWrap
 	{
 		try
 		{
-			int count = LuaDLL.lua_gettop(L);
-
-			if (count == 3 && TypeChecker.CheckTypes(L, 1, typeof(FairyGUI.GObject), typeof(float), typeof(float)))
-			{
-				FairyGUI.GObject obj = (FairyGUI.GObject)ToLua.ToObject(L, 1);
-				float arg0 = (float)LuaDLL.lua_tonumber(L, 2);
-				float arg1 = (float)LuaDLL.lua_tonumber(L, 3);
-				DG.Tweening.Tweener o = obj.TweenMoveY(arg0, arg1);
-				ToLua.PushObject(L, o);
-				return 1;
-			}
-			else if (count == 4 && TypeChecker.CheckTypes(L, 1, typeof(FairyGUI.GObject), typeof(float), typeof(float), typeof(bool)))
-			{
-				FairyGUI.GObject obj = (FairyGUI.GObject)ToLua.ToObject(L, 1);
-				float arg0 = (float)LuaDLL.lua_tonumber(L, 2);
-				float arg1 = (float)LuaDLL.lua_tonumber(L, 3);
-				bool arg2 = LuaDLL.lua_toboolean(L, 4);
-				DG.Tweening.Tweener o = obj.TweenMoveY(arg0, arg1, arg2);
-				ToLua.PushObject(L, o);
-				return 1;
-			}
-			else
-			{
-				return LuaDLL.luaL_throw(L, "invalid arguments to method: FairyGUI.GObject.TweenMoveY");
-			}
+			ToLua.CheckArgsCount(L, 3);
+			FairyGUI.GObject obj = (FairyGUI.GObject)ToLua.CheckObject(L, 1, typeof(FairyGUI.GObject));
+			float arg0 = (float)LuaDLL.luaL_checknumber(L, 2);
+			float arg1 = (float)LuaDLL.luaL_checknumber(L, 3);
+			DG.Tweening.Tweener o = obj.TweenMoveY(arg0, arg1);
+			ToLua.PushObject(L, o);
+			return 1;
 		}
 		catch(Exception e)
 		{
@@ -893,31 +840,13 @@ public class FairyGUI_GObjectWrap
 	{
 		try
 		{
-			int count = LuaDLL.lua_gettop(L);
-
-			if (count == 3 && TypeChecker.CheckTypes(L, 1, typeof(FairyGUI.GObject), typeof(UnityEngine.Vector2), typeof(float)))
-			{
-				FairyGUI.GObject obj = (FairyGUI.GObject)ToLua.ToObject(L, 1);
-				UnityEngine.Vector2 arg0 = ToLua.ToVector2(L, 2);
-				float arg1 = (float)LuaDLL.lua_tonumber(L, 3);
-				DG.Tweening.Tweener o = obj.TweenResize(arg0, arg1);
-				ToLua.PushObject(L, o);
-				return 1;
-			}
-			else if (count == 4 && TypeChecker.CheckTypes(L, 1, typeof(FairyGUI.GObject), typeof(UnityEngine.Vector2), typeof(float), typeof(bool)))
-			{
-				FairyGUI.GObject obj = (FairyGUI.GObject)ToLua.ToObject(L, 1);
-				UnityEngine.Vector2 arg0 = ToLua.ToVector2(L, 2);
-				float arg1 = (float)LuaDLL.lua_tonumber(L, 3);
-				bool arg2 = LuaDLL.lua_toboolean(L, 4);
-				DG.Tweening.Tweener o = obj.TweenResize(arg0, arg1, arg2);
-				ToLua.PushObject(L, o);
-				return 1;
-			}
-			else
-			{
-				return LuaDLL.luaL_throw(L, "invalid arguments to method: FairyGUI.GObject.TweenResize");
-			}
+			ToLua.CheckArgsCount(L, 3);
+			FairyGUI.GObject obj = (FairyGUI.GObject)ToLua.CheckObject(L, 1, typeof(FairyGUI.GObject));
+			UnityEngine.Vector2 arg0 = ToLua.ToVector2(L, 2);
+			float arg1 = (float)LuaDLL.luaL_checknumber(L, 3);
+			DG.Tweening.Tweener o = obj.TweenResize(arg0, arg1);
+			ToLua.PushObject(L, o);
+			return 1;
 		}
 		catch(Exception e)
 		{
@@ -961,23 +890,6 @@ public class FairyGUI_GObjectWrap
 		{
 			return LuaDLL.toluaL_exception(L, e);
 		}
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int Lua_ToString(IntPtr L)
-	{
-		object obj = ToLua.ToObject(L, 1);
-
-		if (obj != null)
-		{
-			LuaDLL.lua_pushstring(L, obj.ToString());
-		}
-		else
-		{
-			LuaDLL.lua_pushnil(L);
-		}
-
-		return 1;
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
@@ -1642,6 +1554,25 @@ public class FairyGUI_GObjectWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index position on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_pixelSnapping(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GObject obj = (FairyGUI.GObject)o;
+			bool ret = obj.pixelSnapping;
+			LuaDLL.lua_pushboolean(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index pixelSnapping on a nil value" : e.Message);
 		}
 	}
 
@@ -2725,6 +2656,25 @@ public class FairyGUI_GObjectWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index position on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int set_pixelSnapping(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GObject obj = (FairyGUI.GObject)o;
+			bool arg0 = LuaDLL.luaL_checkboolean(L, 2);
+			obj.pixelSnapping = arg0;
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index pixelSnapping on a nil value" : e.Message);
 		}
 	}
 

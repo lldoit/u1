@@ -65,35 +65,31 @@ namespace FairyGUI
 		public void Enable(bool value)
 		{
 			if (value)
-				_host.onTouchBegin.Add(__touchBegin);
+			{
+				_host.onTouchBegin.Add(__touchEnd);
+				_host.onTouchEnd.Add(__touchBegin);
+			}
 			else
 			{
 				_host.onTouchBegin.Remove(__touchBegin);
-				Stage.inst.onTouchEnd.Remove(__touchEnd);
+				_host.onTouchEnd.Remove(__touchBegin);
 				Timers.inst.Remove(__timer);
 			}
 		}
 
 		public void Cancel()
 		{
-			Stage.inst.onTouchEnd.Remove(__touchEnd);
 			Timers.inst.Remove(__timer);
 		}
 
 		void __touchBegin(EventContext context)
 		{
-			if (Stage.inst.touchCount > 1)
-			{
-				Timers.inst.Remove(__timer);
-				return;
-			}
-
 			InputEvent evt = context.inputEvent;
 			_startPoint = _host.GlobalToLocal(new Vector2(evt.x, evt.y));
 			_started = false;
 
 			Timers.inst.Add(trigger, 1, __timer);
-			Stage.inst.onTouchEnd.Add(__touchEnd);
+			context.CaptureTouch();
 		}
 
 		void __timer(object param)
@@ -102,7 +98,6 @@ namespace FairyGUI
 			pt = _host.GlobalToLocal(pt) - _startPoint;
 			if (Mathf.Abs(pt.x) > UIConfig.touchDragSensitivity || Mathf.Abs(pt.y) > UIConfig.touchDragSensitivity)
 			{
-				Stage.inst.onTouchEnd.Remove(__touchEnd);
 				Timers.inst.Remove(__timer);
 				return;
 			}
@@ -117,7 +112,6 @@ namespace FairyGUI
 
 		void __touchEnd(EventContext context)
 		{
-			Stage.inst.onTouchEnd.Remove(__touchEnd);
 			Timers.inst.Remove(__timer);
 		}
 	}

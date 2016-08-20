@@ -58,8 +58,6 @@ namespace FairyGUI
 		bool _down;
 		bool _over;
 
-		EventCallback0 _touchEndDelegate;
-
 		public const string UP = "up";
 		public const string DOWN = "down";
 		public const string OVER = "over";
@@ -75,9 +73,9 @@ namespace FairyGUI
 			soundVolumeScale = UIConfig.buttonSoundVolumeScale;
 			changeStateOnClick = true;
 			_downEffectValue = 0.8f;
+			_title = string.Empty;
 
 			onChanged = new EventListener(this, "onChanged");
-			_touchEndDelegate = __touchEnd;
 		}
 
 		/// <summary>
@@ -430,6 +428,7 @@ namespace FairyGUI
 			displayObject.onRollOver.Add(__rollover);
 			displayObject.onRollOut.Add(__rollout);
 			displayObject.onTouchBegin.Add(__touchBegin);
+			displayObject.onTouchEnd.Add(__touchEnd);
 			displayObject.onRemovedFromStage.Add(__removedFromStage);
 			displayObject.onClick.Add(__click);
 		}
@@ -443,16 +442,16 @@ namespace FairyGUI
 
 			XML xml = cxml.GetNode("Button");
 			if (xml == null)
-			{
-				this.title = string.Empty;
-				this.icon = null;
 				return;
-			}
 
 			string str;
 
-			this.title = xml.GetAttribute("title");
-			this.icon = xml.GetAttribute("icon");
+			str = xml.GetAttribute("title");
+			if (str != null)
+				this.title = str;
+			str = xml.GetAttribute("icon");
+			if (str != null)
+				this.icon = str;
 			str = xml.GetAttribute("selectedTitle");
 			if (str != null)
 				this.selectedTitle = str;
@@ -508,10 +507,10 @@ namespace FairyGUI
 			SetState(_selected ? DOWN : UP);
 		}
 
-		private void __touchBegin()
+		private void __touchBegin(EventContext context)
 		{
 			_down = true;
-			Stage.inst.onTouchEnd.Add(_touchEndDelegate);
+			context.CaptureTouch();
 
 			if (_mode == ButtonMode.Common)
 			{
@@ -534,12 +533,10 @@ namespace FairyGUI
 		{
 			if (_down)
 			{
-				Stage.inst.onTouchEnd.Remove(_touchEndDelegate);
-				_down = false;
-
 				if (this.displayObject == null || this.displayObject.isDisposed)
 					return;
 
+				_down = false;
 				if (_mode == ButtonMode.Common)
 				{
 					if (this.grayed && _buttonController != null && _buttonController.HasPage(DISABLED))

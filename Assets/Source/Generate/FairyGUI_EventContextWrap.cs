@@ -9,8 +9,9 @@ public class FairyGUI_EventContextWrap
 		L.BeginClass(typeof(FairyGUI.EventContext), typeof(System.Object));
 		L.RegFunction("StopPropagation", StopPropagation);
 		L.RegFunction("PreventDefault", PreventDefault);
+		L.RegFunction("CaptureTouch", CaptureTouch);
 		L.RegFunction("New", _CreateFairyGUI_EventContext);
-		L.RegFunction("__tostring", Lua_ToString);
+		L.RegFunction("__tostring", ToLua.op_ToString);
 		L.RegVar("type", get_type, set_type);
 		L.RegVar("data", get_data, set_data);
 		L.RegVar("sender", get_sender, null);
@@ -77,20 +78,19 @@ public class FairyGUI_EventContextWrap
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int Lua_ToString(IntPtr L)
+	static int CaptureTouch(IntPtr L)
 	{
-		object obj = ToLua.ToObject(L, 1);
-
-		if (obj != null)
+		try
 		{
-			LuaDLL.lua_pushstring(L, obj.ToString());
+			ToLua.CheckArgsCount(L, 1);
+			FairyGUI.EventContext obj = (FairyGUI.EventContext)ToLua.CheckObject(L, 1, typeof(FairyGUI.EventContext));
+			obj.CaptureTouch();
+			return 0;
 		}
-		else
+		catch(Exception e)
 		{
-			LuaDLL.lua_pushnil(L);
+			return LuaDLL.toluaL_exception(L, e);
 		}
-
-		return 1;
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]

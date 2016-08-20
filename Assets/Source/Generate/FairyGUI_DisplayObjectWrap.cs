@@ -24,7 +24,7 @@ public class FairyGUI_DisplayObjectWrap
 		L.RegFunction("Update", Update);
 		L.RegFunction("Dispose", Dispose);
 		L.RegFunction("New", _CreateFairyGUI_DisplayObject);
-		L.RegFunction("__tostring", Lua_ToString);
+		L.RegFunction("__tostring", ToLua.op_ToString);
 		L.RegVar("name", get_name, set_name);
 		L.RegVar("onPaint", get_onPaint, set_onPaint);
 		L.RegVar("gOwner", get_gOwner, set_gOwner);
@@ -388,23 +388,6 @@ public class FairyGUI_DisplayObjectWrap
 		{
 			return LuaDLL.toluaL_exception(L, e);
 		}
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int Lua_ToString(IntPtr L)
-	{
-		object obj = ToLua.ToObject(L, 1);
-
-		if (obj != null)
-		{
-			LuaDLL.lua_pushstring(L, obj.ToString());
-		}
-		else
-		{
-			LuaDLL.lua_pushnil(L);
-		}
-
-		return 1;
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]

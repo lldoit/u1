@@ -9,13 +9,14 @@ namespace FairyGUI
 	public class NTexture
 	{
 		public Texture nativeTexture { get; private set; }
-		public Texture alphaTexture { get; set; }
+		public NTexture alphaTexture { get; set; }
 		public NTexture root { get; private set; }
 		public Rect uvRect { get; private set; }
 		public Dictionary<string, MaterialManager> materialManagers { get; internal set; }
 		public int refCount;
 		public bool disposed;
 		public float lastActive;
+		public bool storedODisk;
 
 		Rect? _region;
 
@@ -44,12 +45,7 @@ namespace FairyGUI
 		{
 			if (_empty != null)
 			{
-				if (_empty.nativeTexture != null)
-				{
-					Texture.DestroyImmediate(_empty.nativeTexture);
-					_empty.nativeTexture = null;
-				}
-				_empty.Dispose();
+				_empty.Dispose(true);
 				_empty = null;
 			}
 		}
@@ -129,11 +125,23 @@ namespace FairyGUI
 
 		public void Dispose()
 		{
+			Dispose(false);
+		}
+
+		public void Dispose(bool allowDestroyingAssets)
+		{
 			if (!disposed)
 			{
 				disposed = true;
 
 				DestroyMaterials();
+				if (root == this && nativeTexture != null && allowDestroyingAssets)
+				{
+					if (storedODisk)
+						Resources.UnloadAsset(nativeTexture);
+					else
+						Texture.DestroyImmediate(nativeTexture, true);
+				}
 				nativeTexture = null;
 				root = null;
 			}

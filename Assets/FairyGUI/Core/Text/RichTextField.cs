@@ -4,122 +4,143 @@ using FairyGUI.Utils;
 
 namespace FairyGUI
 {
+	/// <summary>
+	/// 
+	/// </summary>
+	public class Emoji
+	{
+		/// <summary>
+		/// 代表图片资源url。
+		/// </summary>
+		public string url;
+
+		/// <summary>
+		/// 图片宽度。不设置（0）则表示使用原始宽度。
+		/// </summary>
+		public int width;
+
+		/// <summary>
+		/// 图片高度。不设置（0）则表示使用原始高度。
+		/// </summary>
+		public int height;
+
+		public Emoji(string url, int width, int height)
+		{
+			this.url = url;
+			this.width = width;
+			this.height = height;
+		}
+
+		public Emoji(string url)
+		{
+			this.url = url;
+		}
+	}
+
+	/// <summary>
+	/// 
+	/// </summary>
 	public class RichTextField : Container
 	{
+		public EventListener onFocusIn { get; private set; }
+		public EventListener onFocusOut { get; private set; }
+		public EventListener onChanged { get; private set; }
+
 		public IHtmlPageContext htmlPageContext { get; set; }
 		public HtmlParseOptions htmlParseOptions { get; private set; }
+		public Dictionary<uint, Emoji> emojies { get; set; }
 
-		TextField _textField;
+		public TextField textField { get; private set; }
 
 		public RichTextField()
 		{
+			Create(new TextField());
+		}
+
+		public RichTextField(TextField textField)
+		{
+			Create(textField);
+		}
+
+		void Create(TextField textField)
+		{
 			CreateGameObject("RichTextField");
+			this.opaque = true;
+
+			onFocusIn = new EventListener(this, "onFocusIn");
+			onFocusOut = new EventListener(this, "onFocusOut");
+			onChanged = new EventListener(this, "onChanged");
 
 			htmlPageContext = HtmlPageContext.inst;
 			htmlParseOptions = new HtmlParseOptions();
 
-			_textField = new TextField();
-			_textField._optimizeNotTouchable = false;
-			_textField._richTextField = this;
-			AddChild(_textField);
+			this.textField = textField;
+			textField.richTextField = this;
+			AddChild(textField);
 
-			graphics = _textField.graphics;
-
-			onClick.AddCapture(__click);
+			graphics = textField.graphics;
 		}
 
 		public string text
 		{
-			get { return _textField.text; }
-			set { _textField.text = value; }
+			get { return textField.text; }
+			set { textField.text = value; }
 		}
 
 		public string htmlText
 		{
-			get { return _textField.htmlText; }
-			set { _textField.htmlText = value; }
+			get { return textField.htmlText; }
+			set { textField.htmlText = value; }
 		}
 
 		public TextFormat textFormat
 		{
-			get { return _textField.textFormat; }
-			set { _textField.textFormat = value; }
-		}
-
-		public AlignType align
-		{
-			get { return _textField.align; }
-			set { _textField.align = value; }
-		}
-
-		public bool autoSize
-		{
-			get { return _textField.autoSize; }
-			set { _textField.autoSize = value; }
-		}
-
-		public bool wordWrap
-		{
-			get { return _textField.wordWrap; }
-			set { _textField.wordWrap = value; }
-		}
-
-		public int stroke
-		{
-			get { return _textField.stroke; }
-			set { _textField.stroke = value; }
-		}
-
-		public Color strokeColor
-		{
-			get { return _textField.strokeColor; }
-			set { _textField.strokeColor = value; }
-		}
-
-		public Vector2 shadowOffset
-		{
-			get { return _textField.shadowOffset; }
-			set { _textField.shadowOffset = value; }
-		}
-
-		public float textWidth
-		{
-			get { return _textField.textWidth; }
-		}
-
-		public float textHeight
-		{
-			get { return _textField.textHeight; }
+			get { return textField.textFormat; }
+			set { textField.textFormat = value; }
 		}
 
 		public IHtmlObject GetHtmlObject(string name)
 		{
-			return _textField.GetHtmlObject(name);
-		}
-
-		override protected void OnSizeChanged()
-		{
-			_textField.size = this.size;
-
-			base.OnSizeChanged();
-		}
-
-		public override Rect GetBounds(DisplayObject targetSpace)
-		{
-			return _textField.GetBounds(targetSpace);
-		}
-
-		void __click(EventContext context)
-		{
-			Vector3 v = context.inputEvent.position;
-			v = this.GlobalToLocal(v);
-
-			HtmlElement link = _textField.GetLink(v);
-			if (link != null)
+			List<HtmlElement> elements = textField.GetHtmlElements();
+			int count = elements.Count;
+			for (int i = 0; i < count; i++)
 			{
-				this.DispatchEvent(onClickLink.type, link.GetString("href"));
-				context.StopPropagation();
+				HtmlElement element = elements[i];
+				if (element.htmlObject != null && name.Equals(element.name, System.StringComparison.OrdinalIgnoreCase))
+					return element.htmlObject;
 			}
+
+			return null;
+		}
+
+		public IHtmlObject GetHtmlObjectAt(int index)
+		{
+			List<HtmlElement> elements = textField.GetHtmlElements();
+			return elements[index].htmlObject;
+		}
+
+		public int htmlObjectCount
+		{
+			get { return textField.GetHtmlElements().Count; }
+		}
+
+		override protected void OnSizeChanged(bool widthChanged, bool heightChanged)
+		{
+			textField.size = this.size;
+
+			base.OnSizeChanged(widthChanged, heightChanged);
+		}
+
+		public override void Update(UpdateContext context)
+		{
+			if (textField.input)
+			{
+				textField._BeforeClip(context);
+				base.Update(context);
+				textField._AfterClip(context);
+			}
+			else
+				base.Update(context);
 		}
 	}
 }

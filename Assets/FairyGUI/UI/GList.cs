@@ -13,6 +13,13 @@ namespace FairyGUI
 	public delegate void ListItemRenderer(int index, GObject item);
 
 	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="index"></param>
+	/// <returns></returns>
+	public delegate string ListItemProvider(int index);
+
+	/// <summary>
 	/// GList class.
 	/// </summary>
 	public class GList : GComponent
@@ -39,6 +46,11 @@ namespace FairyGUI
 		public ListItemRenderer itemRenderer;
 
 		/// <summary>
+		/// Callback funtion to return item resource url.
+		/// </summary>
+		public ListItemProvider itemProvider;
+
+		/// <summary>
 		/// Dispatched when a list item being clicked.
 		/// </summary>
 		public EventListener onClickItem { get; private set; }
@@ -60,12 +72,20 @@ namespace FairyGUI
 		bool _virtual;
 		bool _loop;
 		int _numItems;
+		int _realNumItems;
 		int _firstIndex; //the top left index
-		int _viewCount; //item count in view
 		int _curLineItemCount; //item count in one line
 		Vector2 _itemSize;
 		int _virtualListChanged; //1-content changed, 2-size changed
 		bool _eventLocked;
+
+		class ItemInfo
+		{
+			public Vector2 size;
+			public GObject obj;
+			public uint updateFlag;
+		}
+		List<ItemInfo> _virtualItems;
 
 		public GList()
 			: base()
@@ -82,6 +102,9 @@ namespace FairyGUI
 		public override void Dispose()
 		{
 			_pool.Clear();
+			if (_virtualListChanged != 0)
+				Timers.inst.Remove(this.RefreshVirtualList);
+
 			base.Dispose();
 		}
 
@@ -154,17 +177,6 @@ namespace FairyGUI
 					if (_virtual)
 						SetVirtualListChangedFlag(true);
 				}
-			}
-		}
-
-		public Vector2 virtualItemSize
-		{
-			get { return _itemSize; }
-			set
-			{
-				_itemSize = value;
-				if (_virtual)
-					SetVirtualListChangedFlag(true);
 			}
 		}
 
@@ -920,10 +932,27 @@ namespace FairyGUI
 			{
 				CheckVirtualList();
 
+				Rect rect;
+				if (_layout == ListLayoutType.SingleColumn || _layout == ListLayoutType.FlowHorizontal)
+				{
+					float pos = 0;
+					for (int i = 0; i < index; i += _curLineItemCount)
+						pos += _virtualItems[i].size.y + _lineGap;
+					rect = new Rect(0, pos, _itemSize.x, _virtualItems[index].size.y);
+				}
+				else
+				{
+					float pos = 0;
+					for (int i = 0; i < index; i += _curLineItemCount)
+						pos += _virtualItems[i].size.x + _columnGap;
+					rect = new Rect(pos, 0, _virtualItems[index].size.x, _itemSize.y);
+				}
+
+				setFirst = true;//因为在可变item大小的情况下，只有设置在最顶端，位置才不会因为高度变化而改变，所以只能支持setFirst=true
 				if (this.scrollPane != null)
-					scrollPane.ScrollToView(GetItemRect(index), ani, setFirst);
+					scrollPane.ScrollToView(rect, ani, setFirst);
 				else if (parent != null && parent.scrollPane != null)
-					parent.scrollPane.ScrollToView(GetItemRect(index), ani, setFirst);
+					parent.scrollPane.ScrollToView(this.TransformRect(rect, parent), ani, setFirst);
 			}
 			else
 			{
@@ -961,6 +990,11 @@ namespace FairyGUI
 			SetVirtual(false);
 		}
 
+		public bool isVirtual
+		{
+			get { return _virtual; }
+		}
+
 		/// <summary>
 		/// Set the list to be virtual list, and has loop behavior.
 		/// </summary>
@@ -986,15 +1020,24 @@ namespace FairyGUI
 
 				_virtual = true;
 				_loop = loop;
+				_virtualItems = new List<ItemInfo>();
 				RemoveChildrenToPool();
 
 				if (_itemSize.x == 0 || _itemSize.y == 0)
 				{
 					GObject obj = GetFromPool(null);
 					if (obj == null)
+					{
 						Debug.LogError("FairyGUI: Virtual List must have a default list item resource.");
-					_itemSize = obj.size;
-					ReturnToPool(obj);
+						_itemSize = new Vector2(100, 100);
+					}
+					else
+					{
+						_itemSize = obj.size;
+						_itemSize.x = Mathf.CeilToInt(_itemSize.x);
+						_itemSize.y = Mathf.CeilToInt(_itemSize.y);
+						ReturnToPool(obj);
+					}
 				}
 
 				if (_layout == ListLayoutType.SingleColumn || _layout == ListLayoutType.FlowHorizontal)
@@ -1026,7 +1069,28 @@ namespace FairyGUI
 				if (_virtual)
 				{
 					_numItems = value;
-					SetVirtualListChangedFlag(false);
+					if (_loop)
+						_realNumItems = _numItems * 5;//设置5倍数量，用于循环滚动
+					else
+						_realNumItems = _numItems;
+
+					//_virtualItems的设计是只增不减的
+					int oldCount = _virtualItems.Count;
+					if (_realNumItems > oldCount)
+					{
+						for (int i = oldCount; i < _realNumItems; i++)
+						{
+							ItemInfo ii = new ItemInfo();
+							ii.size = _itemSize;
+
+							_virtualItems.Add(ii);
+						}
+					}
+
+					if (this._virtualListChanged != 0)
+						Timers.inst.Remove(this.RefreshVirtualList);
+					//立即刷新
+					this.RefreshVirtualList(null);
 				}
 				else
 				{
@@ -1034,7 +1098,12 @@ namespace FairyGUI
 					if (value > cnt)
 					{
 						for (int i = cnt; i < value; i++)
-							AddItemFromPool();
+						{
+							if (itemProvider == null)
+								AddItemFromPool();
+							else
+								AddItemFromPool(itemProvider(i));
+						}
 					}
 					else
 					{
@@ -1053,11 +1122,6 @@ namespace FairyGUI
 		public void RefreshVirtualList()
 		{
 			SetVirtualListChangedFlag(false);
-		}
-
-		void __parentSizeChanged()
-		{
-			SetVirtualListChangedFlag(true);
 		}
 
 		void CheckVirtualList()
@@ -1081,9 +1145,6 @@ namespace FairyGUI
 
 		void RefreshVirtualList(object param)
 		{
-			if (_virtualListChanged == 0)
-				return;
-
 			bool layoutChanged = _virtualListChanged == 2;
 			_virtualListChanged = 0;
 			_eventLocked = true;
@@ -1098,15 +1159,6 @@ namespace FairyGUI
 						_curLineItemCount = _lineItemCount;
 					else
 						_curLineItemCount = Mathf.FloorToInt((this.scrollPane.viewWidth + _columnGap) / (_itemSize.x + _columnGap));
-					_viewCount = (Mathf.CeilToInt((this.scrollPane.viewHeight + _lineGap) / (_itemSize.y + _lineGap)) + 1) * _curLineItemCount;
-					int numChildren = _children.Count;
-					if (numChildren < _viewCount)
-					{
-						for (int i = numChildren; i < _viewCount; i++)
-							this.AddItemFromPool();
-					}
-					else if (numChildren > _viewCount)
-						this.RemoveChildrenToPool(_viewCount, numChildren);
 				}
 				else
 				{
@@ -1116,118 +1168,147 @@ namespace FairyGUI
 						_curLineItemCount = _lineItemCount;
 					else
 						_curLineItemCount = Mathf.FloorToInt((this.scrollPane.viewHeight + _lineGap) / (_itemSize.y + _lineGap));
-					_viewCount = (Mathf.CeilToInt((this.scrollPane.viewWidth + _columnGap) / (_itemSize.x + _columnGap)) + 1) * _curLineItemCount;
-					int numChildren = _children.Count;
-					if (numChildren < _viewCount)
-					{
-						for (int i = numChildren; i < _viewCount; i++)
-							this.AddItemFromPool();
-					}
-					else if (numChildren > _viewCount)
-						this.RemoveChildrenToPool(_viewCount, numChildren);
 				}
 			}
 
-			EnsureBoundsCorrect();
-
+			float ch = 0, cw = 0;
+			int len = Mathf.CeilToInt((float)_realNumItems / _curLineItemCount) * _curLineItemCount;
 			if (_layout == ListLayoutType.SingleColumn || _layout == ListLayoutType.FlowHorizontal)
 			{
-				float ch;
-				if (_layout == ListLayoutType.SingleColumn)
-				{
-					ch = _numItems * _itemSize.y + Math.Max(0, _numItems - 1) * _lineGap;
-					if (_loop && ch > 0)
-					{
-						int loopCount = 5;// Mathf.CeilToInt((this.viewHeight * 2 + 1) / ch);
-						ch = ch * loopCount + _lineGap * (loopCount - 1);
-					}
-				}
-				else
-				{
-					int lineCount = Mathf.CeilToInt((float)_numItems / _curLineItemCount);
-					ch = lineCount * _itemSize.y + Math.Max(0, lineCount - 1) * _lineGap;
-				}
-
+				for (int i = 0; i < len; i += _curLineItemCount)
+					ch += _virtualItems[i].size.y + _lineGap;
+				if (ch > 0)
+					ch -= _lineGap;
 				this.scrollPane.SetContentSize(this.scrollPane.contentWidth, ch);
 			}
 			else
 			{
-				float cw;
-				if (_layout == ListLayoutType.SingleRow)
-				{
-					cw = _numItems * _itemSize.x + Math.Max(0, _numItems - 1) * _columnGap;
-					if (_loop && cw > 0)
-					{
-						int loopCount = 5; // Mathf.CeilToInt((this.viewWidth * 2 + 1) / cw);
-						cw = cw * loopCount + _columnGap * (loopCount - 1);
-					}
-				}
-				else
-				{
-					int lineCount = Mathf.CeilToInt((float)_numItems / _curLineItemCount);
-					cw = lineCount * _itemSize.x + Math.Max(0, lineCount - 1) * _columnGap;
-				}
-
+				for (int i = 0; i < len; i += _curLineItemCount)
+					cw += _virtualItems[i].size.x + _columnGap;
+				if (cw > 0)
+					cw -= _columnGap;
 				this.scrollPane.SetContentSize(cw, this.scrollPane.contentHeight);
 			}
 
 			_eventLocked = false;
-			__scrolled(null);
-		}
 
-		void RenderItems(int beginIndex, int endIndex)
-		{
-			for (int i = 0; i < _viewCount; i++)
-			{
-				GObject obj = GetChildAt(i);
-				int j = _firstIndex + i;
-				if (_loop && _numItems > 0)
-					j = j % _numItems;
-
-				if (j < _numItems)
-				{
-					obj.visible = true;
-					if (i >= beginIndex && i < endIndex)
-						itemRenderer(j, obj);
-				}
-				else
-					obj.visible = false;
-			}
-		}
-
-		Rect GetItemRect(int index)
-		{
-			Rect rect = new Rect();
-			int index1 = index / _curLineItemCount;
-			int index2 = index % _curLineItemCount;
-			switch (_layout)
-			{
-				case ListLayoutType.SingleColumn:
-					rect = new Rect(0, index1 * _itemSize.y + Math.Max(0, index1 - 1) * _lineGap,
-						this.viewWidth, _itemSize.y);
-					break;
-
-				case ListLayoutType.FlowHorizontal:
-					rect = new Rect(index2 * _itemSize.x + Math.Max(0, index2 - 1) * _columnGap,
-						index1 * _itemSize.y + Math.Max(0, index1 - 1) * _lineGap,
-						_itemSize.x, _itemSize.y);
-					break;
-
-				case ListLayoutType.SingleRow:
-					rect = new Rect(index1 * _itemSize.x + Math.Max(0, index1 - 1) * _columnGap, 0,
-						_itemSize.x, this.viewHeight);
-					break;
-
-				case ListLayoutType.FlowVertical:
-					rect = new Rect(index1 * _itemSize.x + Math.Max(0, index1 - 1) * _columnGap,
-						index2 * _itemSize.y + Math.Max(0, index2 - 1) * _lineGap,
-						_itemSize.x, _itemSize.y);
-					break;
-			}
-			return rect;
+			HandleScroll(true);
 		}
 
 		void __scrolled(EventContext context)
+		{
+			HandleScroll(false);
+		}
+
+		int GetIndexOnPos1(ref float pos)
+		{
+			int result = 0;
+
+			if (numChildren > 0)
+			{
+				float pos2 = this.GetChildAt(0).y;
+				if (pos2 > pos)
+				{
+					for (int i = _firstIndex - _curLineItemCount; i >= 0; i -= _curLineItemCount)
+					{
+						pos2 -= (_virtualItems[i].size.y + _lineGap);
+						if (pos2 - pos < 0.001)
+						{
+							result = i;
+							pos = pos2;
+							break;
+						}
+					}
+				}
+				else
+				{
+					for (int i = _firstIndex; i < _realNumItems; i += _curLineItemCount)
+					{
+						float pos3 = pos2 + _virtualItems[i].size.y + _lineGap;
+						if (pos3 - pos > 0.001)
+						{
+							result = i;
+							pos = pos2;
+							break;
+						}
+						pos2 = pos3;
+					}
+				}
+			}
+			else
+			{
+				float pos2 = 0;
+				for (int i = 0; i < _realNumItems; i++)
+				{
+					float pos3 = pos2 + _virtualItems[i].size.y + _lineGap;
+					if (pos3 > pos)
+					{
+						result = i;
+						pos = pos2;
+						break;
+					}
+					pos2 = pos3;
+				}
+			}
+
+			return result;
+		}
+
+		int GetIndexOnPos2(ref float pos)
+		{
+			int result = 0;
+
+			if (numChildren > 0)
+			{
+				float pos2 = this.GetChildAt(0).x;
+				if (pos2 > pos)
+				{
+					for (int i = _firstIndex - _curLineItemCount; i >= 0; i -= _curLineItemCount)
+					{
+						pos2 -= (_virtualItems[i].size.x + _columnGap);
+						if (pos2 <= pos)
+						{
+							result = i;
+							pos = pos2;
+							break;
+						}
+					}
+				}
+				else
+				{
+					for (int i = _firstIndex; i < _realNumItems; i += _curLineItemCount)
+					{
+						float pos3 = pos2 + _virtualItems[i].size.x + _columnGap;
+						if (pos3 > pos)
+						{
+							result = i;
+							pos = pos2;
+							break;
+						}
+						pos2 = pos3;
+					}
+				}
+			}
+			else
+			{
+				float pos2 = 0;
+				for (int i = 0; i < _realNumItems; i++)
+				{
+					float pos3 = pos2 + _virtualItems[i].size.x + _columnGap;
+					if (pos3 > pos)
+					{
+						result = i;
+						pos = pos2;
+						break;
+					}
+					pos2 = pos3;
+				}
+			}
+
+			return result;
+		}
+
+		void HandleScroll(bool forceUpdate)
 		{
 			if (_eventLocked)
 				return;
@@ -1236,192 +1317,369 @@ namespace FairyGUI
 			{
 				if (_loop)
 				{
+					//循环列表的核心实现，滚动到头尾时重新定位
 					if (scrollPane.percY == 0)
 						scrollPane.posY = _numItems * (_itemSize.y + _lineGap);
 					else if (scrollPane.percY == 1)
 						scrollPane.posY = scrollPane.contentHeight - _numItems * (_itemSize.y + _lineGap) - this.viewHeight;
 				}
 
-				int firstLine = Mathf.FloorToInt((scrollPane.posY + _lineGap) / (_itemSize.y + _lineGap));
-				int newFirstIndex = firstLine * _curLineItemCount;
-				for (int i = 0; i < _viewCount; i++)
-				{
-					GObject obj = GetChildAt(i);
-					obj.y = (firstLine + (i / _curLineItemCount)) * (_itemSize.y + _lineGap);
-				}
-				if (newFirstIndex >= _numItems)
-					newFirstIndex -= _numItems;
-
-				if (newFirstIndex != _firstIndex || context == null)
-				{
-					int oldFirstIndex = _firstIndex;
-					_firstIndex = newFirstIndex;
-
-					if (context == null || oldFirstIndex + _viewCount < newFirstIndex || oldFirstIndex > newFirstIndex + _viewCount)
-					{
-						//no intersection, render all
-						for (int i = 0; i < _viewCount; i++)
-						{
-							GObject obj = GetChildAt(i);
-							if (obj is GButton)
-								((GButton)obj).selected = false;
-						}
-						RenderItems(0, _viewCount);
-					}
-					else if (oldFirstIndex > newFirstIndex)
-					{
-						int j1 = oldFirstIndex - newFirstIndex;
-						int j2 = _viewCount - j1;
-						for (int i = j2 - 1; i >= 0; i--)
-						{
-							GObject obj1 = GetChildAt(i);
-							GObject obj2 = GetChildAt(i + j1);
-							if (obj2 is GButton)
-								((GButton)obj2).selected = false;
-							float tmp = obj1.y;
-							obj1.y = obj2.y;
-							obj2.y = tmp;
-							SwapChildrenAt(i + j1, i);
-						}
-						RenderItems(0, j1);
-					}
-					else
-					{
-						int j1 = newFirstIndex - oldFirstIndex;
-						int j2 = _viewCount - j1;
-						for (int i = 0; i < j2; i++)
-						{
-							GObject obj1 = GetChildAt(i);
-							GObject obj2 = GetChildAt(i + j1);
-							if (obj1 is GButton)
-								((GButton)obj1).selected = false;
-							float tmp = obj1.y;
-							obj1.y = obj2.y;
-							obj2.y = tmp;
-							SwapChildrenAt(i + j1, i);
-						}
-						RenderItems(j2, _viewCount);
-					}
-				}
-
-				if (this.childrenRenderOrder == ChildrenRenderOrder.Arch)
-				{
-					float mid = this.scrollPane.posY + this.viewHeight / 2;
-					float minDist = int.MaxValue, dist;
-					int apexIndex = 0;
-					for (int i = 0; i < _viewCount; i++)
-					{
-						GObject obj = GetChildAt(i);
-						if (obj.visible)
-						{
-							dist = Mathf.Abs(mid - obj.y - obj.height / 2);
-							if (dist < minDist)
-							{
-								minDist = dist;
-								apexIndex = i;
-							}
-						}
-					}
-					this.apexIndex = apexIndex;
-				}
+				HandleScroll1(forceUpdate);
 			}
 			else
 			{
 				if (_loop)
 				{
+					//循环列表的核心实现，滚动到头尾时重新定位
 					if (scrollPane.percX == 0)
 						scrollPane.posX = _numItems * (_itemSize.x + _columnGap);
 					else if (scrollPane.percX == 1)
 						scrollPane.posX = scrollPane.contentWidth - _numItems * (_itemSize.x + _columnGap) - this.viewWidth;
 				}
-				int firstLine = Mathf.FloorToInt((scrollPane.posX + _columnGap) / (_itemSize.x + _columnGap));
-				int newFirstIndex = firstLine * _curLineItemCount;
-				for (int i = 0; i < _viewCount; i++)
+
+				HandleScroll2(forceUpdate);
+			}
+
+			HandleArchOrder();
+
+			_boundsChanged = false;
+		}
+
+		static uint itemInfoVer = 0; //用来标志item是否在本次处理中已经被重用了
+		static uint enterCounter = 0; //因为HandleScroll是会重入的，这个用来避免极端情况下的死锁
+		void HandleScroll1(bool forceUpdate)
+		{
+			enterCounter++;
+			if (enterCounter > 3)
+				return;
+
+			float pos = scrollPane.posY;
+			//寻找当前位置的第一条项目
+			int newFirstIndex = GetIndexOnPos1(ref pos);
+
+			if (newFirstIndex == _firstIndex && !forceUpdate)
+			{
+				enterCounter--;
+				return;
+			}
+
+			int oldFirstIndex = _firstIndex;
+			_firstIndex = newFirstIndex;
+			int curIndex = newFirstIndex;
+			bool forward = oldFirstIndex > newFirstIndex;
+			int oldCount = this.numChildren;
+			int lastIndex = oldFirstIndex + oldCount - 1;
+			int reuseIndex = forward ? lastIndex : 0;
+			float curX = 0, curY = pos;
+			float max = scrollPane.posY + scrollPane.viewHeight;
+			bool end = scrollPane.percY == 1;
+			bool needRender;
+			float deltaSize = 0;
+			float firstItemDeltaSize = 0;
+			string url = defaultItem;
+
+			itemInfoVer++;
+			while (curIndex < _realNumItems && (end || curY < max))
+			{
+				ItemInfo ii = _virtualItems[curIndex];
+
+				if (ii.obj == null || forceUpdate)
 				{
-					GObject obj = GetChildAt(i);
-					obj.x = (firstLine + (i / _curLineItemCount)) * (_itemSize.x + _columnGap);
-				}
-
-				if (newFirstIndex >= _numItems)
-					newFirstIndex -= _numItems;
-
-				if (newFirstIndex != _firstIndex || context == null)
-				{
-					int oldFirstIndex = _firstIndex;
-					_firstIndex = newFirstIndex;
-					if (context == null || oldFirstIndex + _viewCount < newFirstIndex || oldFirstIndex > newFirstIndex + _viewCount)
+					if (itemProvider != null)
 					{
-						//no intersection, render all
-						for (int i = 0; i < _viewCount; i++)
-						{
-							GObject obj = GetChildAt(i);
-							if (obj is GButton)
-								((GButton)obj).selected = false;
-						}
-
-						RenderItems(0, _viewCount);
+						url = itemProvider(curIndex % _numItems);
+						if (url == null)
+							url = defaultItem;
 					}
-					else if (oldFirstIndex > newFirstIndex)
-					{
-						int j1 = oldFirstIndex - newFirstIndex;
-						int j2 = _viewCount - j1;
-						for (int i = j2 - 1; i >= 0; i--)
-						{
-							GObject obj1 = GetChildAt(i);
-							GObject obj2 = GetChildAt(i + j1);
-							if (obj2 is GButton)
-								((GButton)obj2).selected = false;
-							float tmp = obj1.x;
-							obj1.x = obj2.x;
-							obj2.x = tmp;
-							SwapChildrenAt(i + j1, i);
-						}
 
-						RenderItems(0, j1);
-					}
-					else
+					if (ii.obj != null && ii.obj.resourceURL != url)
 					{
-						int j1 = newFirstIndex - oldFirstIndex;
-						int j2 = _viewCount - j1;
-						for (int i = 0; i < j2; i++)
-						{
-							GObject obj1 = GetChildAt(i);
-							GObject obj2 = GetChildAt(i + j1);
-							if (obj1 is GButton)
-								((GButton)obj1).selected = false;
-							float tmp = obj1.x;
-							obj1.x = obj2.x;
-							obj2.x = tmp;
-							SwapChildrenAt(i + j1, i);
-						}
-
-						RenderItems(j2, _viewCount);
+						RemoveChild(ii.obj);
+						ii.obj = null;
 					}
 				}
 
-				if (this.childrenRenderOrder == ChildrenRenderOrder.Arch)
+				if (ii.obj == null)
 				{
-					float mid = this.scrollPane.posX + this.viewWidth / 2;
-					float minDist = int.MaxValue, dist;
-					int apexIndex = 0;
-					for (int i = 0; i < _viewCount; i++)
+					if (forward)
 					{
-						GObject obj = GetChildAt(i);
-						if (obj.visible)
+						for (int j = reuseIndex; j >= 0; j--)
 						{
-							dist = Mathf.Abs(mid - obj.x - obj.width / 2);
-							if (dist < minDist)
+							ItemInfo ii2 = _virtualItems[j];
+							if (ii2.obj != null && ii2.updateFlag != itemInfoVer && ii2.obj.resourceURL == url)
 							{
-								minDist = dist;
-								apexIndex = i;
+								ii.obj = ii2.obj;
+								ii2.obj = null;
+								if (j == reuseIndex)
+									reuseIndex--;
+								break;
 							}
 						}
 					}
-					this.apexIndex = apexIndex;
+					else
+					{
+						for (int j = reuseIndex; j <= lastIndex; j++)
+						{
+							ItemInfo ii2 = _virtualItems[j];
+							if (ii2.obj != null && ii2.updateFlag != itemInfoVer && ii2.obj.resourceURL == url)
+							{
+								ii.obj = ii2.obj;
+								ii2.obj = null;
+								if (j == reuseIndex)
+									reuseIndex++;
+								break;
+							}
+						}
+					}
+
+					if (ii.obj != null)
+					{
+						SetChildIndex(ii.obj, forward ? curIndex - newFirstIndex : numChildren);
+					}
+					else
+					{
+						ii.obj = _pool.GetObject(url);
+						if (forward)
+							this.AddChildAt(ii.obj, curIndex - newFirstIndex);
+						else
+							this.AddChild(ii.obj);
+					}
+					if (ii.obj is GButton)
+						((GButton)ii.obj).selected = false;
+
+					needRender = true;
+				}
+				else
+					needRender = forceUpdate;
+
+				if (needRender)
+				{
+					itemRenderer(curIndex % _numItems, ii.obj);
+					if (curIndex % _curLineItemCount == 0)
+					{
+						deltaSize += Mathf.CeilToInt(ii.obj.size.y) - ii.size.y;
+						if (curIndex == newFirstIndex && oldFirstIndex > newFirstIndex)
+						{
+							//当内容向下滚动时，如果新出现的项目大小发生变化，需要做一个位置补偿，才不会导致滚动跳动
+							firstItemDeltaSize = Mathf.CeilToInt(ii.obj.size.y) - ii.size.y;
+						}
+					}
+					ii.size.x = Mathf.CeilToInt(ii.obj.size.x);
+					ii.size.y = Mathf.CeilToInt(ii.obj.size.y);
+				}
+
+				ii.updateFlag = itemInfoVer;
+				ii.obj.SetXY(curX, curY);
+				if (curIndex == newFirstIndex) //要显示多一条才不会穿帮
+					max += ii.size.y;
+
+				curX += ii.size.x + _columnGap;
+
+				if (curIndex % _curLineItemCount == _curLineItemCount - 1)
+				{
+					curX = 0;
+					curY += ii.size.y + _lineGap;
+				}
+				curIndex++;
+			}
+
+			for (int i = 0; i < oldCount; i++)
+			{
+				ItemInfo ii = _virtualItems[oldFirstIndex + i];
+				if (ii.updateFlag != itemInfoVer && ii.obj != null)
+				{
+					RemoveChild(ii.obj);
+					ii.obj = null;
 				}
 			}
 
-			_boundsChanged = false;
+			if (deltaSize != 0 || firstItemDeltaSize != 0)
+				this.scrollPane.ChangeContentSizeOnScrolling(0, deltaSize, 0, firstItemDeltaSize);
+
+			if (curIndex > 0 && this.numChildren > 0 && GetChildAt(0).y > scrollPane.posY)//最后一页没填满！
+				HandleScroll1(false);
+
+			enterCounter--;
+		}
+
+		void HandleScroll2(bool forceUpdate)
+		{
+			enterCounter++;
+			if (enterCounter > 3)
+				return;
+
+			float pos = scrollPane.posX;
+			//寻找当前位置的第一条项目
+			int newFirstIndex = GetIndexOnPos2(ref pos);
+
+			if (newFirstIndex == _firstIndex && !forceUpdate)
+			{
+				enterCounter--;
+				return;
+			}
+
+			int oldFirstIndex = _firstIndex;
+			_firstIndex = newFirstIndex;
+			int curIndex = newFirstIndex;
+			bool forward = oldFirstIndex > newFirstIndex;
+			int oldCount = this.numChildren;
+			int lastIndex = oldFirstIndex + oldCount - 1;
+			int reuseIndex = forward ? lastIndex : 0;
+			float curX = pos, curY = 0;
+			float bottom = scrollPane.posX + scrollPane.viewWidth;
+			bool end = scrollPane.percX == 1;
+			bool needRender;
+			float deltaSize = 0;
+			float firstItemDeltaSize = 0;
+			string url = defaultItem;
+
+			itemInfoVer++;
+			while (curIndex < _realNumItems && (end || curX < bottom))
+			{
+				ItemInfo ii = _virtualItems[curIndex];
+
+				if (ii.obj == null || forceUpdate)
+				{
+					if (itemProvider != null)
+					{
+						url = itemProvider(curIndex % _numItems);
+						if (url == null)
+							url = defaultItem;
+					}
+
+					if (ii.obj != null && ii.obj.resourceURL != url)
+					{
+						RemoveChild(ii.obj);
+						ii.obj = null;
+					}
+				}
+
+				if (ii.obj == null)
+				{
+					if (forward)
+					{
+						for (int j = reuseIndex; j >= 0; j--)
+						{
+							ItemInfo ii2 = _virtualItems[j];
+							if (ii2.obj != null && ii2.updateFlag != itemInfoVer && ii2.obj.resourceURL == url)
+							{
+								ii.obj = ii2.obj;
+								ii2.obj = null;
+								if (j == reuseIndex)
+									reuseIndex--;
+								break;
+							}
+						}
+					}
+					else
+					{
+						for (int j = reuseIndex; j <= lastIndex; j++)
+						{
+							ItemInfo ii2 = _virtualItems[j];
+							if (ii2.obj != null && ii2.updateFlag != itemInfoVer && ii2.obj.resourceURL == url)
+							{
+								ii.obj = ii2.obj;
+								ii2.obj = null;
+								if (j == reuseIndex)
+									reuseIndex++;
+								break;
+							}
+						}
+					}
+
+					if (ii.obj != null)
+					{
+						SetChildIndex(ii.obj, forward ? curIndex - newFirstIndex : numChildren);
+					}
+					else
+					{
+						ii.obj = _pool.GetObject(url);
+						if (forward)
+							this.AddChildAt(ii.obj, curIndex - newFirstIndex);
+						else
+							this.AddChild(ii.obj);
+					}
+					if (ii.obj is GButton)
+						((GButton)ii.obj).selected = false;
+
+					needRender = true;
+				}
+				else
+					needRender = forceUpdate;
+
+				if (needRender)
+				{
+					itemRenderer(curIndex % _numItems, ii.obj);
+					if (curIndex % _curLineItemCount == 0)
+					{
+						deltaSize += Mathf.CeilToInt(ii.obj.size.x) - ii.size.x;
+						if (curIndex == newFirstIndex && oldFirstIndex - newFirstIndex == 1)
+						{
+							//当内容向下滚动时，如果新出现的一个项目大小发生变化，需要做一个位置补偿，才不会导致滚动跳动
+							firstItemDeltaSize = Mathf.CeilToInt(ii.obj.size.x) - ii.size.x;
+						}
+					}
+					ii.size.x = Mathf.CeilToInt(ii.obj.size.x);
+					ii.size.y = Mathf.CeilToInt(ii.obj.size.y);
+				}
+
+				ii.updateFlag = itemInfoVer;
+				ii.obj.SetXY(curX, curY);
+				if (curIndex == newFirstIndex) //要显示多一条才不会穿帮
+					bottom += ii.size.x;
+
+				curY += ii.size.y + _lineGap;
+
+				if (curIndex % _curLineItemCount == _curLineItemCount - 1)
+				{
+					curY = 0;
+					curX += ii.size.x + _columnGap;
+				}
+				curIndex++;
+			}
+
+			for (int i = 0; i < oldCount; i++)
+			{
+				ItemInfo ii = _virtualItems[oldFirstIndex + i];
+				if (ii.updateFlag != itemInfoVer && ii.obj != null)
+				{
+					RemoveChild(ii.obj);
+					ii.obj = null;
+				}
+			}
+
+			if (deltaSize != 0 || firstItemDeltaSize != 0)
+				this.scrollPane.ChangeContentSizeOnScrolling(deltaSize, 0, firstItemDeltaSize, 0);
+
+			if (curIndex > 0 && this.numChildren > 0 && GetChildAt(0).x > scrollPane.posX)//最后一页没填满！
+				HandleScroll2(false);
+
+			enterCounter--;
+		}
+
+		void HandleArchOrder()
+		{
+			if (this.childrenRenderOrder == ChildrenRenderOrder.Arch)
+			{
+				float mid = this.scrollPane.posY + this.viewHeight / 2;
+				float minDist = int.MaxValue, dist;
+				int apexIndex = 0;
+				int cnt = this.numChildren;
+				for (int i = 0; i < cnt; i++)
+				{
+					GObject obj = GetChildAt(i);
+					if (obj.visible)
+					{
+						dist = Mathf.Abs(mid - obj.y - obj.height / 2);
+						if (dist < minDist)
+						{
+							minDist = dist;
+							apexIndex = i;
+						}
+					}
+				}
+				this.apexIndex = apexIndex;
+			}
 		}
 
 		override protected internal void GetSnappingPosition(ref float xValue, ref float yValue)
@@ -1430,19 +1688,17 @@ namespace FairyGUI
 			{
 				if (_layout == ListLayoutType.SingleColumn || _layout == ListLayoutType.FlowHorizontal)
 				{
-					int i = Mathf.FloorToInt(yValue / (_itemSize.y + _lineGap));
-					if (yValue > i * (_itemSize.y + _lineGap) + _itemSize.y / 2)
-						i++;
-
-					yValue = i * (_itemSize.y + _lineGap);
+					float saved = yValue;
+					int index = GetIndexOnPos1(ref yValue);
+					if (saved - yValue > _virtualItems[index].size.y / 2 && index < _realNumItems)
+						yValue += _virtualItems[index].size.y + _lineGap;
 				}
 				else
 				{
-					int i = Mathf.FloorToInt(xValue / (_itemSize.x + _columnGap));
-					if (xValue > i * (_itemSize.x + _columnGap) + _itemSize.x / 2)
-						i++;
-
-					xValue = i * (_itemSize.x + _columnGap);
+					float saved = xValue;
+					int index = GetIndexOnPos2(ref xValue);
+					if (saved - xValue > _virtualItems[index].size.x / 2 && index < _realNumItems)
+						xValue += _virtualItems[index].size.x + _columnGap;
 				}
 			}
 			else
@@ -1459,6 +1715,8 @@ namespace FairyGUI
 			float cw, ch;
 			float maxWidth = 0;
 			float maxHeight = 0;
+			float sw;
+			float sh;
 
 			if (_layout == ListLayoutType.SingleColumn)
 			{
@@ -1468,12 +1726,15 @@ namespace FairyGUI
 					if (!child.visible)
 						continue;
 
+					sw = Mathf.CeilToInt(child.width);
+					sh = Mathf.CeilToInt(child.height);
+
 					if (curY != 0)
 						curY += _lineGap;
 					child.y = curY;
-					curY += child.height;
-					if (child.width > maxWidth)
-						maxWidth = child.width;
+					curY += sh;
+					if (sw > maxWidth)
+						maxWidth = sw;
 				}
 				cw = curX + maxWidth;
 				ch = curY;
@@ -1486,12 +1747,15 @@ namespace FairyGUI
 					if (!child.visible)
 						continue;
 
+					sw = Mathf.CeilToInt(child.width);
+					sh = Mathf.CeilToInt(child.height);
+
 					if (curX != 0)
 						curX += _columnGap;
 					child.x = curX;
-					curX += child.width;
-					if (child.height > maxHeight)
-						maxHeight = child.height;
+					curX += sw;
+					if (sh > maxHeight)
+						maxHeight = sh;
 				}
 				cw = curX;
 				ch = curY + maxHeight;
@@ -1506,11 +1770,14 @@ namespace FairyGUI
 					if (!child.visible)
 						continue;
 
+					sw = Mathf.CeilToInt(child.width);
+					sh = Mathf.CeilToInt(child.height);
+
 					if (curX != 0)
 						curX += _columnGap;
 
 					if (_lineItemCount != 0 && j >= _lineItemCount
-						|| _lineItemCount == 0 && curX + child.width > viewWidth && maxHeight != 0)
+						|| _lineItemCount == 0 && curX + sw > viewWidth && maxHeight != 0)
 					{
 						//new line
 						curX -= _columnGap;
@@ -1522,9 +1789,9 @@ namespace FairyGUI
 						j = 0;
 					}
 					child.SetXY(curX, curY);
-					curX += child.width;
-					if (child.height > maxHeight)
-						maxHeight = child.height;
+					curX += sw;
+					if (sh > maxHeight)
+						maxHeight = sh;
 					j++;
 				}
 				ch = curY + maxHeight;
@@ -1540,11 +1807,14 @@ namespace FairyGUI
 					if (!child.visible)
 						continue;
 
+					sw = Mathf.CeilToInt(child.width);
+					sh = Mathf.CeilToInt(child.height);
+
 					if (curY != 0)
 						curY += _lineGap;
 
 					if (_lineItemCount != 0 && j >= _lineItemCount
-						|| _lineItemCount == 0 && curY + child.height > viewHeight && maxWidth != 0)
+						|| _lineItemCount == 0 && curY + sh > viewHeight && maxWidth != 0)
 					{
 						curY -= _lineGap;
 						if (curY > maxHeight)
@@ -1555,9 +1825,9 @@ namespace FairyGUI
 						j = 0;
 					}
 					child.SetXY(curX, curY);
-					curY += child.height;
-					if (child.width > maxWidth)
-						maxWidth = child.width;
+					curY += sh;
+					if (sw > maxWidth)
+						maxWidth = sw;
 					j++;
 				}
 				cw = curX + maxWidth;
@@ -1672,6 +1942,10 @@ namespace FairyGUI
 						((GLabel)obj).title = ix.GetAttribute("title");
 						((GLabel)obj).icon = ix.GetAttribute("icon");
 					}
+
+					str = ix.GetAttribute("name");
+					if (str != null)
+						obj.name = str;
 				}
 			}
 		}

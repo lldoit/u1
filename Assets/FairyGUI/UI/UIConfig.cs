@@ -131,6 +131,16 @@ namespace FairyGUI
 		/// </summary>
 		public static bool bringWindowToFrontOnClick = true;
 
+		/// <summary>
+		/// 
+		/// </summary>
+		public static int inputCaretSize = 1;
+
+		/// <summary>
+		/// 
+		/// </summary>
+		public static Color inputHighlightColor = new Color32(255, 223, 141, 128);
+
 		public enum ConfigKey
 		{
 			DefaultFont,
@@ -155,6 +165,8 @@ namespace FairyGUI
 			ModalLayerColor,
 			RenderingTextBrighterOnDesktop,
 			AllowSoftnessOnTopOrLeftSide,
+			InputCaretSize,
+			InputHighlightColor,
 
 			PleaseSelect = 100
 		}
@@ -294,6 +306,14 @@ namespace FairyGUI
 
 					case ConfigKey.AllowSoftnessOnTopOrLeftSide:
 						UIConfig.allowSoftnessOnTopOrLeftSide = value.b;
+						break;
+
+					case ConfigKey.InputCaretSize:
+						UIConfig.inputCaretSize = value.i;
+						break;
+
+					case ConfigKey.InputHighlightColor:
+						UIConfig.inputHighlightColor = value.c;
 						break;
 				}
 			}

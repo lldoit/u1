@@ -12,6 +12,7 @@ namespace FairyGUI
 		public static Vector2 screenPoint;
 		public static Vector3 worldPoint;
 		public static Vector3 direction;
+		public static bool forTouch;
 
 		static Dictionary<Camera, RaycastHit?> raycastHits = new Dictionary<Camera, RaycastHit?>();
 

@@ -37,7 +37,8 @@ namespace FairyGUI
 		/// </summary>
 		public int touchId { get; internal set; }
 
-		internal int clickCount;
+		internal int clickCount; 
+		internal static bool shiftDown;
 
 		internal void Reset()
 		{
@@ -76,8 +77,7 @@ namespace FairyGUI
 				RuntimePlatform rp = Application.platform;
 				bool isMac = (
 					rp == RuntimePlatform.OSXEditor ||
-					rp == RuntimePlatform.OSXPlayer ||
-					rp == RuntimePlatform.OSXWebPlayer);
+					rp == RuntimePlatform.OSXPlayer);
 
 				return isMac ?
 					((modifiers & EventModifiers.Command) != 0) :
@@ -93,7 +93,7 @@ namespace FairyGUI
 			get
 			{
 				//return (modifiers & EventModifiers.Shift) != 0;
-				return Stage.shiftDown;
+				return shiftDown;
 			}
 		}
 

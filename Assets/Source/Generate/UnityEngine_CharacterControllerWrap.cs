@@ -11,7 +11,7 @@ public class UnityEngine_CharacterControllerWrap
 		L.RegFunction("Move", Move);
 		L.RegFunction("New", _CreateUnityEngine_CharacterController);
 		L.RegFunction("__eq", op_Equality);
-		L.RegFunction("__tostring", Lua_ToString);
+		L.RegFunction("__tostring", ToLua.op_ToString);
 		L.RegVar("isGrounded", get_isGrounded, null);
 		L.RegVar("velocity", get_velocity, null);
 		L.RegVar("collisionFlags", get_collisionFlags, null);
@@ -22,6 +22,7 @@ public class UnityEngine_CharacterControllerWrap
 		L.RegVar("stepOffset", get_stepOffset, set_stepOffset);
 		L.RegVar("skinWidth", get_skinWidth, set_skinWidth);
 		L.RegVar("detectCollisions", get_detectCollisions, set_detectCollisions);
+		L.RegVar("enableOverlapRecovery", get_enableOverlapRecovery, set_enableOverlapRecovery);
 		L.EndClass();
 	}
 
@@ -101,23 +102,6 @@ public class UnityEngine_CharacterControllerWrap
 		{
 			return LuaDLL.toluaL_exception(L, e);
 		}
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int Lua_ToString(IntPtr L)
-	{
-		object obj = ToLua.ToObject(L, 1);
-
-		if (obj != null)
-		{
-			LuaDLL.lua_pushstring(L, obj.ToString());
-		}
-		else
-		{
-			LuaDLL.lua_pushnil(L);
-		}
-
-		return 1;
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
@@ -311,6 +295,25 @@ public class UnityEngine_CharacterControllerWrap
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_enableOverlapRecovery(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			UnityEngine.CharacterController obj = (UnityEngine.CharacterController)o;
+			bool ret = obj.enableOverlapRecovery;
+			LuaDLL.lua_pushboolean(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index enableOverlapRecovery on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
 	static int set_radius(IntPtr L)
 	{
 		object o = null;
@@ -440,6 +443,25 @@ public class UnityEngine_CharacterControllerWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index detectCollisions on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int set_enableOverlapRecovery(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			UnityEngine.CharacterController obj = (UnityEngine.CharacterController)o;
+			bool arg0 = LuaDLL.luaL_checkboolean(L, 2);
+			obj.enableOverlapRecovery = arg0;
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index enableOverlapRecovery on a nil value" : e.Message);
 		}
 	}
 }

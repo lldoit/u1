@@ -26,7 +26,6 @@ namespace FairyGUI
 		float _clickPercent;
 		int _touchId;
 
-		EventCallback1 _touchEndDelegate;
 		EventCallback1 _touchMoveDelegate;
 
 		/// <summary>
@@ -47,7 +46,6 @@ namespace FairyGUI
 			onChanged = new EventListener(this, "onChanged");
 			onGripTouchEnd = new EventListener(this, "onGripTouchEnd");
 
-			_touchEndDelegate = __gripTouchEnd;
 			_touchMoveDelegate = __gripTouchMove;
 		}
 
@@ -177,7 +175,10 @@ namespace FairyGUI
 			}
 
 			if (_gripObject != null)
-				_gripObject.displayObject.onTouchBegin.Add(__gripTouchBegin);
+			{
+				_gripObject.onTouchBegin.Add(__gripTouchBegin);
+				_gripObject.onTouchEnd.Add(__gripTouchEnd);
+			}
 		}
 
 		override public void Setup_AfterAdd(XML cxml)
@@ -214,8 +215,8 @@ namespace FairyGUI
 			_clickPos = this.GlobalToLocal(new Vector2(evt.x, evt.y));
 			_clickPercent = (float)_value / _max;
 
+			context.CaptureTouch();
 			Stage.inst.onTouchMove.Add(_touchMoveDelegate);
-			Stage.inst.onTouchEnd.Add(_touchEndDelegate);
 		}
 
 		private void __gripTouchMove(EventContext context)
@@ -257,7 +258,6 @@ namespace FairyGUI
 				return;
 
 			Stage.inst.onTouchMove.Remove(_touchMoveDelegate);
-			Stage.inst.onTouchEnd.Remove(_touchEndDelegate);
 
 			if (displayObject == null || displayObject.isDisposed)
 				return;

@@ -21,7 +21,7 @@ namespace FairyGUI
 			grahpics.texture = NTexture.Empty;
 			grahpics.enabled = false;
 
-			_size = new Vector2(1, 1);
+			_size = new Vector2(UIConfig.inputCaretSize + 0.5f, 1);
 
 			cachedTransform = gameObject.transform;
 		}

@@ -311,7 +311,7 @@ public class Packager {
     [MenuItem("LuaFramework/Build Protobuf-lua-gen File")]
     public static void BuildProtobufFile() {
         if (!AppConst.ExampleMode) {
-            Debugger.LogError("若使用编码Protobuf-lua-gen功能，需要自己配置外部环境！！");
+            LuaInterface.Debugger.LogError("若使用编码Protobuf-lua-gen功能，需要自己配置外部环境！！");
             return;
         }
         string dir = AppDataPath + "/Lua/3rd/pblua";

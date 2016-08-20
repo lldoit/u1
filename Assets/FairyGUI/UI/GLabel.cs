@@ -132,15 +132,16 @@ namespace FairyGUI
 
 			XML xml = cxml.GetNode("Label");
 			if (xml == null)
-			{
-				this.title = string.Empty;
-				this.icon = null;
 				return;
-			}
 
-			this.title = xml.GetAttribute("title");
-			this.icon = xml.GetAttribute("icon");
-			string str = xml.GetAttribute("titleColor");
+			string str;
+			str = xml.GetAttribute("title");
+			if (str != null)
+				this.title = str;
+			str = xml.GetAttribute("icon");
+			if (str != null)
+				this.icon = str;
+			str = xml.GetAttribute("titleColor");
 			if (str != null)
 				this.titleColor = ToolSet.ConvertFromHtmlColor(str);
 

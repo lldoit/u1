@@ -11,7 +11,7 @@ public class FairyGUI_GTextFieldWrap
 		L.RegFunction("Setup_BeforeAdd", Setup_BeforeAdd);
 		L.RegFunction("Setup_AfterAdd", Setup_AfterAdd);
 		L.RegFunction("New", _CreateFairyGUI_GTextField);
-		L.RegFunction("__tostring", Lua_ToString);
+		L.RegFunction("__tostring", ToLua.op_ToString);
 		L.RegVar("onFocusIn", get_onFocusIn, null);
 		L.RegVar("onFocusOut", get_onFocusOut, null);
 		L.RegVar("onChanged", get_onChanged, null);
@@ -30,6 +30,7 @@ public class FairyGUI_GTextFieldWrap
 		L.RegVar("autoSize", get_autoSize, set_autoSize);
 		L.RegVar("textWidth", get_textWidth, null);
 		L.RegVar("textHeight", get_textHeight, null);
+		L.RegVar("emojies", get_emojies, set_emojies);
 		L.EndClass();
 	}
 
@@ -106,23 +107,6 @@ public class FairyGUI_GTextFieldWrap
 		{
 			return LuaDLL.toluaL_exception(L, e);
 		}
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int Lua_ToString(IntPtr L)
-	{
-		object obj = ToLua.ToObject(L, 1);
-
-		if (obj != null)
-		{
-			LuaDLL.lua_pushstring(L, obj.ToString());
-		}
-		else
-		{
-			LuaDLL.lua_pushnil(L);
-		}
-
-		return 1;
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
@@ -468,6 +452,25 @@ public class FairyGUI_GTextFieldWrap
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_emojies(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GTextField obj = (FairyGUI.GTextField)o;
+			System.Collections.Generic.Dictionary<uint,FairyGUI.Emoji> ret = obj.emojies;
+			ToLua.PushObject(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index emojies on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
 	static int set_text(IntPtr L)
 	{
 		object o = null;
@@ -692,6 +695,25 @@ public class FairyGUI_GTextFieldWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index autoSize on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int set_emojies(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GTextField obj = (FairyGUI.GTextField)o;
+			System.Collections.Generic.Dictionary<uint,FairyGUI.Emoji> arg0 = (System.Collections.Generic.Dictionary<uint,FairyGUI.Emoji>)ToLua.CheckObject(L, 2, typeof(System.Collections.Generic.Dictionary<uint,FairyGUI.Emoji>));
+			obj.emojies = arg0;
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index emojies on a nil value" : e.Message);
 		}
 	}
 }

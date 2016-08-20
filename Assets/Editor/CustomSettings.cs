@@ -37,6 +37,9 @@ public static class CustomSettings
     {        
         _DT(typeof(Action)),        
         _DT(typeof(UnityEngine.Events.UnityAction)),
+        _DT(typeof(System.Predicate<int>)),
+        _DT(typeof(System.Action<int>)),
+        _DT(typeof(System.Comparison<int>)),
     };
 
     //在这里添加你要导出注册到lua的类型列表
@@ -68,8 +71,6 @@ public static class CustomSettings
         _GT(typeof(Material)).AddExtendType(typeof(DG.Tweening.ShortcutExtensions)),
         _GT(typeof(Rigidbody)).AddExtendType(typeof(DG.Tweening.ShortcutExtensions)),
         _GT(typeof(Camera)).AddExtendType(typeof(DG.Tweening.ShortcutExtensions)),
-        
-        
         _GT(typeof(AudioSource)).AddExtendType(typeof(DG.Tweening.ShortcutExtensions)),
         //_GT(typeof(LineRenderer)).AddExtendType(typeof(DG.Tweening.ShortcutExtensions)),
         //_GT(typeof(TrailRenderer)).AddExtendType(typeof(DG.Tweening.ShortcutExtensions)),    
@@ -190,7 +191,7 @@ public static class CustomSettings
     };
 
     public static List<Type> dynamicList = new List<Type>()
-    {/*
+    {
         typeof(MeshRenderer),
         typeof(ParticleEmitter),
         typeof(ParticleRenderer),
@@ -208,7 +209,7 @@ public static class CustomSettings
 
         typeof(BlendWeights),
         typeof(RenderTexture),
-        typeof(Rigidbody),*/
+        typeof(Rigidbody),
     };
 
     //重载函数，相同参数个数，相同位置out参数匹配出问题时, 需要强制匹配解决
@@ -218,12 +219,12 @@ public static class CustomSettings
         
     };
 
-    static BindType _GT(Type t)
+    public static BindType _GT(Type t)
     {
         return new BindType(t);
     }
 
-    static DelegateType _DT(Type t)
+    public static DelegateType _DT(Type t)
     {
         return new DelegateType(t);
     }    

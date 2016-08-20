@@ -9,7 +9,8 @@ namespace FairyGUI
 	/// </summary>
 	class EventBridge
 	{
-		EventDispatcher _owner;
+		public EventDispatcher owner;
+
 		EventCallback0 _callback0;
 		EventCallback1 _callback1;
 		EventCallback1 _captureCallback;
@@ -17,7 +18,7 @@ namespace FairyGUI
 
 		public EventBridge(EventDispatcher owner)
 		{
-			_owner = owner;
+			this.owner = owner;
 		}
 
 		public void AddCapture(EventCallback1 callback)
@@ -71,7 +72,7 @@ namespace FairyGUI
 				return;
 
 			_dispatching = true;
-			context.sender = _owner;
+			context.sender = owner;
 			try
 			{
 				if (_callback1 != null)
@@ -94,7 +95,7 @@ namespace FairyGUI
 				return;
 
 			_dispatching = true;
-			context.sender = _owner;
+			context.sender = owner;
 			try
 			{
 				_captureCallback(context);

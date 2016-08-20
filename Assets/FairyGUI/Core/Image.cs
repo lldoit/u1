@@ -177,7 +177,7 @@ namespace FairyGUI
 				_contentRect.height = 0;
 			}
 			if (oldWidth != _contentRect.width || oldHeight != _contentRect.height)
-				OnSizeChanged();
+				OnSizeChanged(true, true);
 		}
 
 		public override void Update(UpdateContext context)
@@ -227,33 +227,45 @@ namespace FairyGUI
 			}
 			else if (_scaleByTile)
 			{
-				int hc = Mathf.CeilToInt(_contentRect.width / _texture.width);
-				int vc = Mathf.CeilToInt(_contentRect.height / _texture.height);
-				float tailWidth = _contentRect.width - (hc - 1) * _texture.width;
-				float tailHeight = _contentRect.height - (vc - 1) * _texture.height;
-
-				graphics.Alloc(hc * vc * 4);
-
-				int k = 0;
-				for (int i = 0; i < hc; i++)
+				//如果纹理是repeat模式，而且单独占满一张纹理，那么可以用repeat的模式优化显示
+				if (_texture.nativeTexture.wrapMode == TextureWrapMode.Repeat
+					&& uvRect.x == 0 && uvRect.y == 0 && uvRect.width == 1 && uvRect.height == 1)
 				{
-					for (int j = 0; j < vc; j++)
-					{
-						graphics.FillVerts(k, new Rect(i * _texture.width, j * _texture.height,
-								i == (hc - 1) ? tailWidth : _texture.width, j == (vc - 1) ? tailHeight : _texture.height));
-						Rect uvTmp = uvRect;
-						if (i == hc - 1)
-							uvTmp.xMax = Mathf.Lerp(uvRect.xMin, uvRect.xMax, tailWidth / _texture.width);
-						if (j == vc - 1)
-							uvTmp.yMin = Mathf.Lerp(uvRect.yMin, uvRect.yMax, 1 - tailHeight / _texture.height);
-						graphics.FillUV(k, uvTmp);
-						k += 4;
-					}
+					uvRect.width *= _contentRect.width / _texture.width;
+					uvRect.height *= _contentRect.height / _texture.height;
+					graphics.SetOneQuadMesh(_contentRect, uvRect, _color);
 				}
+				else
+				{
+					int hc = Mathf.CeilToInt(_contentRect.width / _texture.width);
+					int vc = Mathf.CeilToInt(_contentRect.height / _texture.height);
+					float tailWidth = _contentRect.width - (hc - 1) * _texture.width;
+					float tailHeight = _contentRect.height - (vc - 1) * _texture.height;
 
-				graphics.FillColors(_color);
-				graphics.FillTriangles();
-				graphics.UpdateMesh();
+					graphics.Alloc(hc * vc * 4);
+
+					int k = 0;
+					for (int i = 0; i < hc; i++)
+					{
+						for (int j = 0; j < vc; j++)
+						{
+							graphics.FillVerts(k, new Rect(i * _texture.width, j * _texture.height,
+									i == (hc - 1) ? tailWidth : _texture.width, j == (vc - 1) ? tailHeight : _texture.height));
+							Rect uvTmp = uvRect;
+							if (i == hc - 1)
+								uvTmp.xMax = Mathf.Lerp(uvRect.xMin, uvRect.xMax, tailWidth / _texture.width);
+							if (j == vc - 1)
+								uvTmp.yMin = Mathf.Lerp(uvRect.yMin, uvRect.yMax, 1 - tailHeight / _texture.height);
+
+							graphics.FillUV(k, uvTmp);
+							k += 4;
+						}
+					}
+
+					graphics.FillColors(_color);
+					graphics.FillTriangles();
+					graphics.UpdateMesh();
+				}
 			}
 			else if (_scale9Grid != null)
 			{

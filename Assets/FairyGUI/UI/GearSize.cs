@@ -30,6 +30,7 @@ namespace FairyGUI
 
 		Dictionary<string, GearSizeValue> _storage;
 		GearSizeValue _default;
+		GearSizeValue _tweenTarget;
 
 		public GearSize(GObject owner)
 			: base(owner)
@@ -69,19 +70,27 @@ namespace FairyGUI
 			if (!_storage.TryGetValue(_controller.selectedPageId, out gv))
 				gv = _default;
 
-			if (tweener != null)
-			{
-				tweener.Kill(true);
-				tweener = null;
-			}
-
 			if (tween && UIPackage._constructing == 0 && !disableAllTweenEffect)
 			{
+				if (tweener != null)
+				{
+					if (_tweenTarget.width != gv.width || _tweenTarget.height != gv.height
+						|| _tweenTarget.scaleX != gv.scaleX || _tweenTarget.scaleY != gv.scaleY)
+					{
+						tweener.Kill(true);
+						tweener = null;
+					}
+					else
+						return;
+				}
+
 				bool a = gv.width != _owner.width || gv.height != _owner.height;
 				bool b = gv.scaleX != _owner.scaleX || gv.scaleY != _owner.scaleY;
 				if (a || b)
 				{
 					_owner.internalVisible++;
+					_tweenTarget = gv;
+
 					tweener = DOTween.To(() => new Vector4(_owner.width, _owner.height, _owner.scaleX, _owner.scaleY), v =>
 					{
 						_owner._gearLocked = true;

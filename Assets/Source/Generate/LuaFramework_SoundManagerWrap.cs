@@ -13,7 +13,7 @@ public class LuaFramework_SoundManagerWrap
 		L.RegFunction("CanPlaySoundEffect", CanPlaySoundEffect);
 		L.RegFunction("Play", Play);
 		L.RegFunction("__eq", op_Equality);
-		L.RegFunction("__tostring", Lua_ToString);
+		L.RegFunction("__tostring", ToLua.op_ToString);
 		L.EndClass();
 	}
 
@@ -121,23 +121,6 @@ public class LuaFramework_SoundManagerWrap
 		{
 			return LuaDLL.toluaL_exception(L, e);
 		}
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int Lua_ToString(IntPtr L)
-	{
-		object obj = ToLua.ToObject(L, 1);
-
-		if (obj != null)
-		{
-			LuaDLL.lua_pushstring(L, obj.ToString());
-		}
-		else
-		{
-			LuaDLL.lua_pushnil(L);
-		}
-
-		return 1;
 	}
 }
 

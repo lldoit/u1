@@ -5,25 +5,6 @@ using UnityEngine;
 
 namespace FairyGUI.Utils
 {
-	public class HtmlParseOptions
-	{
-		public bool linkUnderline;
-		public bool useLinkColor;
-		public Color linkColor;
-		public bool ignoreWhiteSpace;
-
-		public static bool DefaultLinkUnderline = true;
-		public static bool DefaultUseLinkColor = true;
-		public static Color DefaultLinkColor = new Color32(0x3A, 0x67, 0xCC, 0xFF);
-
-		public HtmlParseOptions()
-		{
-			linkUnderline = DefaultLinkUnderline;
-			useLinkColor = DefaultUseLinkColor;
-			linkColor = DefaultLinkColor;
-		}
-	}
-
 	/// <summary>
 	/// 
 	/// </summary>
@@ -164,7 +145,7 @@ namespace FairyGUI.Utils
 						if (XMLIterator.tagType == XMLTagType.Start || XMLIterator.tagType == XMLTagType.Void)
 						{
 							HtmlElement element = HtmlElement.GetElement(HtmlElementType.Image);
-							element.attributes = XMLIterator.GetAttributes(element.attributes);
+							element.FetchAttributes();
 							element.name = element.GetString("name");
 							_elements.Add(element);
 						}
@@ -176,11 +157,11 @@ namespace FairyGUI.Utils
 							PushTextFormat();
 
 							_format.underline = _format.underline | parseOptions.linkUnderline;
-							if (!_format.colorChanged && parseOptions.useLinkColor)
+							if (!_format.colorChanged && parseOptions.linkColor.a != 0)
 								_format.color = parseOptions.linkColor;
 
-							HtmlElement element = HtmlElement.GetElement(HtmlElementType.LinkStart);
-							element.attributes = XMLIterator.GetAttributes(element.attributes);
+							HtmlElement element = HtmlElement.GetElement(HtmlElementType.Link);
+							element.FetchAttributes();
 							element.name = element.GetString("name");
 							_elements.Add(element);
 						}
@@ -189,7 +170,6 @@ namespace FairyGUI.Utils
 							PopTextFormat();
 
 							HtmlElement element = HtmlElement.GetElement(HtmlElementType.LinkEnd);
-							element.attributes = XMLIterator.GetAttributes(element.attributes);
 							_elements.Add(element);
 						}
 						break;
@@ -197,7 +177,7 @@ namespace FairyGUI.Utils
 					case "input":
 						{
 							HtmlElement element = HtmlElement.GetElement(HtmlElementType.Input);
-							element.attributes = XMLIterator.GetAttributes(element.attributes);
+							element.FetchAttributes();
 							element.name = element.GetString("name");
 							element.format.CopyFrom(_format);
 							_elements.Add(element);
@@ -209,7 +189,7 @@ namespace FairyGUI.Utils
 							if (XMLIterator.tagType == XMLTagType.Start || XMLIterator.tagType == XMLTagType.Void)
 							{
 								HtmlElement element = HtmlElement.GetElement(HtmlElementType.Select);
-								element.attributes = XMLIterator.GetAttributes(element.attributes);
+								element.FetchAttributes();
 								if (XMLIterator.tagType == XMLTagType.Start)
 								{
 									sHelperList1.Clear();

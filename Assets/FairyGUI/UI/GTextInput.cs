@@ -25,14 +25,8 @@ namespace FairyGUI
 		/// </summary>
 		public bool editable
 		{
-			get
-			{
-				return _textField.input;
-			}
-			set
-			{
-				_textField.input = value;
-			}
+			get { return _textField.input; }
+			set { _textField.input = value; }
 		}
 
 		/// <summary>
@@ -40,14 +34,17 @@ namespace FairyGUI
 		/// </summary>
 		public int maxLength
 		{
-			get
-			{
-				return _textField.maxLength;
-			}
-			set
-			{
-				_textField.maxLength = value;
-			}
+			get { return _textField.maxLength; }
+			set { _textField.maxLength = value; }
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		public string restrict
+		{
+			get { return _textField.restrict; }
+			set { _textField.restrict = value; }
 		}
 
 		/// <summary>
@@ -55,7 +52,7 @@ namespace FairyGUI
 		/// </summary>
 		override public bool displayAsPassword
 		{
-			get 
+			get
 			{
 				return _displayAsPassword;
 			}
@@ -96,8 +93,8 @@ namespace FairyGUI
 		/// </summary>
 		public int keyboardType
 		{
-			get { return _textField.inputAdapter.keyboardType; }
-			set { _textField.inputAdapter.keyboardType = value; }
+			get { return _textField.keyboardType; }
+			set { _textField.keyboardType = value; }
 		}
 
 		/// <summary>
@@ -107,7 +104,7 @@ namespace FairyGUI
 		public void ReplaceSelection(string value)
 		{
 			_textField.ReplaceSelection(value);
-			UpdateTextFieldText();
+			_text = _textField.text;
 			UpdateSize();
 		}
 
@@ -116,6 +113,10 @@ namespace FairyGUI
 			base.CreateDisplayObject();
 
 			_textField.input = true;
+			RichTextField richTextField = new RichTextField(_textField);
+			_textField.gOwner = null;
+			richTextField.gOwner = this;
+			displayObject = richTextField;
 		}
 
 		public override void Setup_BeforeAdd(Utils.XML xml)
@@ -123,6 +124,9 @@ namespace FairyGUI
 			base.Setup_BeforeAdd(xml);
 
 			_promptText = xml.GetAttribute("prompt");
+			_textField.restrict = xml.GetAttribute("restrict");
+			_textField.maxLength = xml.GetAttributeInt("maxLength", int.MaxValue);
+			_textField.keyboardType = xml.GetAttributeInt("keyboardType");
 		}
 
 		public override void Setup_AfterAdd(XML xml)
@@ -136,8 +140,6 @@ namespace FairyGUI
 					_textField.displayAsPassword = false;
 					_textField.htmlText = UBBParser.inst.Parse(XMLUtils.EncodeString(_promptText));
 				}
-				else if (_verticalAlign != VertAlignType.Top)
-					DoAlign();
 			}
 		}
 

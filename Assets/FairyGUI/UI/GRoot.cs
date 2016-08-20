@@ -70,6 +70,7 @@ namespace FairyGUI
 			scaler.designResolutionX = designResolutionX;
 			scaler.designResolutionY = designResolutionY;
 			scaler.scaleMode = UIContentScaler.ScaleMode.ScaleWithScreenSize;
+			scaler.screenMatchMode = screenMatchMode;
 			scaler.ApplyChange();
 			ApplyContentScaleFactor();
 		}
@@ -525,6 +526,7 @@ namespace FairyGUI
 				}
 
 				_defaultTooltipWin = UIPackage.CreateObjectFromURL(resourceURL);
+				_defaultTooltipWin.touchable = false;
 			}
 
 			_defaultTooltipWin.text = msg;

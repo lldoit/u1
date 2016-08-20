@@ -10,12 +10,14 @@ namespace FairyGUI.Utils
 	public enum HtmlElementType
 	{
 		Text,
-		LinkStart,
-		LinkEnd,
+		Link,
 		Image,
 		Input,
 		Select,
-		Object
+		Object,
+
+		//internal
+		LinkEnd,
 	}
 
 	/// <summary>
@@ -31,9 +33,7 @@ namespace FairyGUI.Utils
 		public IHtmlObject htmlObject;
 		public int space;
 
-		internal int quadStart;
-		internal int quadEnd;
-		internal Hashtable attributes;
+		Hashtable attributes;
 
 		public HtmlElement()
 		{
@@ -66,9 +66,9 @@ namespace FairyGUI.Utils
 			if (attributes == null)
 				return defValue;
 
-			string ret = (string)attributes[attrName];
+			object ret = attributes[attrName];
 			if (ret != null)
-				return ret;
+				return ret.ToString();
 			else
 				return defValue;
 		}
@@ -134,6 +134,11 @@ namespace FairyGUI.Utils
 				return defValue;
 
 			return ToolSet.ConvertFromHtmlColor(value);
+		}
+
+		public void FetchAttributes()
+		{
+			attributes = XMLIterator.GetAttributes(attributes);
 		}
 
 		#region Pool Support

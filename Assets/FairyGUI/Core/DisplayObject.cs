@@ -55,7 +55,7 @@ namespace FairyGUI
 		protected int _paintingFlag;
 
 		protected Rect _contentRect;
-		protected Vector2 _positionOffset;
+		internal Vector2 _positionOffset;
 		protected bool _requireUpdateMesh;
 		protected Matrix4x4? _transformMatrix;
 
@@ -142,10 +142,13 @@ namespace FairyGUI
 				if (_visible != value)
 				{
 					_visible = value;
-					SetGO_Visible();
-
-					if (_visible)
+					if (parent != null && _visible)
+					{
+						gameObject.SetActive(true);
 						this.InvalidateBatchingState();
+					}
+					else
+						gameObject.SetActive(false);
 				}
 			}
 		}
@@ -235,7 +238,7 @@ namespace FairyGUI
 			cachedTransform.localPosition = v;
 		}
 
-		protected void SetPositionOffset(Vector2 value)
+		internal void SetPositionOffset(Vector2 value)
 		{
 			Vector3 v = cachedTransform.localPosition;
 			v.x += (_positionOffset.x - value.x);
@@ -255,7 +258,7 @@ namespace FairyGUI
 				if (!Mathf.Approximately(value, _contentRect.width))
 				{
 					_contentRect.width = value;
-					OnSizeChanged();
+					OnSizeChanged(true, false);
 				}
 			}
 		}
@@ -271,7 +274,7 @@ namespace FairyGUI
 				if (!Mathf.Approximately(value, _contentRect.height))
 				{
 					_contentRect.height = value;
-					OnSizeChanged();
+					OnSizeChanged(false, true);
 				}
 			}
 		}
@@ -292,16 +295,18 @@ namespace FairyGUI
 		/// <param name="hv"></param>
 		public void SetSize(float wv, float hv)
 		{
-			if (!Mathf.Approximately(wv, _contentRect.width)
-				|| !Mathf.Approximately(hv, _contentRect.height))
+			bool wc = !Mathf.Approximately(wv, _contentRect.width);
+			bool hc = !Mathf.Approximately(hv, _contentRect.height);
+
+			if (wc || hc)
 			{
 				_contentRect.width = wv;
 				_contentRect.height = hv;
-				OnSizeChanged();
+				OnSizeChanged(wc, hc);
 			}
 		}
 
-		virtual protected void OnSizeChanged()
+		virtual protected void OnSizeChanged(bool widthChanged, bool heightChanged)
 		{
 			ApplyPivot();
 			_paintingFlag = 1;
@@ -712,7 +717,7 @@ namespace FairyGUI
 			if (parent != value)
 			{
 				parent = value;
-				SetGO_Visible();
+				UpdateHierarchy();
 			}
 		}
 
@@ -937,11 +942,24 @@ namespace FairyGUI
 				return TransformRect(_contentRect, targetSpace);
 		}
 
-		virtual protected internal DisplayObject HitTest(bool forTouch)
+		protected internal DisplayObject InternalHitTest()
 		{
-			if (!_visible || (forTouch && (!_touchable || _optimizeNotTouchable)))
+			if (!_visible || (HitTestContext.forTouch && (!_touchable || _optimizeNotTouchable)))
 				return null;
 
+			return HitTest();
+		}
+
+		protected internal DisplayObject InternalHitTestMask()
+		{
+			if (_visible)
+				return HitTest();
+			else
+				return null;
+		}
+
+		virtual protected DisplayObject HitTest()
+		{
 			Rect rect = GetBounds(this);
 			if (rect.width == 0 || rect.height == 0)
 				return null;
@@ -1197,7 +1215,7 @@ namespace FairyGUI
 					if (paintingTexture == null || paintingTexture.width != textureWidth || paintingTexture.height != textureHeight)
 					{
 						if (paintingTexture != null)
-							paintingTexture.Dispose();
+							paintingTexture.Dispose(true);
 						if (textureWidth > 0 && textureHeight > 0)
 						{
 							paintingTexture = new NTexture(CaptureCamera.CreateRenderTexture(textureWidth, textureHeight, false));
@@ -1251,9 +1269,9 @@ namespace FairyGUI
 				onPaint();
 		}
 
-		virtual protected void SetGO_Visible()
+		virtual protected void UpdateHierarchy()
 		{
-			if (parent != null && _visible)
+			if (parent != null)
 			{
 #if (UNITY_4_6 || UNITY_4_7 || UNITY_5)
 				cachedTransform.SetParent(parent.cachedTransform, false);
@@ -1269,7 +1287,8 @@ namespace FairyGUI
 				cachedTransform.localEulerAngles = v3;
 #endif
 				gameObject.hideFlags = DisplayOptions.hideFlags;
-				gameObject.SetActive(true);
+				if (_visible)
+					gameObject.SetActive(true);
 
 				int layerValue = parent.gameObject.layer;
 				if (parent._paintingMode != 0)
@@ -1310,7 +1329,7 @@ namespace FairyGUI
 			if (paintingGraphics != null)
 			{
 				if (paintingGraphics.texture != null)
-					paintingGraphics.texture.Dispose();
+					paintingGraphics.texture.Dispose(true);
 
 				paintingGraphics.Dispose();
 				if (paintingGraphics.gameObject != this.gameObject)

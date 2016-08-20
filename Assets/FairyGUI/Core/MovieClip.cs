@@ -33,6 +33,7 @@ namespace FairyGUI
 		int _times;
 		int _endAt;
 		int _status; //0-none, 1-next loop, 2-ending, 3-ended
+		bool _forceDraw;
 		EventCallback0 _playEndDelegate;
 
 		public MovieClip()
@@ -60,9 +61,9 @@ namespace FairyGUI
 			playState.Rewind();
 
 			graphics.texture = texture;
-			OnSizeChanged();
+			OnSizeChanged(true, true);
 			InvalidateBatchingState();
-			DrawFrame();
+			_forceDraw = true;
 		}
 
 		public void Clear()
@@ -88,7 +89,7 @@ namespace FairyGUI
 					_currentFrame = value;
 					playState.currrentFrame = value;
 					if (frameCount > 0)
-						DrawFrame();
+						_forceDraw = true;
 				}
 			}
 		}
@@ -118,7 +119,7 @@ namespace FairyGUI
 			if (_playing && frameCount != 0 && _status != 3)
 			{
 				playState.Update(this, context);
-				if (_currentFrame != playState.currrentFrame)
+				if (_forceDraw || _currentFrame != playState.currrentFrame)
 				{
 					if (_status == 1)
 					{
@@ -152,12 +153,16 @@ namespace FairyGUI
 					DrawFrame();
 				}
 			}
+			else if(_forceDraw)
+				DrawFrame();
 
 			base.Update(context);
 		}
 
 		void DrawFrame()
 		{
+			_forceDraw = false;
+
 			if (_currentFrame >= frames.Length)
 				graphics.ClearMesh();
 			else

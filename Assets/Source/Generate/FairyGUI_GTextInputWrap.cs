@@ -11,9 +11,10 @@ public class FairyGUI_GTextInputWrap
 		L.RegFunction("Setup_BeforeAdd", Setup_BeforeAdd);
 		L.RegFunction("Setup_AfterAdd", Setup_AfterAdd);
 		L.RegFunction("New", _CreateFairyGUI_GTextInput);
-		L.RegFunction("__tostring", Lua_ToString);
+		L.RegFunction("__tostring", ToLua.op_ToString);
 		L.RegVar("editable", get_editable, set_editable);
 		L.RegVar("maxLength", get_maxLength, set_maxLength);
+		L.RegVar("restrict", get_restrict, set_restrict);
 		L.RegVar("displayAsPassword", get_displayAsPassword, set_displayAsPassword);
 		L.RegVar("caretPosition", get_caretPosition, set_caretPosition);
 		L.RegVar("promptText", get_promptText, set_promptText);
@@ -97,23 +98,6 @@ public class FairyGUI_GTextInputWrap
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int Lua_ToString(IntPtr L)
-	{
-		object obj = ToLua.ToObject(L, 1);
-
-		if (obj != null)
-		{
-			LuaDLL.lua_pushstring(L, obj.ToString());
-		}
-		else
-		{
-			LuaDLL.lua_pushnil(L);
-		}
-
-		return 1;
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
 	static int get_editable(IntPtr L)
 	{
 		object o = null;
@@ -148,6 +132,25 @@ public class FairyGUI_GTextInputWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index maxLength on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_restrict(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GTextInput obj = (FairyGUI.GTextInput)o;
+			string ret = obj.restrict;
+			LuaDLL.lua_pushstring(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index restrict on a nil value" : e.Message);
 		}
 	}
 
@@ -262,6 +265,25 @@ public class FairyGUI_GTextInputWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index maxLength on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int set_restrict(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GTextInput obj = (FairyGUI.GTextInput)o;
+			string arg0 = ToLua.CheckString(L, 2);
+			obj.restrict = arg0;
+			return 0;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index restrict on a nil value" : e.Message);
 		}
 	}
 

@@ -26,6 +26,7 @@ namespace FairyGUI
 
 		Dictionary<string, GearXYValue> _storage;
 		GearXYValue _default;
+		GearXYValue _tweenTarget;
 
 		public GearXY(GObject owner)
 			: base(owner)
@@ -56,17 +57,24 @@ namespace FairyGUI
 			if (!_storage.TryGetValue(_controller.selectedPageId, out gv))
 				gv = _default;
 
-			if (tweener != null)
-			{
-				tweener.Kill(true);
-				tweener = null;
-			}
-
 			if (tween && UIPackage._constructing == 0 && !disableAllTweenEffect)
 			{
-				if (_owner.x != gv.x || _owner.y != gv.y)
+				if(tweener!=null)
+				{
+					if (_tweenTarget.x != gv.x || _tweenTarget.y != gv.y)
+					{
+						tweener.Kill(true);
+						tweener = null;
+					}
+					else
+						return;
+				}
+
+				if(_owner.x != gv.x || _owner.y != gv.y)
 				{
 					_owner.internalVisible++;
+					_tweenTarget = gv;
+
 					tweener = DOTween.To(() => new Vector2(_owner.x, _owner.y), v =>
 					{
 						_owner._gearLocked = true;

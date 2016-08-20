@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System;
+using LuaInterface;
 
 public class ThreadEvent
 {
@@ -155,7 +156,7 @@ namespace LuaFramework
         /// </summary>
         void OnExtractFile(List<object> evParams)
         {
-            Debugger.LogWarning("Thread evParams: >>" + evParams.Count);
+            LuaInterface.Debugger.LogWarning("Thread evParams: >>" + evParams.Count);
 
             ///------------------通知更新面板解压完成--------------------
             NotiData data = new NotiData(NotiConst.UPDATE_DOWNLOAD, null);

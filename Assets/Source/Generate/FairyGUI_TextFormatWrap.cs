@@ -11,7 +11,7 @@ public class FairyGUI_TextFormatWrap
 		L.RegFunction("EqualStyle", EqualStyle);
 		L.RegFunction("CopyFrom", CopyFrom);
 		L.RegFunction("New", _CreateFairyGUI_TextFormat);
-		L.RegFunction("__tostring", Lua_ToString);
+		L.RegFunction("__tostring", ToLua.op_ToString);
 		L.RegVar("size", get_size, set_size);
 		L.RegVar("font", get_font, set_font);
 		L.RegVar("color", get_color, set_color);
@@ -98,23 +98,6 @@ public class FairyGUI_TextFormatWrap
 		{
 			return LuaDLL.toluaL_exception(L, e);
 		}
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int Lua_ToString(IntPtr L)
-	{
-		object obj = ToLua.ToObject(L, 1);
-
-		if (obj != null)
-		{
-			LuaDLL.lua_pushstring(L, obj.ToString());
-		}
-		else
-		{
-			LuaDLL.lua_pushnil(L);
-		}
-
-		return 1;
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]

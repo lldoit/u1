@@ -30,7 +30,7 @@ public class FairyGUI_ContainerWrap
 		L.RegFunction("Update", Update);
 		L.RegFunction("Dispose", Dispose);
 		L.RegFunction("New", _CreateFairyGUI_Container);
-		L.RegFunction("__tostring", Lua_ToString);
+		L.RegFunction("__tostring", ToLua.op_ToString);
 		L.RegVar("renderMode", get_renderMode, set_renderMode);
 		L.RegVar("renderCamera", get_renderCamera, set_renderCamera);
 		L.RegVar("opaque", get_opaque, set_opaque);
@@ -408,10 +408,11 @@ public class FairyGUI_ContainerWrap
 	{
 		try
 		{
-			ToLua.CheckArgsCount(L, 2);
+			ToLua.CheckArgsCount(L, 3);
 			FairyGUI.Container obj = (FairyGUI.Container)ToLua.CheckObject(L, 1, typeof(FairyGUI.Container));
 			UnityEngine.Vector2 arg0 = ToLua.ToVector2(L, 2);
-			FairyGUI.DisplayObject o = obj.HitTest(arg0);
+			bool arg1 = LuaDLL.luaL_checkboolean(L, 3);
+			FairyGUI.DisplayObject o = obj.HitTest(arg0, arg1);
 			ToLua.PushObject(L, o);
 			return 1;
 		}
@@ -535,23 +536,6 @@ public class FairyGUI_ContainerWrap
 		{
 			return LuaDLL.toluaL_exception(L, e);
 		}
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int Lua_ToString(IntPtr L)
-	{
-		object obj = ToLua.ToObject(L, 1);
-
-		if (obj != null)
-		{
-			LuaDLL.lua_pushstring(L, obj.ToString());
-		}
-		else
-		{
-			LuaDLL.lua_pushnil(L);
-		}
-
-		return 1;
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]

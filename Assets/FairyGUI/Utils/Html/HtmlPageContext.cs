@@ -12,6 +12,7 @@ namespace FairyGUI.Utils
 		Stack<IHtmlObject> _inputPool;
 		Stack<IHtmlObject> _buttonPool;
 		Stack<IHtmlObject> _selectPool;
+		Stack<IHtmlObject> _linkPool;
 
 		public static HtmlPageContext inst = new HtmlPageContext();
 
@@ -21,6 +22,7 @@ namespace FairyGUI.Utils
 			_inputPool = new Stack<IHtmlObject>();
 			_buttonPool = new Stack<IHtmlObject>();
 			_selectPool = new Stack<IHtmlObject>();
+			_linkPool = new Stack<IHtmlObject>();
 		}
 
 		virtual public IHtmlObject CreateObject(RichTextField owner, HtmlElement element)
@@ -32,6 +34,13 @@ namespace FairyGUI.Utils
 					ret = _imagePool.Pop();
 				else
 					ret = new HtmlImage();
+			}
+			else if (element.type == HtmlElementType.Link)
+			{
+				if (_linkPool.Count > 0 && Application.isPlaying)
+					ret = _linkPool.Pop();
+				else
+					ret = new HtmlLink();
 			}
 			else if (element.type == HtmlElementType.Input)
 			{
@@ -81,6 +90,8 @@ namespace FairyGUI.Utils
 				_inputPool.Push(obj);
 			else if (obj is HtmlButton)
 				_buttonPool.Push(obj);
+			else if (obj is HtmlLink)
+				_linkPool.Push(obj);
 		}
 
 		virtual public NTexture GetImageTexture(HtmlImage image)

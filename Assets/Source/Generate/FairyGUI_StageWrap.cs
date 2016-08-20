@@ -19,7 +19,7 @@ public class FairyGUI_StageWrap
 		L.RegFunction("SortWorldSpacePanelsByZOrder", SortWorldSpacePanelsByZOrder);
 		L.RegFunction("MonitorTexture", MonitorTexture);
 		L.RegFunction("New", _CreateFairyGUI_Stage);
-		L.RegFunction("__tostring", Lua_ToString);
+		L.RegFunction("__tostring", ToLua.op_ToString);
 		L.RegVar("touchScreen", get_touchScreen, null);
 		L.RegVar("stageHeight", get_stageHeight, null);
 		L.RegVar("stageWidth", get_stageWidth, null);
@@ -277,23 +277,6 @@ public class FairyGUI_StageWrap
 		{
 			return LuaDLL.toluaL_exception(L, e);
 		}
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int Lua_ToString(IntPtr L)
-	{
-		object obj = ToLua.ToObject(L, 1);
-
-		if (obj != null)
-		{
-			LuaDLL.lua_pushstring(L, obj.ToString());
-		}
-		else
-		{
-			LuaDLL.lua_pushnil(L);
-		}
-
-		return 1;
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]

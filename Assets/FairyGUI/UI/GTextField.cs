@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 using FairyGUI.Utils;
 
 namespace FairyGUI
@@ -35,31 +36,28 @@ namespace FairyGUI
 		protected bool _widthAutoSize;
 		protected bool _heightAutoSize;
 		protected TextFormat _textFormat;
-		protected VertAlignType _verticalAlign;
-
 		protected bool _updatingSize;
-		protected int _textWidth;
-		protected int _textHeight;
 
 		public GTextField()
 			: base()
 		{
-			underConstruct = true;
-
 			_textFormat = new TextFormat();
 			_textFormat.font = UIConfig.defaultFont;
 			_textFormat.size = 12;
 			_textFormat.color = Color.black;
 			_textFormat.lineSpacing = 3;
 			_textFormat.letterSpacing = 0;
-			UpdateTextFormat();
+
+			TextFormat tf = _textField.textFormat;
+			tf.CopyFrom(_textFormat);
+			_textField.textFormat = tf;
 
 			_text = string.Empty;
-			_verticalAlign = VertAlignType.Top;
-
-			this.autoSize = AutoSizeType.Both;
-
-			underConstruct = false;
+			_autoSize = AutoSizeType.Both;
+			_widthAutoSize = true;
+			_heightAutoSize = true;
+			_textField.autoSize = true;
+			_textField.wordWrap = false;
 
 			gearColor = new GearColor(this);
 
@@ -89,7 +87,6 @@ namespace FairyGUI
 				if (value == null)
 					value = string.Empty;
 				_text = value;
-				_textField.width = this.width;
 				UpdateTextFieldText();
 				UpdateSize();
 			}
@@ -102,7 +99,6 @@ namespace FairyGUI
 			else
 				_textField.text = _text;
 		}
-
 
 		/// <summary>
 		/// 
@@ -155,7 +151,7 @@ namespace FairyGUI
 		/// <summary>
 		/// 
 		/// </summary>
-		virtual public AlignType align
+		public AlignType align
 		{
 			get { return _textField.align; }
 			set { _textField.align = value; }
@@ -166,24 +162,14 @@ namespace FairyGUI
 		/// </summary>
 		public VertAlignType verticalAlign
 		{
-			get
-			{
-				return _verticalAlign;
-			}
-			set
-			{
-				if (_verticalAlign != value)
-				{
-					_verticalAlign = value;
-					DoAlign();
-				}
-			}
+			get { return _textField.verticalAlign; }
+			set { _textField.verticalAlign = value; }
 		}
 
 		/// <summary>
 		/// 
 		/// </summary>
-		virtual public bool singleLine
+		public bool singleLine
 		{
 			get { return _textField.singleLine; }
 			set { _textField.singleLine = value; }
@@ -192,7 +178,7 @@ namespace FairyGUI
 		/// <summary>
 		/// 
 		/// </summary>
-		virtual public int stroke
+		public int stroke
 		{
 			get { return _textField.stroke; }
 			set { _textField.stroke = value; }
@@ -201,7 +187,7 @@ namespace FairyGUI
 		/// <summary>
 		/// 
 		/// </summary>
-		virtual public Color strokeColor
+		public Color strokeColor
 		{
 			get { return _textField.strokeColor; }
 			set { _textField.strokeColor = value; }
@@ -210,7 +196,7 @@ namespace FairyGUI
 		/// <summary>
 		/// 
 		/// </summary>
-		virtual public Vector2 shadowOffset
+		public Vector2 shadowOffset
 		{
 			get { return _textField.shadowOffset; }
 			set { _textField.shadowOffset = value; }
@@ -245,13 +231,34 @@ namespace FairyGUI
 				if (_autoSize != value)
 				{
 					_autoSize = value;
-					if (this is GTextInput)
-						return;
 
 					_widthAutoSize = value == AutoSizeType.Both;
 					_heightAutoSize = value == AutoSizeType.Both || value == AutoSizeType.Height;
 
-					UpdateAutoSize();
+					if (this is GTextInput)
+						_widthAutoSize = false;
+
+					if (_widthAutoSize)
+					{
+						_textField.autoSize = true;
+						_textField.wordWrap = false;
+
+						if (!underConstruct)
+							this.SetSize(_textField.textWidth, _textField.textHeight);
+					}
+					else
+					{
+						_textField.autoSize = false;
+						_textField.wordWrap = true;
+
+						if (_heightAutoSize)
+						{
+							if (!underConstruct)
+								this.height = _textField.textHeight;
+						}
+						else
+							displayObject.SetSize(this.width, this.height);
+					}
 				}
 			}
 		}
@@ -261,7 +268,7 @@ namespace FairyGUI
 		/// </summary>
 		public float textWidth
 		{
-			get { return _textWidth; }
+			get { return _textField.textWidth; }
 		}
 
 		/// <summary>
@@ -269,7 +276,28 @@ namespace FairyGUI
 		/// </summary>
 		public float textHeight
 		{
-			get { return _textHeight; }
+			get { return _textField.textHeight; }
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		public Dictionary<uint, Emoji> emojies
+		{
+			get
+			{
+				if (_textField.richTextField == null)
+					return null;
+
+				return _textField.richTextField.emojies;
+			}
+			set
+			{
+				if (_textField.richTextField == null)
+					return;
+
+				_textField.richTextField.emojies = value;
+			}
 		}
 
 		override public void HandleControllerChanged(Controller c)
@@ -280,119 +308,50 @@ namespace FairyGUI
 				gearColor.Apply();
 		}
 
-		virtual protected void UpdateAutoSize()
-		{
-			if (_widthAutoSize)
-			{
-				_textField.autoSize = true;
-				_textField.wordWrap = false;
-			}
-			else
-			{
-				_textField.autoSize = false;
-				_textField.wordWrap = true;
-			}
-			if (!underConstruct)
-				UpdateSize();
-		}
-
-		virtual protected void UpdateSize()
+		protected void UpdateSize()
 		{
 			if (_updatingSize)
 				return;
 
 			_updatingSize = true;
 
-			_textWidth = Mathf.CeilToInt(_textField.textWidth);
-			_textHeight = Mathf.CeilToInt(_textField.textHeight);
-
-			float w, h;
 			if (_widthAutoSize)
-				w = _textWidth;
-			else
-				w = this.width;
-
-			if (_heightAutoSize)
-			{
-				h = _textHeight;
-				if (!_widthAutoSize)
-					_textField.height = _textHeight;
-			}
-			else
-			{
-				h = this.height;
-				if (_textHeight > this.height)
-					_textHeight = Mathf.CeilToInt(this.height);
-				_textField.height = h;
-			}
-
-			this.SetSize(w, h);
-			DoAlign();
+				this.size = displayObject.size = new Vector2(_textField.textWidth, _textField.textHeight);
+			else if (_heightAutoSize)
+				this.height = displayObject.height = _textField.textHeight;
 
 			_updatingSize = false;
 		}
 
-		virtual protected void UpdateTextFormat()
+		protected void UpdateTextFormat()
 		{
+			TextFormat tf = _textField.textFormat;
+			tf.CopyFrom(_textFormat);
 			if (_textFormat.font == null || _textFormat.font.Length == 0)
-			{
-				TextFormat tf = _textField.textFormat;
-				tf.CopyFrom(_textFormat);
 				tf.font = UIConfig.defaultFont;
-				_textField.textFormat = tf;
-			}
-			else
-			{
-				TextFormat tf = _textField.textFormat;
-				tf.CopyFrom(_textFormat);
-				_textField.textFormat = _textFormat;
-			}
+			_textField.textFormat = tf;
 
 			if (!underConstruct)
 				UpdateSize();
 		}
 
-		virtual protected void DoAlign()
-		{
-			if (_verticalAlign == VertAlignType.Top)
-				_yOffset = 0;
-			else
-			{
-				float dh;
-				if (_textHeight == 0)
-					dh = this.height - this.textFormat.size;
-				else
-					dh = this.height - _textHeight;
-				if (dh < 0)
-					dh = 0;
-				if (_verticalAlign == VertAlignType.Middle)
-					_yOffset = dh / 2;
-				else
-					_yOffset = dh;
-			}
-			HandlePositionChanged();
-		}
-
 		override protected void HandleSizeChanged()
 		{
-			if (!_updatingSize)
+			if (_updatingSize)
+				return;
+
+			if (underConstruct)
+				displayObject.SetSize(this.width, this.height);
+			else if (!_widthAutoSize)
 			{
-				if (!_widthAutoSize)
+				if (_heightAutoSize)
 				{
-					float tw, th;
-					tw = this.width;
-					float h = _textField.textHeight;
-					float h2 = this.height;
-					if (_heightAutoSize)
-					{
-						th = h;
-						this.height = Mathf.RoundToInt(h);
-					}
-					else
-						th = h2;
-					_textField.SetSize(tw, th);
+					displayObject.width = this.width;//先调整宽度，让文本重排
+					displayObject.height = _textField.textHeight;
+					SetSizeDirectly(this.width, displayObject.height);
 				}
-				DoAlign();
+				else
+					displayObject.SetSize(this.width, this.height);
 			}
 		}
 
@@ -420,7 +379,7 @@ namespace FairyGUI
 
 			str = xml.GetAttribute("vAlign");
 			if (str != null)
-				_verticalAlign = FieldTypes.ParseVerticalAlign(str);
+				this.verticalAlign = FieldTypes.ParseVerticalAlign(str);
 
 			str = xml.GetAttribute("leading");
 			if (str != null)

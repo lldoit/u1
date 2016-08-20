@@ -33,7 +33,7 @@ namespace FairyGUI
 			(float)UnityEngine.Rendering.BlendMode.One,
 
 			//Add
-			(float)UnityEngine.Rendering.BlendMode.One,
+			(float)UnityEngine.Rendering.BlendMode.SrcAlpha,
 			(float)UnityEngine.Rendering.BlendMode.One,
 
 			//Multiply

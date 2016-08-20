@@ -24,9 +24,11 @@ namespace FairyGUI
 		}
 #endif
 
+#if !UNITY_5_4_OR_NEWER
 		void OnLevelWasLoaded()
 		{
 			StageCamera.CheckMainCamera();
 		}
+#endif
 	}
 }

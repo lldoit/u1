@@ -88,12 +88,12 @@ namespace FairyGUI
 			}
 			else
 			{
+				Rect rect = (Rect)clipRect;
+				if (rectMaskDepth > 0)
+					rect = ToolSet.Intersection(ref clipInfo.rect, ref rect);
+
 				rectMaskDepth++;
 				clipInfo.stencil = false;
-
-				Rect rect = (Rect)clipRect;
-				if (clipped)
-					rect = ToolSet.Intersection(ref clipInfo.rect, ref rect);
 				clipped = true;
 
 				/* clipPos = xy * clipBox.zw + clipBox.xy

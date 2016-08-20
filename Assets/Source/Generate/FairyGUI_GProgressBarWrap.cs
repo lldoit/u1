@@ -13,7 +13,7 @@ public class FairyGUI_GProgressBarWrap
 		L.RegFunction("Setup_AfterAdd", Setup_AfterAdd);
 		L.RegFunction("Dispose", Dispose);
 		L.RegFunction("New", _CreateFairyGUI_GProgressBar);
-		L.RegFunction("__tostring", Lua_ToString);
+		L.RegFunction("__tostring", ToLua.op_ToString);
 		L.RegVar("titleType", get_titleType, set_titleType);
 		L.RegVar("max", get_max, set_max);
 		L.RegVar("value", get_value, set_value);
@@ -128,23 +128,6 @@ public class FairyGUI_GProgressBarWrap
 		{
 			return LuaDLL.toluaL_exception(L, e);
 		}
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int Lua_ToString(IntPtr L)
-	{
-		object obj = ToLua.ToObject(L, 1);
-
-		if (obj != null)
-		{
-			LuaDLL.lua_pushstring(L, obj.ToString());
-		}
-		else
-		{
-			LuaDLL.lua_pushnil(L);
-		}
-
-		return 1;
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]

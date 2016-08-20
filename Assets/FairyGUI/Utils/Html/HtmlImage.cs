@@ -19,6 +19,7 @@ namespace FairyGUI.Utils
 		{
 			loader = (GLoader)UIObjectFactory.NewObject("loader");
 			loader.fill = FillType.ScaleFree;
+			loader.touchable = false;
 		}
 
 		public HtmlElement element
@@ -93,6 +94,7 @@ namespace FairyGUI.Utils
 
 		public void Remove()
 		{
+			loader.RemoveEventListeners();
 			if (loader.displayObject.parent != null)
 				_owner.RemoveChild(loader.displayObject);
 			if (_externalTexture)

@@ -25,7 +25,7 @@ public class FairyGUI_UIPackageWrap
 		L.RegFunction("GetItem", GetItem);
 		L.RegFunction("GetItemByName", GetItemByName);
 		L.RegFunction("New", _CreateFairyGUI_UIPackage);
-		L.RegFunction("__tostring", Lua_ToString);
+		L.RegFunction("__tostring", ToLua.op_ToString);
 		L.RegVar("id", get_id, null);
 		L.RegVar("name", get_name, null);
 		L.RegVar("assetPath", get_assetPath, null);
@@ -183,10 +183,25 @@ public class FairyGUI_UIPackageWrap
 	{
 		try
 		{
-			ToLua.CheckArgsCount(L, 1);
-			string arg0 = ToLua.CheckString(L, 1);
-			FairyGUI.UIPackage.RemovePackage(arg0);
-			return 0;
+			int count = LuaDLL.lua_gettop(L);
+
+			if (count == 1 && TypeChecker.CheckTypes(L, 1, typeof(string)))
+			{
+				string arg0 = ToLua.ToString(L, 1);
+				FairyGUI.UIPackage.RemovePackage(arg0);
+				return 0;
+			}
+			else if (count == 2 && TypeChecker.CheckTypes(L, 1, typeof(string), typeof(bool)))
+			{
+				string arg0 = ToLua.ToString(L, 1);
+				bool arg1 = LuaDLL.lua_toboolean(L, 2);
+				FairyGUI.UIPackage.RemovePackage(arg0, arg1);
+				return 0;
+			}
+			else
+			{
+				return LuaDLL.luaL_throw(L, "invalid arguments to method: FairyGUI.UIPackage.RemovePackage");
+			}
 		}
 		catch(Exception e)
 		{
@@ -484,23 +499,6 @@ public class FairyGUI_UIPackageWrap
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int Lua_ToString(IntPtr L)
-	{
-		object obj = ToLua.ToObject(L, 1);
-
-		if (obj != null)
-		{
-			LuaDLL.lua_pushstring(L, obj.ToString());
-		}
-		else
-		{
-			LuaDLL.lua_pushnil(L);
-		}
-
-		return 1;
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
 	static int get_id(IntPtr L)
 	{
 		object o = null;
@@ -600,9 +598,20 @@ public class FairyGUI_UIPackageWrap
 	{
 		try
 		{
+			int count = LuaDLL.lua_gettop(L);
 			LuaFunction func = ToLua.CheckLuaFunction(L, 1);
-			Delegate arg1 = DelegateFactory.CreateDelegate(typeof(FairyGUI.UIPackage.LoadResource), func);
-			ToLua.Push(L, arg1);
+
+			if (count == 1)
+			{
+				Delegate arg1 = DelegateFactory.CreateDelegate(typeof(FairyGUI.UIPackage.LoadResource), func);
+				ToLua.Push(L, arg1);
+			}
+			else
+			{
+				LuaTable self = ToLua.CheckLuaTable(L, 2);
+				Delegate arg1 = DelegateFactory.CreateDelegate(typeof(FairyGUI.UIPackage.LoadResource), func, self);
+				ToLua.Push(L, arg1);
+			}
 			return 1;
 		}
 		catch(Exception e)

@@ -36,7 +36,7 @@ public class FairyGUI_GComponentWrap
 		L.RegFunction("ConstructFromResource", ConstructFromResource);
 		L.RegFunction("ConstructFromXML", ConstructFromXML);
 		L.RegFunction("New", _CreateFairyGUI_GComponent);
-		L.RegFunction("__tostring", Lua_ToString);
+		L.RegFunction("__tostring", ToLua.op_ToString);
 		L.RegVar("rootContainer", get_rootContainer, null);
 		L.RegVar("container", get_container, null);
 		L.RegVar("scrollPane", get_scrollPane, null);
@@ -633,23 +633,6 @@ public class FairyGUI_GComponentWrap
 		{
 			return LuaDLL.toluaL_exception(L, e);
 		}
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int Lua_ToString(IntPtr L)
-	{
-		object obj = ToLua.ToObject(L, 1);
-
-		if (obj != null)
-		{
-			LuaDLL.lua_pushstring(L, obj.ToString());
-		}
-		else
-		{
-			LuaDLL.lua_pushnil(L);
-		}
-
-		return 1;
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]

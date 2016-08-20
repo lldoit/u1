@@ -51,6 +51,7 @@ namespace FairyGUI
 		List<DisplayObject> _descendants;
 
 		internal int _panelOrder;
+		internal bool _disabled;
 		bool _ownsGameObject;
 
 		public Container()
@@ -363,7 +364,7 @@ namespace FairyGUI
 		/// </summary>
 		/// <param name="stagePoint"></param>
 		/// <returns></returns>
-		public DisplayObject HitTest(Vector2 stagePoint)
+		public DisplayObject HitTest(Vector2 stagePoint, bool forTouch)
 		{
 			if (StageCamera.main == null)
 				return null;
@@ -371,8 +372,9 @@ namespace FairyGUI
 			HitTestContext.screenPoint = new Vector2(stagePoint.x, Screen.height - stagePoint.y);
 			HitTestContext.worldPoint = StageCamera.main.ScreenToWorldPoint(HitTestContext.screenPoint);
 			HitTestContext.direction = Vector3.back;
+			HitTestContext.forTouch = forTouch;
 
-			DisplayObject ret = HitTest(true);
+			DisplayObject ret = HitTest();
 			if (ret != null)
 				return ret;
 			else if (this is Stage)
@@ -404,9 +406,9 @@ namespace FairyGUI
 			return WorldToLocal(HitTestContext.worldPoint, HitTestContext.direction);
 		}
 
-		override protected internal DisplayObject HitTest(bool forTouch)
+		override protected DisplayObject HitTest()
 		{
-			if (!visible || (forTouch && (!touchable || _optimizeNotTouchable)))
+			if (_disabled)
 				return null;
 
 			Vector2 localPoint = new Vector2();
@@ -433,7 +435,7 @@ namespace FairyGUI
 				}
 			}
 
-			if (_mask != null && _mask.HitTest(false) == null)
+			if (_mask != null && _mask.InternalHitTestMask() == null)
 				return null;
 
 			DisplayObject target = null;
@@ -446,12 +448,12 @@ namespace FairyGUI
 					if (child == _mask)
 						continue;
 
-					target = child.HitTest(forTouch);
+					target = child.InternalHitTest();
 					if (target != null)
 						break;
 				}
 			}
-
+			
 			if (target == null && opaque && _contentRect.Contains(localPoint))
 				target = this;
 
@@ -534,10 +536,10 @@ namespace FairyGUI
 			}
 		}
 
-		override protected void SetGO_Visible()
+		override protected void UpdateHierarchy()
 		{
 			if (_ownsGameObject)
-				base.SetGO_Visible();
+				base.UpdateHierarchy();
 			else if (gameObject != null)
 			{
 				//we dont change transform parent of this object
@@ -556,6 +558,9 @@ namespace FairyGUI
 
 		override public void Update(UpdateContext context)
 		{
+			if (_disabled)
+				return;
+
 			if (onUpdate != null)
 				onUpdate();
 
@@ -607,6 +612,10 @@ namespace FairyGUI
 						child.Update(context);
 					}
 				}
+
+				if (_mask != null)
+					_mask.graphics.SetStencilEraserOrder(context.renderingOrder++);
+
 			}
 
 			if (_fBatching)
@@ -644,6 +653,9 @@ namespace FairyGUI
 				if ((child is Container) && ((Container)child)._fBatchingRoot)
 					((Container)child).SetRenderingOrder(context);
 			}
+
+			if (_mask != null && _mask.graphics != null)
+				_mask.graphics.SetStencilEraserOrder(context.renderingOrder++);
 		}
 
 		private void DoFairyBatching()
@@ -657,7 +669,7 @@ namespace FairyGUI
 			CollectChildren(this);
 
 			int cnt = _descendants.Count;
-			//Debug.Log("DoFairyBatching " + cnt);
+			//Debug.Log("DoFairyBatching " + cnt + "," + this.cachedTransform.GetInstanceID());
 
 			int i, j;
 			for (i = 0; i < cnt; i++)

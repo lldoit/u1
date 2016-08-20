@@ -14,6 +14,7 @@ namespace FairyGUI
 
 		internal bool _defaultPrevented;
 		internal bool _stopsPropagation;
+		internal bool _touchEndCapture;
 
 		internal List<EventBridge> callChain = new List<EventBridge>();
 
@@ -25,6 +26,11 @@ namespace FairyGUI
 		public void PreventDefault()
 		{
 			_defaultPrevented = true;
+		}
+
+		public void CaptureTouch()
+		{
+			_touchEndCapture = true;
 		}
 
 		public bool isDefaultPrevented
@@ -41,7 +47,13 @@ namespace FairyGUI
 		internal static EventContext Get()
 		{
 			if (pool.Count > 0)
-				return pool.Pop();
+			{
+				EventContext context = pool.Pop();
+				context._stopsPropagation = false;
+				context._defaultPrevented = false;
+				context._touchEndCapture = false;
+				return context;
+			}
 			else
 				return new EventContext();
 		}

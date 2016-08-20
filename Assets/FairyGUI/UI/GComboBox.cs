@@ -38,8 +38,6 @@ namespace FairyGUI
 		bool _down;
 		bool _over;
 
-		EventCallback1 _touchEndDelegate;
-
 		public GComboBox()
 		{
 			visibleItemCount = UIConfig.defaultComboBoxVisibleItemCount;
@@ -50,7 +48,6 @@ namespace FairyGUI
 			_popupDirection = "down";
 
 			onChanged = new EventListener(this, "onChanged");
-			_touchEndDelegate = __touchEnd;
 		}
 
 		/// <summary>
@@ -63,7 +60,7 @@ namespace FairyGUI
 				if (_titleObject != null)
 					return _titleObject.text;
 				else
-					return null;
+					return string.Empty;
 			}
 			set
 			{
@@ -242,6 +239,7 @@ namespace FairyGUI
 			displayObject.onRollOver.Add(__rollover);
 			displayObject.onRollOut.Add(__rollout);
 			displayObject.onTouchBegin.Add(__touchBegin);
+			displayObject.onTouchEnd.Add(__touchEnd);
 		}
 
 		override public void Setup_AfterAdd(XML cxml)
@@ -356,26 +354,24 @@ namespace FairyGUI
 			SetState(GButton.UP);
 		}
 
-		private void __touchBegin()
+		private void __touchBegin(EventContext context)
 		{
 			_down = true;
 
-			Stage.inst.onTouchEnd.Add(_touchEndDelegate);
-
 			if (dropdown != null)
 				ShowDropdown();
+
+			context.CaptureTouch();
 		}
 
 		private void __touchEnd(EventContext context)
 		{
 			if (_down)
 			{
-				Stage.inst.onTouchEnd.Remove(_touchEndDelegate);
-				_down = false;
-
 				if (this.displayObject == null || this.displayObject.isDisposed)
 					return;
 
+				_down = false;
 				if (dropdown != null && dropdown.parent != null)
 				{
 					if (_over)

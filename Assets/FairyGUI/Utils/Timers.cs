@@ -12,7 +12,6 @@ namespace FairyGUI
 	{
 		public static int repeat;
 		public static float time;
-		public static Timers inst = new Timers();
 		public static GameObject gameObject;
 
 		Dictionary<TimerCallback, Anymous_T> _items;
@@ -21,9 +20,20 @@ namespace FairyGUI
 		List<Anymous_T> _pool;
 		float _lastTime;
 
+		private static Timers _inst;
+		public static Timers inst
+		{
+			get
+			{
+				if (_inst == null)
+					_inst = new Timers();
+				return _inst;
+			}
+		}
+
 		public Timers()
 		{
-			inst = this;
+			_inst = this;
 			gameObject = new GameObject();
 			gameObject.hideFlags = HideFlags.HideInHierarchy;
 			gameObject.SetActive(true);

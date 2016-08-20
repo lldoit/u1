@@ -82,10 +82,15 @@ namespace FairyGUI
 		{
 			if (Application.isPlaying)
 			{
-				CreateContainer();
+				if (this.container == null)
+				{
+					CreateContainer();
 
-				if (!string.IsNullOrEmpty(packagePath) && UIPackage.GetByName(packageName) == null)
-					UIPackage.AddPackage(packagePath);
+					if (!string.IsNullOrEmpty(packagePath) && UIPackage.GetByName(packageName) == null)
+						UIPackage.AddPackage(packagePath);
+				}
+				else
+					this.container._disabled = false;
 			}
 			else
 			{
@@ -105,7 +110,12 @@ namespace FairyGUI
 
 		void OnDisable()
 		{
-			if (!Application.isPlaying)
+			if (Application.isPlaying)
+			{
+				if (this.container != null)
+					this.container._disabled = true;
+			}
+			else
 				EMRenderSupport.Remove(this);
 		}
 

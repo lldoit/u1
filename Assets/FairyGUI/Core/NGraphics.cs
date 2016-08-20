@@ -38,6 +38,8 @@ namespace FairyGUI
 		//透明度改变需要通过修改顶点颜色实现，但顶点颜色本身可能就带有透明度，所以这里要有一个备份
 		byte[] _alphaBackup;
 
+		StencilEraser _stencilEraser;
+
 		//写死的一些三角形顶点组合，避免每次new
 		/** 1---2
 		 *  | / |
@@ -184,6 +186,12 @@ namespace FairyGUI
 			set { meshRenderer.sortingOrder = value; }
 		}
 
+		public void SetStencilEraserOrder(int value)
+		{
+			if (_stencilEraser != null)
+				_stencilEraser.meshRenderer.sortingOrder = value;
+		}
+
 		public void Dispose()
 		{
 			if (mesh != null)
@@ -209,15 +217,28 @@ namespace FairyGUI
 			_material = null;
 			meshRenderer = null;
 			meshFilter = null;
+			_stencilEraser = null;
 		}
 
 		public void UpdateMaterial(UpdateContext context)
 		{
+			NMaterial nm = null;
 			if (_manager != null && !_customMatarial)
 			{
-				_material = _manager.GetMaterial(this, context);
+				nm = _manager.GetMaterial(this, context);
+				_material = nm.material;
 				if ((object)_material != (object)meshRenderer.sharedMaterial && (object)_material.mainTexture != null)
 					meshRenderer.sharedMaterial = _material;
+
+				if (nm.combined)
+					_material.SetTexture("_AlphaTex", _manager.texture.alphaTexture.nativeTexture);
+			}
+
+			if (maskFrameId != 0 && maskFrameId != UpdateContext.frameId)
+			{
+				//曾经是遮罩对象，现在不是了
+				if (_stencilEraser != null)
+					_stencilEraser.enabled = false;
 			}
 
 			if (_material != null)
@@ -227,7 +248,7 @@ namespace FairyGUI
 
 				if (context.clipped)
 				{
-					if (maskFrameId != UpdateContext.frameId && context.rectMaskDepth > 0)
+					if (maskFrameId != UpdateContext.frameId && context.rectMaskDepth > 0) //在矩形剪裁下，且不是遮罩对象
 					{
 						_material.SetVector("_ClipBox", context.clipInfo.clipBox);
 						if (context.clipInfo.soft)
@@ -236,7 +257,7 @@ namespace FairyGUI
 
 					if (context.stencilReferenceValue > 0)
 					{
-						if (maskFrameId == UpdateContext.frameId)
+						if (maskFrameId == UpdateContext.frameId) //是遮罩
 						{
 							if (context.stencilReferenceValue == 1)
 							{
@@ -254,19 +275,45 @@ namespace FairyGUI
 								_material.SetInt("_StencilReadMask", context.stencilReferenceValue - 1);
 								_material.SetInt("_ColorMask", 0);
 							}
+
+							//设置擦除stencil的drawcall
+							if (_stencilEraser == null)
+							{
+								_stencilEraser = new StencilEraser(gameObject.transform);
+								_stencilEraser.meshFilter.mesh = mesh;
+							}
+							else
+								_stencilEraser.enabled = true;
+
+							if (nm != null)
+							{
+								NMaterial eraserNm = _manager.GetMaterial(this, context);
+								eraserNm.stencilSet = true;
+								Material eraserMat = eraserNm.material;
+								if ((object)eraserMat != (object)_stencilEraser.meshRenderer.sharedMaterial)
+									_stencilEraser.meshRenderer.sharedMaterial = eraserMat;
+
+								int refValue = context.stencilReferenceValue - 1;
+								eraserMat.SetInt("_StencilComp", (int)UnityEngine.Rendering.CompareFunction.Equal);
+								eraserMat.SetInt("_Stencil", refValue);
+								eraserMat.SetInt("_StencilOp", (int)UnityEngine.Rendering.StencilOp.Replace);
+								eraserMat.SetInt("_StencilReadMask", refValue);
+								eraserMat.SetInt("_ColorMask", 0);
+							}
 						}
 						else
 						{
+							int refValue = context.stencilReferenceValue | (context.stencilReferenceValue - 1);
 							_material.SetInt("_StencilComp", (int)UnityEngine.Rendering.CompareFunction.Equal);
-							_material.SetInt("_Stencil", context.stencilReferenceValue | (context.stencilReferenceValue - 1));
+							_material.SetInt("_Stencil", refValue);
 							_material.SetInt("_StencilOp", (int)UnityEngine.Rendering.StencilOp.Keep);
-							_material.SetInt("_StencilReadMask", context.stencilReferenceValue | (context.stencilReferenceValue - 1));
+							_material.SetInt("_StencilReadMask", refValue);
 							_material.SetInt("_ColorMask", 15);
 						}
-						if (_material is NMaterial)
-							((NMaterial)_material).stencilSet = true;
+						if (nm != null)
+							nm.stencilSet = true;
 					}
-					else if ((_material is NMaterial) && ((NMaterial)_material).stencilSet)
+					else if (nm != null && nm.stencilSet)
 					{
 						_material.SetInt("_StencilComp", (int)UnityEngine.Rendering.CompareFunction.Always);
 						_material.SetInt("_Stencil", 0);
@@ -274,7 +321,15 @@ namespace FairyGUI
 						_material.SetInt("_StencilReadMask", 255);
 						_material.SetInt("_ColorMask", 15);
 
-						((NMaterial)_material).stencilSet = false;
+						nm.stencilSet = false;
+					}
+					else
+					{
+						_material.SetInt("_StencilComp", (int)UnityEngine.Rendering.CompareFunction.Always);
+						_material.SetInt("_Stencil", 0);
+						_material.SetInt("_StencilOp", (int)UnityEngine.Rendering.StencilOp.Keep);
+						_material.SetInt("_StencilReadMask", 255);
+						_material.SetInt("_ColorMask", 15);
 					}
 				}
 			}
@@ -341,6 +396,9 @@ namespace FairyGUI
 			mesh.triangles = triangles;
 			mesh.colors32 = colors;
 			meshFilter.mesh = mesh;
+
+			if (_stencilEraser != null)
+				_stencilEraser.meshFilter.mesh = mesh;
 		}
 
 		public void SetOneQuadMesh(Rect drawRect, Rect uvRect, Color color)
@@ -457,13 +515,101 @@ namespace FairyGUI
 			int k = 0;
 			for (int i = 1; i < numSides; i++)
 			{
+				triangles[k++] = i+1;
 				triangles[k++] = i;
-				triangles[k++] = i + 1;
 				triangles[k++] = 0;
 			}
-			triangles[k++] = numSides;
 			triangles[k++] = 1;
+			triangles[k++] = numSides;
 			triangles[k++] = 0;
+
+			FillColors(fillColor);
+			UpdateMesh();
+		}
+
+		static List<int> sRestIndices = new List<int>();
+		public void DrawPolygon(Vector2[] points, Color fillColor)
+		{
+			int numVertices = points.Length;
+			if (numVertices < 3)
+				return;
+
+			int numTriangles = numVertices - 2;
+			int i, restIndexPos, numRestIndices;
+			int k = 0;
+
+			Alloc(numVertices);
+
+			for (i = 0; i < numVertices; i++)
+				vertices[i] = new Vector3(points[i].x, -points[i].y);
+
+			// Algorithm "Ear clipping method" described here:
+			// -> https://en.wikipedia.org/wiki/Polygon_triangulation
+			//
+			// Implementation inspired by:
+			// -> http://polyk.ivank.net
+			// -> Starling
+
+			AllocTriangleArray(numTriangles * 3);
+
+			sRestIndices.Clear();
+			for (i = 0; i < numVertices; ++i)
+				sRestIndices.Add(i);
+
+			restIndexPos = 0;
+			numRestIndices = numVertices;
+
+			Vector2 a, b, c, p;
+			int otherIndex;
+			bool earFound;
+			int i0, i1, i2;
+
+			while (numRestIndices > 3)
+			{
+				earFound = false;
+				i0 = sRestIndices[restIndexPos % numRestIndices];
+				i1 = sRestIndices[(restIndexPos + 1) % numRestIndices];
+				i2 = sRestIndices[(restIndexPos + 2) % numRestIndices];
+
+				a = points[i0];
+				b = points[i1];
+				c = points[i2];
+
+				if ((a.y - b.y) * (c.x - b.x) + (b.x - a.x) * (c.y - b.y) >= 0)
+				{
+					earFound = true;
+					for (i = 3; i < numRestIndices; ++i)
+					{
+						otherIndex = sRestIndices[(restIndexPos + i) % numRestIndices];
+						p = points[otherIndex];
+
+						if (ToolSet.IsPointInTriangle(ref p, ref  a, ref b, ref c))
+						{
+							earFound = false;
+							break;
+						}
+					}
+				}
+
+				if (earFound)
+				{
+					triangles[k++] = i0;
+					triangles[k++] = i1;
+					triangles[k++] = i2;
+					sRestIndices.RemoveAt((restIndexPos + 1) % numRestIndices);
+
+					numRestIndices--;
+					restIndexPos = 0;
+				}
+				else
+				{
+					restIndexPos++;
+					if (restIndexPos == numRestIndices) break; // no more ears
+				}
+			}
+			triangles[k++] = sRestIndices[0];
+			triangles[k++] = sRestIndices[1];
+			triangles[k++] = sRestIndices[2];
 
 			FillColors(fillColor);
 			UpdateMesh();
@@ -638,6 +784,38 @@ namespace FairyGUI
 			uv[index + 1] = new Vector2(rect.xMin, rect.yMax);
 			uv[index + 2] = new Vector2(rect.xMax, rect.yMax);
 			uv[index + 3] = new Vector2(rect.xMax, rect.yMin);
+		}
+	}
+
+	class StencilEraser
+	{
+		public GameObject gameObject;
+		public MeshFilter meshFilter;
+		public MeshRenderer meshRenderer;
+
+		public StencilEraser(Transform parent)
+		{
+			gameObject = new GameObject("Eraser");
+			FairyGUI.Utils.ToolSet.SetParent(gameObject.transform, parent);
+			meshFilter = gameObject.AddComponent<MeshFilter>();
+			meshRenderer = gameObject.AddComponent<MeshRenderer>();
+#if UNITY_5
+			meshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+#else
+            meshRenderer.castShadows = false;
+#endif
+			meshRenderer.receiveShadows = false;
+
+			gameObject.layer = parent.gameObject.layer;
+			gameObject.hideFlags = parent.gameObject.hideFlags;
+			meshFilter.hideFlags = parent.gameObject.hideFlags;
+			meshRenderer.hideFlags = parent.gameObject.hideFlags;
+		}
+
+		public bool enabled
+		{
+			get { return meshRenderer.enabled; }
+			set { meshRenderer.enabled = value; }
 		}
 	}
 }

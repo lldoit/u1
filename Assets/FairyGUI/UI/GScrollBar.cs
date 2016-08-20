@@ -21,13 +21,11 @@ namespace FairyGUI
 		Vector2 _dragOffset;
 		int _touchId;
 
-		EventCallback1 _touchEndDelegate;
 		EventCallback1 _touchMoveDelegate;
 
 		public GScrollBar()
 		{
 			_scrollPerc = 0;
-			_touchEndDelegate = __stageTouchEnd;
 			_touchMoveDelegate = __stageTouchMove;
 		}
 
@@ -119,6 +117,8 @@ namespace FairyGUI
 			_arrowButton2 = GetChild("arrow2");
 
 			_grip.onTouchBegin.Add(__gripTouchBegin);
+			_grip.onTouchEnd.Add(__gripTouchEnd);
+
 			this.onTouchBegin.Add(__touchBegin);
 			if (_arrowButton1 != null)
 				_arrowButton1.onTouchBegin.Add(__arrowButton1Click);
@@ -137,8 +137,8 @@ namespace FairyGUI
 
 			_dragOffset = this.GlobalToLocal(new Vector2(evt.x, evt.y)) - _grip.xy;
 
+			context.CaptureTouch();
 			Stage.inst.onTouchMove.Add(_touchMoveDelegate);
-			Stage.inst.onTouchEnd.Add(_touchEndDelegate);
 		}
 
 		void __stageTouchMove(EventContext context)
@@ -174,14 +174,13 @@ namespace FairyGUI
 			}
 		}
 
-		void __stageTouchEnd(EventContext context)
+		void __gripTouchEnd(EventContext context)
 		{
 			InputEvent evt = context.inputEvent;
 			if (_touchId != evt.touchId)
 				return;
 
 			Stage.inst.onTouchMove.Remove(_touchMoveDelegate);
-			Stage.inst.onTouchEnd.Remove(_touchEndDelegate);
 		}
 
 		void __arrowButton1Click(EventContext context)

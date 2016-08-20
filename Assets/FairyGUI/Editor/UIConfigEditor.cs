@@ -105,6 +105,7 @@ namespace FairyGUIEditor
 						case UIConfig.ConfigKey.DefaultScrollSpeed:
 						case UIConfig.ConfigKey.TouchDragSensitivity:
 						case UIConfig.ConfigKey.TouchScrollSensitivity:
+						case UIConfig.ConfigKey.InputCaretSize:
 							value.i = EditorGUILayout.IntField(value.i);
 							break;
 
@@ -133,6 +134,7 @@ namespace FairyGUIEditor
 							break;
 
 						case UIConfig.ConfigKey.ModalLayerColor:
+						case UIConfig.ConfigKey.InputHighlightColor:
 							value.c = EditorGUILayout.ColorField(value.c);
 							break;
 					}
@@ -255,6 +257,14 @@ namespace FairyGUIEditor
 
 				case UIConfig.ConfigKey.TouchScrollSensitivity:
 					value.i = 20;
+					break;
+
+				case UIConfig.ConfigKey.InputCaretSize:
+					value.i = 1;
+					break;
+
+				case UIConfig.ConfigKey.InputHighlightColor:
+					value.c = new Color32(255, 223, 141, 128);
 					break;
 			}
 		}

@@ -17,6 +17,8 @@ namespace FairyGUI
 		static CharacterInfo sTempChar;
 		static GlyphInfo glyhInfo = new GlyphInfo();
 
+		internal static bool textRebuildFlag;
+
 		public DynamicFont(string name)
 		{
 			this.name = name;
@@ -218,7 +220,7 @@ namespace FairyGUI
 				return;
 			mainTexture = new NTexture(_font.material.mainTexture);
 
-			Stage.textRebuildFlag = true;
+			textRebuildFlag = true;
 			//Debug.Log("Font texture rebuild: " + name + "," + mainTexture.width + "," + mainTexture.height);
 		}
 #else
@@ -226,7 +228,7 @@ namespace FairyGUI
 		{
 			mainTexture = new NTexture(_font.material.mainTexture);
 
-			Stage.textRebuildFlag = true;
+			textRebuildFlag = true;
 
 			//Debug.Log("Font texture rebuild: " + name + "," + mainTexture.width + "," + mainTexture.height);
 		}

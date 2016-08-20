@@ -57,16 +57,16 @@ namespace FairyGUI
 			this.texture = texture;
 
 			_pools = new MaterialPool[7];
-			_pools[0] = new MaterialPool(this, null); //none
-			_pools[1] = new MaterialPool(this, GRAYED); //grayed
-			_pools[2] = new MaterialPool(this, CLIPPED); //clipped
-			_pools[3] = new MaterialPool(this, CLIPPED_GRAYED); //clipped+grayed
-			_pools[4] = new MaterialPool(this, SOFT_CLIPPED); //softClipped
-			_pools[5] = new MaterialPool(this, SOFT_CLIPPED_GRAYED); //softClipped+grayed
-			_pools[6] = new MaterialPool(this, ALPHA_MASK); //stencil mask
+			_pools[0] = new MaterialPool(this, null, false); //none
+			_pools[1] = new MaterialPool(this, GRAYED, false); //grayed
+			_pools[2] = new MaterialPool(this, CLIPPED, false); //clipped
+			_pools[3] = new MaterialPool(this, CLIPPED_GRAYED, false); //clipped+grayed
+			_pools[4] = new MaterialPool(this, SOFT_CLIPPED, false); //softClipped
+			_pools[5] = new MaterialPool(this, SOFT_CLIPPED_GRAYED, false); //softClipped+grayed
+			_pools[6] = new MaterialPool(this, ALPHA_MASK, true); //stencil mask
 		}
 
-		public Material GetMaterial(NGraphics grahpics, UpdateContext context)
+		public NMaterial GetMaterial(NGraphics grahpics, UpdateContext context)
 		{
 			frameId = UpdateContext.frameId;
 			blendMode = grahpics.blendMode;
@@ -116,21 +116,22 @@ namespace FairyGUI
 
 		public NMaterial CreateMaterial()
 		{
-			NMaterial mat = new NMaterial(ShaderConfig.GetShader(shaderName));
-			mat.mainTexture = texture.nativeTexture;
+			NMaterial nm = new NMaterial(ShaderConfig.GetShader(shaderName));
+			nm.material.mainTexture = texture.nativeTexture;
 			if (texture.alphaTexture != null)
 			{
-				mat.EnableKeyword("COMBINED");
-				mat.SetTexture("_AlphaTex", texture.alphaTexture);
+				nm.combined = true;
+				nm.material.EnableKeyword("COMBINED");
+				nm.material.SetTexture("_AlphaTex", texture.alphaTexture.nativeTexture);
 			}
 			if (_keywords != null)
 			{
 				foreach (string v in _keywords)
-					mat.EnableKeyword(v);
+					nm.material.EnableKeyword(v);
 			}
-			mat.hideFlags = DisplayOptions.hideFlags;
+			nm.material.hideFlags = DisplayOptions.hideFlags;
 
-			return mat;
+			return nm;
 		}
 
 		public void Dispose()
