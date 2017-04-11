@@ -1,5 +1,5 @@
 ﻿/*
-Copyright (c) 2015-2016 topameng(topameng@qq.com)
+Copyright (c) 2015-2017 topameng(topameng@qq.com)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -187,7 +187,7 @@ namespace LuaInterface
 
     public class LuaDLL
     {
-        public static string version = "1.0.6.237";
+        public static string version = "1.0.6.250";
         public static int LUA_MULTRET = -1;
         public static string[] LuaTypeName = { "none", "nil", "boolean", "lightuserdata", "number", "string", "table", "function", "userdata", "thread" };        
 
@@ -824,8 +824,21 @@ namespace LuaInterface
         //[DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         //public static extern int luaL_error(IntPtr luaState, string message);
 
-        public static int luaL_throw(IntPtr luaState, string message)
+        public static int luaL_throw(IntPtr L, string message)
         {
+            tolua_pushtraceback(L);
+            lua_pushstring(L, message);
+            lua_pushnumber(L, 1);
+
+            if (lua_pcall(L, 2, -1, 0) == 0)
+            {
+                message = lua_tostring(L, -1);
+            }
+            else
+            {
+                lua_pop(L, 1);
+            }
+
             throw new LuaException(message, null, 2);
         }
 
@@ -875,16 +888,16 @@ namespace LuaInterface
             return LuaDLL.lua_pcall(luaState, 0, LUA_MULTRET, 0) == 0;
         }
 
-        public static int luaL_dostring(IntPtr luaState, string chunk)
+        public static bool luaL_dostring(IntPtr luaState, string chunk)
         {
             int result = LuaDLL.luaL_loadstring(luaState, chunk);
 
             if (result != 0)
             {
-                return result;
+                return false;
             }
 
-            return LuaDLL.lua_pcall(luaState, 0, LUA_MULTRET, 0);
+            return LuaDLL.lua_pcall(luaState, 0, LUA_MULTRET, 0) == 0;
         }
 
         public static void luaL_getmetatable(IntPtr luaState, string meta)

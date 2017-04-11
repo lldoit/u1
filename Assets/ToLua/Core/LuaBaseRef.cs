@@ -1,5 +1,5 @@
 ﻿/*
-Copyright (c) 2015-2016 topameng(topameng@qq.com)
+Copyright (c) 2015-2017 topameng(topameng@qq.com)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -33,16 +33,18 @@ namespace LuaInterface
         protected LuaState luaState;
         protected ObjectTranslator translator = null;
 
-        protected bool beDisposed;
+        protected volatile bool beDisposed;
         protected int count = 0;
 
         public LuaBaseRef()
         {
+            IsAlive = true;
             count = 1;
         }
 
         ~LuaBaseRef()
         {
+            IsAlive = false;
             Dispose(false);
         }
 
@@ -53,8 +55,9 @@ namespace LuaInterface
             if (count > 0)
             {
                 return;
-            }            
+            }
 
+            IsAlive = false;
             Dispose(true);            
         }
 
@@ -136,7 +139,7 @@ namespace LuaInterface
 
             if (l == null && r != null)
             {
-                return r == null || b.reference <= 0;
+                return b.reference <= 0;
             }
 
             if (l != null && r == null)
@@ -162,9 +165,6 @@ namespace LuaInterface
             return !CompareRef(a, b);
         }
 
-        public bool IsAlive()
-        {
-            return !beDisposed;
-        }
+        public volatile bool IsAlive = true;
     }
 }

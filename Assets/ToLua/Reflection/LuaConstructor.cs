@@ -1,5 +1,5 @@
 ﻿/*
-Copyright (c) 2015-2016 topameng(topameng@qq.com)
+Copyright (c) 2015-2017 topameng(topameng@qq.com)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -55,7 +55,7 @@ namespace LuaInterface
                 {
                     bool isRef = list[i].IsByRef;
                     Type t0 = isRef ? list[i].GetElementType() : list[i];
-                    object o = ToLua.CheckVarObject(L, i + 1, t0);
+                    object o = ToLua.CheckVarObject(L, i + 2, t0);
                     args[i] = TypeChecker.ChangeType(o, t0);
                 }
             }

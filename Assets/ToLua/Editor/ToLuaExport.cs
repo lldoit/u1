@@ -1,5 +1,5 @@
 ﻿/*
-Copyright (c) 2015-2016 topameng(topameng@qq.com)
+Copyright (c) 2015-2017 topameng(topameng@qq.com)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -137,7 +137,7 @@ public static class ToLuaExport
         "Texture2D.alphaIsTransparency",
         "WWW.movie",
         "WebCamTexture.MarkNonReadable",
-        "WebCamTexture.isReadable",		
+        "WebCamTexture.isReadable",
         "Graphic.OnRebuildRequested",
         "Text.OnRebuildRequested",
         "Resources.LoadAssetAtPath",
@@ -146,23 +146,31 @@ public static class ToLuaExport
         "CanvasRenderer.OnRequestRebuild",
         "CanvasRenderer.onRequestRebuild",
         "Terrain.bakeLightProbesForTrees",
+        "MonoBehaviour.runInEditMode",
+        "Light.lightmappingMode",
         //NGUI
         "UIInput.ProcessEvent",
         "UIWidget.showHandlesWithMoveTool",
-        "UIWidget.showHandles",               
-        "Input.IsJoystickPreconfigured",    
-        "UIDrawCall.isActive",        
+        "UIWidget.showHandles",
+        "Input.IsJoystickPreconfigured",
+        "UIDrawCall.isActive"
+    };
+
+	public static List<MemberInfo> memberInfoFilter = new List<MemberInfo>
+	{
+        //可精确查找一个函数
+		//Type.GetMethod(string name, BindingFlags bindingAttr, Binder binder, CallingConventions callConvention, Type[] types, ParameterModifier[] modifiers);
     };
 
     public static bool IsMemberFilter(MemberInfo mi)
     {
-        return memberFilter.Contains(type.Name + "." + mi.Name);
+		return memberInfoFilter.Contains(mi) || memberFilter.Contains(type.Name + "." + mi.Name);
     }
 
     public static bool IsMemberFilter(Type t)
     {
         string name = LuaMisc.GetTypeName(t);
-        return memberFilter.Find((p) => { return name.Contains(p); }) != null;
+        return memberInfoFilter.Contains(t) || memberFilter.Find((p) => { return name.Contains(p); }) != null;
     }
 
     static ToLuaExport()
@@ -1678,7 +1686,7 @@ public static class ToLuaExport
         }
         else if (varType == typeof(LuaByteBuffer))
         {
-            sb.AppendFormat("{0}LuaByteBuffer {1} = new LuaByteBuffer(ToLua.{2}ByteBuffer(L, {3}));\r\n", head, arg, checkStr, stackPos);
+            sb.AppendFormat("{0}LuaByteBuffer {1} = new LuaByteBuffer(ToLua.CheckByteBuffer(L, {2}));\r\n", head, arg, stackPos);
         }
         else if (varType.IsArray && varType.GetArrayRank() == 1)
         {
@@ -3248,27 +3256,63 @@ public static class ToLuaExport
     [NoToLuaAttribute]
     public static Delegate CreateDelegate(Type t, LuaFunction func = null)
     {
-        DelegateValue create = null;
+        DelegateValue Create = null;
 
-        if (!dict.TryGetValue(t, out create))
+        if (!dict.TryGetValue(t, out Create))
         {
             throw new LuaException(string.Format(""Delegate {0} not register"", LuaMisc.GetTypeName(t)));            
         }
-        
-        return create(func, null, false);        
+
+        if (func != null)
+        {
+            LuaState state = func.GetLuaState();
+            LuaDelegate target = state.GetLuaDelegate(func);
+            
+            if (target != null)
+            {
+                return Delegate.CreateDelegate(t, target, target.method);
+            }  
+            else
+            {
+                Delegate d = Create(func, null, false);
+                target = d.Target as LuaDelegate;
+                state.AddLuaDelegate(target, func);
+                return d;
+            }       
+        }
+
+        return Create(func, null, false);        
     }
 
     [NoToLuaAttribute]
     public static Delegate CreateDelegate(Type t, LuaFunction func, LuaTable self)
     {
-        DelegateValue create = null;
+        DelegateValue Create = null;
 
-        if (!dict.TryGetValue(t, out create))
+        if (!dict.TryGetValue(t, out Create))
         {
             throw new LuaException(string.Format(""Delegate {0} not register"", LuaMisc.GetTypeName(t)));
         }
 
-        return create(func, self, true);
+        if (func != null)
+        {
+            LuaState state = func.GetLuaState();
+            LuaDelegate target = state.GetLuaDelegate(func, self);
+
+            if (target != null)
+            {
+                return Delegate.CreateDelegate(t, target, target.method);
+            }
+            else
+            {
+                Delegate d = Create(func, self, true);
+                target = d.Target as LuaDelegate;
+                state.AddLuaDelegate(target, func, self);
+                return d;
+            }
+        }
+
+        return Create(func, self, true);
     }
 ";
 
@@ -3439,7 +3483,7 @@ public static class ToLuaExport
         sb.Append("public static class DelegateFactory\r\n");
         sb.Append("{\r\n");        
         sb.Append("\tpublic delegate Delegate DelegateValue(LuaFunction func, LuaTable self, bool flag);\r\n");
-        sb.Append("\tpublic static Dictionary<Type, DelegateValue> dict = new Dictionary<Type, DelegateValue>();\r\n");
+        sb.Append("\tpublic static Dictionary<Type, DelegateValue> dict = new Dictionary<Type, DelegateValue>();\r\n");        
         sb.AppendLineEx();
         sb.Append("\tstatic DelegateFactory()\r\n");
         sb.Append("\t{\r\n");
@@ -3493,12 +3537,16 @@ public static class ToLuaExport
             sb.AppendLineEx("\t\t}\r\n");
             sb.AppendLineEx("\t\tif(!flag)");
             sb.AppendLineEx("\t\t{");
-            sb.AppendFormat("\t\t\t{0} d = (new {1}_Event(func)).Call;\r\n", strType, name);            
+            sb.AppendFormat("\t\t\t{0}_Event target = new {0}_Event(func);\r\n", name);
+            sb.AppendFormat("\t\t\t{0} d = target.Call;\r\n", strType);
+            sb.AppendLineEx("\t\t\ttarget.method = d.Method;");
             sb.AppendLineEx("\t\t\treturn d;");
             sb.AppendLineEx("\t\t}");
             sb.AppendLineEx("\t\telse");
             sb.AppendLineEx("\t\t{");
-            sb.AppendFormat("\t\t\t{0} d = (new {1}_Event(func, self)).CallWithSelf;\r\n", strType, name);
+            sb.AppendFormat("\t\t\t{0}_Event target = new {0}_Event(func, self);\r\n", name);
+            sb.AppendFormat("\t\t\t{0} d = target.CallWithSelf;\r\n", strType);
+            sb.AppendLineEx("\t\t\ttarget.method = d.Method;");
             sb.AppendLineEx("\t\t\treturn d;");
             sb.AppendLineEx("\t\t}");
 
@@ -3593,9 +3641,9 @@ public static class ToLuaExport
                 }
 
                 ParameterInfo[] plist = md.GetParameters();
-                Type t = plist[0].ParameterType;                
+                Type t = plist[0].ParameterType;
 
-                if ((t == type) || (IsGenericType(md, t) && type.IsSubclassOf(t.BaseType)))
+                if (t == type || (IsGenericType(md, t) && (type == t.BaseType || type.IsSubclassOf(t.BaseType))))
                 {
                     string name = md.Name;
 

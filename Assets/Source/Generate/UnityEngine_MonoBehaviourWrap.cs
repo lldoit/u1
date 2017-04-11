@@ -12,7 +12,6 @@ public class UnityEngine_MonoBehaviourWrap
 		L.RegFunction("CancelInvoke", CancelInvoke);
 		L.RegFunction("IsInvoking", IsInvoking);
 		L.RegFunction("StartCoroutine", StartCoroutine);
-		L.RegFunction("StartCoroutine_Auto", StartCoroutine_Auto);
 		L.RegFunction("StopCoroutine", StopCoroutine);
 		L.RegFunction("StopAllCoroutines", StopAllCoroutines);
 		L.RegFunction("print", print);
@@ -159,24 +158,6 @@ public class UnityEngine_MonoBehaviourWrap
 			{
 				return LuaDLL.luaL_throw(L, "invalid arguments to method: UnityEngine.MonoBehaviour.StartCoroutine");
 			}
-		}
-		catch(Exception e)
-		{
-			return LuaDLL.toluaL_exception(L, e);
-		}
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int StartCoroutine_Auto(IntPtr L)
-	{
-		try
-		{
-			ToLua.CheckArgsCount(L, 2);
-			UnityEngine.MonoBehaviour obj = (UnityEngine.MonoBehaviour)ToLua.CheckObject(L, 1, typeof(UnityEngine.MonoBehaviour));
-			System.Collections.IEnumerator arg0 = (System.Collections.IEnumerator)ToLua.CheckObject(L, 2, typeof(System.Collections.IEnumerator));
-			UnityEngine.Coroutine o = obj.StartCoroutine_Auto(arg0);
-			ToLua.PushObject(L, o);
-			return 1;
 		}
 		catch(Exception e)
 		{

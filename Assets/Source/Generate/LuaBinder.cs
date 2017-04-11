@@ -64,8 +64,8 @@ public static class LuaBinder
 		L.RegFunction("CameraCallback", UnityEngine_Camera_CameraCallback);
 		L.EndModule();
 		L.BeginModule("Application");
-		L.RegFunction("LogCallback", UnityEngine_Application_LogCallback);
 		L.RegFunction("AdvertisingIdentifierCallback", UnityEngine_Application_AdvertisingIdentifierCallback);
+		L.RegFunction("LogCallback", UnityEngine_Application_LogCallback);
 		L.EndModule();
 		L.BeginModule("AudioClip");
 		L.RegFunction("PCMReaderCallback", UnityEngine_AudioClip_PCMReaderCallback);
@@ -218,33 +218,6 @@ public static class LuaBinder
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int UnityEngine_Application_LogCallback(IntPtr L)
-	{
-		try
-		{
-			int count = LuaDLL.lua_gettop(L);
-			LuaFunction func = ToLua.CheckLuaFunction(L, 1);
-
-			if (count == 1)
-			{
-				Delegate arg1 = DelegateFactory.CreateDelegate(typeof(UnityEngine.Application.LogCallback), func);
-				ToLua.Push(L, arg1);
-			}
-			else
-			{
-				LuaTable self = ToLua.CheckLuaTable(L, 2);
-				Delegate arg1 = DelegateFactory.CreateDelegate(typeof(UnityEngine.Application.LogCallback), func, self);
-				ToLua.Push(L, arg1);
-			}
-			return 1;
-		}
-		catch(Exception e)
-		{
-			return LuaDLL.toluaL_exception(L, e);
-		}
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
 	static int UnityEngine_Application_AdvertisingIdentifierCallback(IntPtr L)
 	{
 		try
@@ -261,6 +234,33 @@ public static class LuaBinder
 			{
 				LuaTable self = ToLua.CheckLuaTable(L, 2);
 				Delegate arg1 = DelegateFactory.CreateDelegate(typeof(UnityEngine.Application.AdvertisingIdentifierCallback), func, self);
+				ToLua.Push(L, arg1);
+			}
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int UnityEngine_Application_LogCallback(IntPtr L)
+	{
+		try
+		{
+			int count = LuaDLL.lua_gettop(L);
+			LuaFunction func = ToLua.CheckLuaFunction(L, 1);
+
+			if (count == 1)
+			{
+				Delegate arg1 = DelegateFactory.CreateDelegate(typeof(UnityEngine.Application.LogCallback), func);
+				ToLua.Push(L, arg1);
+			}
+			else
+			{
+				LuaTable self = ToLua.CheckLuaTable(L, 2);
+				Delegate arg1 = DelegateFactory.CreateDelegate(typeof(UnityEngine.Application.LogCallback), func, self);
 				ToLua.Push(L, arg1);
 			}
 			return 1;
@@ -685,7 +685,7 @@ public static class LuaBinder
 			state.BeginPreModule("UnityEngine");
 			UnityEngine_MeshRendererWrap.Register(state);
 			int reference = state.GetMetaReference(typeof(UnityEngine.MeshRenderer));
-			state.EndPreModule(reference);
+			state.EndPreModule(L, reference);
 			return 1;
 		}
 		catch(Exception e)
@@ -703,7 +703,7 @@ public static class LuaBinder
 			state.BeginPreModule("UnityEngine");
 			UnityEngine_ParticleEmitterWrap.Register(state);
 			int reference = state.GetMetaReference(typeof(UnityEngine.ParticleEmitter));
-			state.EndPreModule(reference);
+			state.EndPreModule(L, reference);
 			return 1;
 		}
 		catch(Exception e)
@@ -721,7 +721,7 @@ public static class LuaBinder
 			state.BeginPreModule("UnityEngine");
 			UnityEngine_ParticleRendererWrap.Register(state);
 			int reference = state.GetMetaReference(typeof(UnityEngine.ParticleRenderer));
-			state.EndPreModule(reference);
+			state.EndPreModule(L, reference);
 			return 1;
 		}
 		catch(Exception e)
@@ -739,7 +739,7 @@ public static class LuaBinder
 			state.BeginPreModule("UnityEngine");
 			UnityEngine_ParticleAnimatorWrap.Register(state);
 			int reference = state.GetMetaReference(typeof(UnityEngine.ParticleAnimator));
-			state.EndPreModule(reference);
+			state.EndPreModule(L, reference);
 			return 1;
 		}
 		catch(Exception e)
@@ -757,7 +757,7 @@ public static class LuaBinder
 			state.BeginPreModule("UnityEngine");
 			UnityEngine_BoxColliderWrap.Register(state);
 			int reference = state.GetMetaReference(typeof(UnityEngine.BoxCollider));
-			state.EndPreModule(reference);
+			state.EndPreModule(L, reference);
 			return 1;
 		}
 		catch(Exception e)
@@ -775,7 +775,7 @@ public static class LuaBinder
 			state.BeginPreModule("UnityEngine");
 			UnityEngine_MeshColliderWrap.Register(state);
 			int reference = state.GetMetaReference(typeof(UnityEngine.MeshCollider));
-			state.EndPreModule(reference);
+			state.EndPreModule(L, reference);
 			return 1;
 		}
 		catch(Exception e)
@@ -793,7 +793,7 @@ public static class LuaBinder
 			state.BeginPreModule("UnityEngine");
 			UnityEngine_SphereColliderWrap.Register(state);
 			int reference = state.GetMetaReference(typeof(UnityEngine.SphereCollider));
-			state.EndPreModule(reference);
+			state.EndPreModule(L, reference);
 			return 1;
 		}
 		catch(Exception e)
@@ -811,7 +811,7 @@ public static class LuaBinder
 			state.BeginPreModule("UnityEngine");
 			UnityEngine_CharacterControllerWrap.Register(state);
 			int reference = state.GetMetaReference(typeof(UnityEngine.CharacterController));
-			state.EndPreModule(reference);
+			state.EndPreModule(L, reference);
 			return 1;
 		}
 		catch(Exception e)
@@ -829,7 +829,7 @@ public static class LuaBinder
 			state.BeginPreModule("UnityEngine");
 			UnityEngine_CapsuleColliderWrap.Register(state);
 			int reference = state.GetMetaReference(typeof(UnityEngine.CapsuleCollider));
-			state.EndPreModule(reference);
+			state.EndPreModule(L, reference);
 			return 1;
 		}
 		catch(Exception e)
@@ -847,7 +847,7 @@ public static class LuaBinder
 			state.BeginPreModule("UnityEngine");
 			UnityEngine_AnimationWrap.Register(state);
 			int reference = state.GetMetaReference(typeof(UnityEngine.Animation));
-			state.EndPreModule(reference);
+			state.EndPreModule(L, reference);
 			return 1;
 		}
 		catch(Exception e)
@@ -865,7 +865,7 @@ public static class LuaBinder
 			state.BeginPreModule("UnityEngine");
 			UnityEngine_AnimationClipWrap.Register(state);
 			int reference = state.GetMetaReference(typeof(UnityEngine.AnimationClip));
-			state.EndPreModule(reference);
+			state.EndPreModule(L, reference);
 			return 1;
 		}
 		catch(Exception e)
@@ -883,7 +883,7 @@ public static class LuaBinder
 			state.BeginPreModule("UnityEngine");
 			UnityEngine_AnimationStateWrap.Register(state);
 			int reference = state.GetMetaReference(typeof(UnityEngine.AnimationState));
-			state.EndPreModule(reference);
+			state.EndPreModule(L, reference);
 			return 1;
 		}
 		catch(Exception e)
@@ -901,7 +901,7 @@ public static class LuaBinder
 			state.BeginPreModule("UnityEngine");
 			UnityEngine_BlendWeightsWrap.Register(state);
 			int reference = state.GetMetaReference(typeof(UnityEngine.BlendWeights));
-			state.EndPreModule(reference);
+			state.EndPreModule(L, reference);
 			return 1;
 		}
 		catch(Exception e)
@@ -919,7 +919,7 @@ public static class LuaBinder
 			state.BeginPreModule("UnityEngine");
 			UnityEngine_RenderTextureWrap.Register(state);
 			int reference = state.GetMetaReference(typeof(UnityEngine.RenderTexture));
-			state.EndPreModule(reference);
+			state.EndPreModule(L, reference);
 			return 1;
 		}
 		catch(Exception e)
@@ -937,7 +937,7 @@ public static class LuaBinder
 			state.BeginPreModule("UnityEngine");
 			UnityEngine_RigidbodyWrap.Register(state);
 			int reference = state.GetMetaReference(typeof(UnityEngine.Rigidbody));
-			state.EndPreModule(reference);
+			state.EndPreModule(L, reference);
 			return 1;
 		}
 		catch(Exception e)

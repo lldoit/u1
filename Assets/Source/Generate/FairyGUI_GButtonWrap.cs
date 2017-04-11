@@ -13,16 +13,16 @@ public class FairyGUI_GButtonWrap
 		L.RegFunction("Setup_AfterAdd", Setup_AfterAdd);
 		L.RegFunction("New", _CreateFairyGUI_GButton);
 		L.RegFunction("__tostring", ToLua.op_ToString);
+		L.RegVar("sound", get_sound, set_sound);
+		L.RegVar("soundVolumeScale", get_soundVolumeScale, set_soundVolumeScale);
+		L.RegVar("changeStateOnClick", get_changeStateOnClick, set_changeStateOnClick);
+		L.RegVar("linkedPopup", get_linkedPopup, set_linkedPopup);
 		L.RegVar("UP", get_UP, null);
 		L.RegVar("DOWN", get_DOWN, null);
 		L.RegVar("OVER", get_OVER, null);
 		L.RegVar("SELECTED_OVER", get_SELECTED_OVER, null);
 		L.RegVar("DISABLED", get_DISABLED, null);
 		L.RegVar("SELECTED_DISABLED", get_SELECTED_DISABLED, null);
-		L.RegVar("sound", get_sound, set_sound);
-		L.RegVar("soundVolumeScale", get_soundVolumeScale, set_soundVolumeScale);
-		L.RegVar("changeStateOnClick", get_changeStateOnClick, set_changeStateOnClick);
-		L.RegVar("linkedPopup", get_linkedPopup, set_linkedPopup);
 		L.RegVar("pageOption", get_pageOption, null);
 		L.RegVar("onChanged", get_onChanged, null);
 		L.RegVar("icon", get_icon, set_icon);
@@ -130,6 +130,82 @@ public class FairyGUI_GButtonWrap
 	}
 
 	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_sound(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GButton obj = (FairyGUI.GButton)o;
+			UnityEngine.AudioClip ret = obj.sound;
+			ToLua.Push(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index sound on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_soundVolumeScale(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GButton obj = (FairyGUI.GButton)o;
+			float ret = obj.soundVolumeScale;
+			LuaDLL.lua_pushnumber(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index soundVolumeScale on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_changeStateOnClick(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GButton obj = (FairyGUI.GButton)o;
+			bool ret = obj.changeStateOnClick;
+			LuaDLL.lua_pushboolean(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index changeStateOnClick on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+	static int get_linkedPopup(IntPtr L)
+	{
+		object o = null;
+
+		try
+		{
+			o = ToLua.ToObject(L, 1);
+			FairyGUI.GButton obj = (FairyGUI.GButton)o;
+			FairyGUI.GObject ret = obj.linkedPopup;
+			ToLua.PushObject(L, ret);
+			return 1;
+		}
+		catch(Exception e)
+		{
+			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index linkedPopup on a nil value" : e.Message);
+		}
+	}
+
+	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
 	static int get_UP(IntPtr L)
 	{
 		try
@@ -210,82 +286,6 @@ public class FairyGUI_GButtonWrap
 		catch(Exception e)
 		{
 			return LuaDLL.toluaL_exception(L, e);
-		}
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int get_sound(IntPtr L)
-	{
-		object o = null;
-
-		try
-		{
-			o = ToLua.ToObject(L, 1);
-			FairyGUI.GButton obj = (FairyGUI.GButton)o;
-			UnityEngine.AudioClip ret = obj.sound;
-			ToLua.Push(L, ret);
-			return 1;
-		}
-		catch(Exception e)
-		{
-			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index sound on a nil value" : e.Message);
-		}
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int get_soundVolumeScale(IntPtr L)
-	{
-		object o = null;
-
-		try
-		{
-			o = ToLua.ToObject(L, 1);
-			FairyGUI.GButton obj = (FairyGUI.GButton)o;
-			float ret = obj.soundVolumeScale;
-			LuaDLL.lua_pushnumber(L, ret);
-			return 1;
-		}
-		catch(Exception e)
-		{
-			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index soundVolumeScale on a nil value" : e.Message);
-		}
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int get_changeStateOnClick(IntPtr L)
-	{
-		object o = null;
-
-		try
-		{
-			o = ToLua.ToObject(L, 1);
-			FairyGUI.GButton obj = (FairyGUI.GButton)o;
-			bool ret = obj.changeStateOnClick;
-			LuaDLL.lua_pushboolean(L, ret);
-			return 1;
-		}
-		catch(Exception e)
-		{
-			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index changeStateOnClick on a nil value" : e.Message);
-		}
-	}
-
-	[MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-	static int get_linkedPopup(IntPtr L)
-	{
-		object o = null;
-
-		try
-		{
-			o = ToLua.ToObject(L, 1);
-			FairyGUI.GButton obj = (FairyGUI.GButton)o;
-			FairyGUI.GObject ret = obj.linkedPopup;
-			ToLua.PushObject(L, ret);
-			return 1;
-		}
-		catch(Exception e)
-		{
-			return LuaDLL.toluaL_exception(L, e, o == null ? "attempt to index linkedPopup on a nil value" : e.Message);
 		}
 	}
 

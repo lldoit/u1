@@ -310,7 +310,7 @@ public class UnityEngine_LightWrap
 		{
 			o = ToLua.ToObject(L, 1);
 			UnityEngine.Light obj = (UnityEngine.Light)o;
-			UnityEngine.LightShadowResolution ret = obj.shadowResolution;
+			UnityEngine.Rendering.LightShadowResolution ret = obj.shadowResolution;
 			ToLua.Push(L, ret);
 			return 1;
 		}
@@ -709,7 +709,7 @@ public class UnityEngine_LightWrap
 		{
 			o = ToLua.ToObject(L, 1);
 			UnityEngine.Light obj = (UnityEngine.Light)o;
-			UnityEngine.LightShadowResolution arg0 = (UnityEngine.LightShadowResolution)ToLua.CheckObject(L, 2, typeof(UnityEngine.LightShadowResolution));
+			UnityEngine.Rendering.LightShadowResolution arg0 = (UnityEngine.Rendering.LightShadowResolution)ToLua.CheckObject(L, 2, typeof(UnityEngine.Rendering.LightShadowResolution));
 			obj.shadowResolution = arg0;
 			return 0;
 		}

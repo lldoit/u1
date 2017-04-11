@@ -38,9 +38,9 @@ public class SerializedLightmapSetting : MonoBehaviour
                 {
                     lightmaps[i] = new LightmapData();
                     if (i < l1)
-                        lightmaps[i].lightmapFar = lightmapFar[i];
+                        lightmaps[i].lightmapLight = lightmapFar[i];
                     if (i < l2)
-                        lightmaps[i].lightmapNear = lightmapNear[i];
+                        lightmaps[i].lightmapDir = lightmapNear[i];
                 }
             }
             LightmapSettings.lightmaps = lightmaps;
@@ -63,8 +63,8 @@ public class SerializedLightmapSetting : MonoBehaviour
             lightmapNear = new Texture2D[l];
             for (int i = 0; i < l; i++)
             {
-                lightmapFar[i] = LightmapSettings.lightmaps[i].lightmapFar;
-                lightmapNear[i] = LightmapSettings.lightmaps[i].lightmapNear;
+                lightmapFar[i] = LightmapSettings.lightmaps[i].lightmapLight;
+                lightmapNear[i] = LightmapSettings.lightmaps[i].lightmapDir;
             }
         }
 

@@ -23,8 +23,8 @@ public static class DelegateFactory
 		dict.Add(typeof(System.Action<int>), System_Action_int);
 		dict.Add(typeof(System.Comparison<int>), System_Comparison_int);
 		dict.Add(typeof(UnityEngine.Camera.CameraCallback), UnityEngine_Camera_CameraCallback);
-		dict.Add(typeof(UnityEngine.Application.LogCallback), UnityEngine_Application_LogCallback);
 		dict.Add(typeof(UnityEngine.Application.AdvertisingIdentifierCallback), UnityEngine_Application_AdvertisingIdentifierCallback);
+		dict.Add(typeof(UnityEngine.Application.LogCallback), UnityEngine_Application_LogCallback);
 		dict.Add(typeof(UnityEngine.AudioClip.PCMReaderCallback), UnityEngine_AudioClip_PCMReaderCallback);
 		dict.Add(typeof(UnityEngine.AudioClip.PCMSetPositionCallback), UnityEngine_AudioClip_PCMSetPositionCallback);
 		dict.Add(typeof(System.Action<NotiData>), System_Action_NotiData);
@@ -41,27 +41,63 @@ public static class DelegateFactory
     [NoToLuaAttribute]
     public static Delegate CreateDelegate(Type t, LuaFunction func = null)
     {
-        DelegateValue create = null;
+        DelegateValue Create = null;
 
-        if (!dict.TryGetValue(t, out create))
+        if (!dict.TryGetValue(t, out Create))
         {
             throw new LuaException(string.Format("Delegate {0} not register", LuaMisc.GetTypeName(t)));            
         }
-        
-        return create(func, null, false);        
+
+        if (func != null)
+        {
+            LuaState state = func.GetLuaState();
+            LuaDelegate target = state.GetLuaDelegate(func);
+            
+            if (target != null)
+            {
+                return Delegate.CreateDelegate(t, target, target.method);
+            }  
+            else
+            {
+                Delegate d = Create(func, null, false);
+                target = d.Target as LuaDelegate;
+                state.AddLuaDelegate(target, func);
+                return d;
+            }       
+        }
+
+        return Create(func, null, false);        
     }
 
     [NoToLuaAttribute]
     public static Delegate CreateDelegate(Type t, LuaFunction func, LuaTable self)
     {
-        DelegateValue create = null;
+        DelegateValue Create = null;
 
-        if (!dict.TryGetValue(t, out create))
+        if (!dict.TryGetValue(t, out Create))
         {
             throw new LuaException(string.Format("Delegate {0} not register", LuaMisc.GetTypeName(t)));
         }
 
-        return create(func, self, true);
+        if (func != null)
+        {
+            LuaState state = func.GetLuaState();
+            LuaDelegate target = state.GetLuaDelegate(func, self);
+
+            if (target != null)
+            {
+                return Delegate.CreateDelegate(t, target, target.method);
+            }
+            else
+            {
+                Delegate d = Create(func, self, true);
+                target = d.Target as LuaDelegate;
+                state.AddLuaDelegate(target, func, self);
+                return d;
+            }
+        }
+
+        return Create(func, self, true);
     }
 
     [NoToLuaAttribute]
@@ -144,12 +180,16 @@ public static class DelegateFactory
 
 		if(!flag)
 		{
-			System.Action d = (new System_Action_Event(func)).Call;
+			System_Action_Event target = new System_Action_Event(func);
+			System.Action d = target.Call;
+			target.method = d.Method;
 			return d;
 		}
 		else
 		{
-			System.Action d = (new System_Action_Event(func, self)).CallWithSelf;
+			System_Action_Event target = new System_Action_Event(func, self);
+			System.Action d = target.CallWithSelf;
+			target.method = d.Method;
 			return d;
 		}
 	}
@@ -183,12 +223,16 @@ public static class DelegateFactory
 
 		if(!flag)
 		{
-			UnityEngine.Events.UnityAction d = (new UnityEngine_Events_UnityAction_Event(func)).Call;
+			UnityEngine_Events_UnityAction_Event target = new UnityEngine_Events_UnityAction_Event(func);
+			UnityEngine.Events.UnityAction d = target.Call;
+			target.method = d.Method;
 			return d;
 		}
 		else
 		{
-			UnityEngine.Events.UnityAction d = (new UnityEngine_Events_UnityAction_Event(func, self)).CallWithSelf;
+			UnityEngine_Events_UnityAction_Event target = new UnityEngine_Events_UnityAction_Event(func, self);
+			UnityEngine.Events.UnityAction d = target.CallWithSelf;
+			target.method = d.Method;
 			return d;
 		}
 	}
@@ -230,12 +274,16 @@ public static class DelegateFactory
 
 		if(!flag)
 		{
-			System.Predicate<int> d = (new System_Predicate_int_Event(func)).Call;
+			System_Predicate_int_Event target = new System_Predicate_int_Event(func);
+			System.Predicate<int> d = target.Call;
+			target.method = d.Method;
 			return d;
 		}
 		else
 		{
-			System.Predicate<int> d = (new System_Predicate_int_Event(func, self)).CallWithSelf;
+			System_Predicate_int_Event target = new System_Predicate_int_Event(func, self);
+			System.Predicate<int> d = target.CallWithSelf;
+			target.method = d.Method;
 			return d;
 		}
 	}
@@ -273,12 +321,16 @@ public static class DelegateFactory
 
 		if(!flag)
 		{
-			System.Action<int> d = (new System_Action_int_Event(func)).Call;
+			System_Action_int_Event target = new System_Action_int_Event(func);
+			System.Action<int> d = target.Call;
+			target.method = d.Method;
 			return d;
 		}
 		else
 		{
-			System.Action<int> d = (new System_Action_int_Event(func, self)).CallWithSelf;
+			System_Action_int_Event target = new System_Action_int_Event(func, self);
+			System.Action<int> d = target.CallWithSelf;
+			target.method = d.Method;
 			return d;
 		}
 	}
@@ -322,12 +374,16 @@ public static class DelegateFactory
 
 		if(!flag)
 		{
-			System.Comparison<int> d = (new System_Comparison_int_Event(func)).Call;
+			System_Comparison_int_Event target = new System_Comparison_int_Event(func);
+			System.Comparison<int> d = target.Call;
+			target.method = d.Method;
 			return d;
 		}
 		else
 		{
-			System.Comparison<int> d = (new System_Comparison_int_Event(func, self)).CallWithSelf;
+			System_Comparison_int_Event target = new System_Comparison_int_Event(func, self);
+			System.Comparison<int> d = target.CallWithSelf;
+			target.method = d.Method;
 			return d;
 		}
 	}
@@ -365,59 +421,16 @@ public static class DelegateFactory
 
 		if(!flag)
 		{
-			UnityEngine.Camera.CameraCallback d = (new UnityEngine_Camera_CameraCallback_Event(func)).Call;
+			UnityEngine_Camera_CameraCallback_Event target = new UnityEngine_Camera_CameraCallback_Event(func);
+			UnityEngine.Camera.CameraCallback d = target.Call;
+			target.method = d.Method;
 			return d;
 		}
 		else
 		{
-			UnityEngine.Camera.CameraCallback d = (new UnityEngine_Camera_CameraCallback_Event(func, self)).CallWithSelf;
-			return d;
-		}
-	}
-
-	class UnityEngine_Application_LogCallback_Event : LuaDelegate
-	{
-		public UnityEngine_Application_LogCallback_Event(LuaFunction func) : base(func) { }
-		public UnityEngine_Application_LogCallback_Event(LuaFunction func, LuaTable self) : base(func, self) { }
-
-		public void Call(string param0, string param1, UnityEngine.LogType param2)
-		{
-			func.BeginPCall();
-			func.Push(param0);
-			func.Push(param1);
-			func.Push(param2);
-			func.PCall();
-			func.EndPCall();
-		}
-
-		public void CallWithSelf(string param0, string param1, UnityEngine.LogType param2)
-		{
-			func.BeginPCall();
-			func.Push(self);
-			func.Push(param0);
-			func.Push(param1);
-			func.Push(param2);
-			func.PCall();
-			func.EndPCall();
-		}
-	}
-
-	public static Delegate UnityEngine_Application_LogCallback(LuaFunction func, LuaTable self, bool flag)
-	{
-		if (func == null)
-		{
-			UnityEngine.Application.LogCallback fn = delegate(string param0, string param1, UnityEngine.LogType param2) { };
-			return fn;
-		}
-
-		if(!flag)
-		{
-			UnityEngine.Application.LogCallback d = (new UnityEngine_Application_LogCallback_Event(func)).Call;
-			return d;
-		}
-		else
-		{
-			UnityEngine.Application.LogCallback d = (new UnityEngine_Application_LogCallback_Event(func, self)).CallWithSelf;
+			UnityEngine_Camera_CameraCallback_Event target = new UnityEngine_Camera_CameraCallback_Event(func, self);
+			UnityEngine.Camera.CameraCallback d = target.CallWithSelf;
+			target.method = d.Method;
 			return d;
 		}
 	}
@@ -459,12 +472,67 @@ public static class DelegateFactory
 
 		if(!flag)
 		{
-			UnityEngine.Application.AdvertisingIdentifierCallback d = (new UnityEngine_Application_AdvertisingIdentifierCallback_Event(func)).Call;
+			UnityEngine_Application_AdvertisingIdentifierCallback_Event target = new UnityEngine_Application_AdvertisingIdentifierCallback_Event(func);
+			UnityEngine.Application.AdvertisingIdentifierCallback d = target.Call;
+			target.method = d.Method;
 			return d;
 		}
 		else
 		{
-			UnityEngine.Application.AdvertisingIdentifierCallback d = (new UnityEngine_Application_AdvertisingIdentifierCallback_Event(func, self)).CallWithSelf;
+			UnityEngine_Application_AdvertisingIdentifierCallback_Event target = new UnityEngine_Application_AdvertisingIdentifierCallback_Event(func, self);
+			UnityEngine.Application.AdvertisingIdentifierCallback d = target.CallWithSelf;
+			target.method = d.Method;
+			return d;
+		}
+	}
+
+	class UnityEngine_Application_LogCallback_Event : LuaDelegate
+	{
+		public UnityEngine_Application_LogCallback_Event(LuaFunction func) : base(func) { }
+		public UnityEngine_Application_LogCallback_Event(LuaFunction func, LuaTable self) : base(func, self) { }
+
+		public void Call(string param0, string param1, UnityEngine.LogType param2)
+		{
+			func.BeginPCall();
+			func.Push(param0);
+			func.Push(param1);
+			func.Push(param2);
+			func.PCall();
+			func.EndPCall();
+		}
+
+		public void CallWithSelf(string param0, string param1, UnityEngine.LogType param2)
+		{
+			func.BeginPCall();
+			func.Push(self);
+			func.Push(param0);
+			func.Push(param1);
+			func.Push(param2);
+			func.PCall();
+			func.EndPCall();
+		}
+	}
+
+	public static Delegate UnityEngine_Application_LogCallback(LuaFunction func, LuaTable self, bool flag)
+	{
+		if (func == null)
+		{
+			UnityEngine.Application.LogCallback fn = delegate(string param0, string param1, UnityEngine.LogType param2) { };
+			return fn;
+		}
+
+		if(!flag)
+		{
+			UnityEngine_Application_LogCallback_Event target = new UnityEngine_Application_LogCallback_Event(func);
+			UnityEngine.Application.LogCallback d = target.Call;
+			target.method = d.Method;
+			return d;
+		}
+		else
+		{
+			UnityEngine_Application_LogCallback_Event target = new UnityEngine_Application_LogCallback_Event(func, self);
+			UnityEngine.Application.LogCallback d = target.CallWithSelf;
+			target.method = d.Method;
 			return d;
 		}
 	}
@@ -502,12 +570,16 @@ public static class DelegateFactory
 
 		if(!flag)
 		{
-			UnityEngine.AudioClip.PCMReaderCallback d = (new UnityEngine_AudioClip_PCMReaderCallback_Event(func)).Call;
+			UnityEngine_AudioClip_PCMReaderCallback_Event target = new UnityEngine_AudioClip_PCMReaderCallback_Event(func);
+			UnityEngine.AudioClip.PCMReaderCallback d = target.Call;
+			target.method = d.Method;
 			return d;
 		}
 		else
 		{
-			UnityEngine.AudioClip.PCMReaderCallback d = (new UnityEngine_AudioClip_PCMReaderCallback_Event(func, self)).CallWithSelf;
+			UnityEngine_AudioClip_PCMReaderCallback_Event target = new UnityEngine_AudioClip_PCMReaderCallback_Event(func, self);
+			UnityEngine.AudioClip.PCMReaderCallback d = target.CallWithSelf;
+			target.method = d.Method;
 			return d;
 		}
 	}
@@ -545,12 +617,16 @@ public static class DelegateFactory
 
 		if(!flag)
 		{
-			UnityEngine.AudioClip.PCMSetPositionCallback d = (new UnityEngine_AudioClip_PCMSetPositionCallback_Event(func)).Call;
+			UnityEngine_AudioClip_PCMSetPositionCallback_Event target = new UnityEngine_AudioClip_PCMSetPositionCallback_Event(func);
+			UnityEngine.AudioClip.PCMSetPositionCallback d = target.Call;
+			target.method = d.Method;
 			return d;
 		}
 		else
 		{
-			UnityEngine.AudioClip.PCMSetPositionCallback d = (new UnityEngine_AudioClip_PCMSetPositionCallback_Event(func, self)).CallWithSelf;
+			UnityEngine_AudioClip_PCMSetPositionCallback_Event target = new UnityEngine_AudioClip_PCMSetPositionCallback_Event(func, self);
+			UnityEngine.AudioClip.PCMSetPositionCallback d = target.CallWithSelf;
+			target.method = d.Method;
 			return d;
 		}
 	}
@@ -588,12 +664,16 @@ public static class DelegateFactory
 
 		if(!flag)
 		{
-			System.Action<NotiData> d = (new System_Action_NotiData_Event(func)).Call;
+			System_Action_NotiData_Event target = new System_Action_NotiData_Event(func);
+			System.Action<NotiData> d = target.Call;
+			target.method = d.Method;
 			return d;
 		}
 		else
 		{
-			System.Action<NotiData> d = (new System_Action_NotiData_Event(func, self)).CallWithSelf;
+			System_Action_NotiData_Event target = new System_Action_NotiData_Event(func, self);
+			System.Action<NotiData> d = target.CallWithSelf;
+			target.method = d.Method;
 			return d;
 		}
 	}
@@ -627,12 +707,16 @@ public static class DelegateFactory
 
 		if(!flag)
 		{
-			FairyGUI.EventCallback0 d = (new FairyGUI_EventCallback0_Event(func)).Call;
+			FairyGUI_EventCallback0_Event target = new FairyGUI_EventCallback0_Event(func);
+			FairyGUI.EventCallback0 d = target.Call;
+			target.method = d.Method;
 			return d;
 		}
 		else
 		{
-			FairyGUI.EventCallback0 d = (new FairyGUI_EventCallback0_Event(func, self)).CallWithSelf;
+			FairyGUI_EventCallback0_Event target = new FairyGUI_EventCallback0_Event(func, self);
+			FairyGUI.EventCallback0 d = target.CallWithSelf;
+			target.method = d.Method;
 			return d;
 		}
 	}
@@ -670,12 +754,16 @@ public static class DelegateFactory
 
 		if(!flag)
 		{
-			FairyGUI.EventCallback1 d = (new FairyGUI_EventCallback1_Event(func)).Call;
+			FairyGUI_EventCallback1_Event target = new FairyGUI_EventCallback1_Event(func);
+			FairyGUI.EventCallback1 d = target.Call;
+			target.method = d.Method;
 			return d;
 		}
 		else
 		{
-			FairyGUI.EventCallback1 d = (new FairyGUI_EventCallback1_Event(func, self)).CallWithSelf;
+			FairyGUI_EventCallback1_Event target = new FairyGUI_EventCallback1_Event(func, self);
+			FairyGUI.EventCallback1 d = target.CallWithSelf;
+			target.method = d.Method;
 			return d;
 		}
 	}
@@ -715,12 +803,16 @@ public static class DelegateFactory
 
 		if(!flag)
 		{
-			FairyGUI.ListItemRenderer d = (new FairyGUI_ListItemRenderer_Event(func)).Call;
+			FairyGUI_ListItemRenderer_Event target = new FairyGUI_ListItemRenderer_Event(func);
+			FairyGUI.ListItemRenderer d = target.Call;
+			target.method = d.Method;
 			return d;
 		}
 		else
 		{
-			FairyGUI.ListItemRenderer d = (new FairyGUI_ListItemRenderer_Event(func, self)).CallWithSelf;
+			FairyGUI_ListItemRenderer_Event target = new FairyGUI_ListItemRenderer_Event(func, self);
+			FairyGUI.ListItemRenderer d = target.CallWithSelf;
+			target.method = d.Method;
 			return d;
 		}
 	}
@@ -762,12 +854,16 @@ public static class DelegateFactory
 
 		if(!flag)
 		{
-			FairyGUI.ListItemProvider d = (new FairyGUI_ListItemProvider_Event(func)).Call;
+			FairyGUI_ListItemProvider_Event target = new FairyGUI_ListItemProvider_Event(func);
+			FairyGUI.ListItemProvider d = target.Call;
+			target.method = d.Method;
 			return d;
 		}
 		else
 		{
-			FairyGUI.ListItemProvider d = (new FairyGUI_ListItemProvider_Event(func, self)).CallWithSelf;
+			FairyGUI_ListItemProvider_Event target = new FairyGUI_ListItemProvider_Event(func, self);
+			FairyGUI.ListItemProvider d = target.CallWithSelf;
+			target.method = d.Method;
 			return d;
 		}
 	}
@@ -801,12 +897,16 @@ public static class DelegateFactory
 
 		if(!flag)
 		{
-			FairyGUI.PlayCompleteCallback d = (new FairyGUI_PlayCompleteCallback_Event(func)).Call;
+			FairyGUI_PlayCompleteCallback_Event target = new FairyGUI_PlayCompleteCallback_Event(func);
+			FairyGUI.PlayCompleteCallback d = target.Call;
+			target.method = d.Method;
 			return d;
 		}
 		else
 		{
-			FairyGUI.PlayCompleteCallback d = (new FairyGUI_PlayCompleteCallback_Event(func, self)).CallWithSelf;
+			FairyGUI_PlayCompleteCallback_Event target = new FairyGUI_PlayCompleteCallback_Event(func, self);
+			FairyGUI.PlayCompleteCallback d = target.CallWithSelf;
+			target.method = d.Method;
 			return d;
 		}
 	}
@@ -840,12 +940,16 @@ public static class DelegateFactory
 
 		if(!flag)
 		{
-			FairyGUI.TransitionHook d = (new FairyGUI_TransitionHook_Event(func)).Call;
+			FairyGUI_TransitionHook_Event target = new FairyGUI_TransitionHook_Event(func);
+			FairyGUI.TransitionHook d = target.Call;
+			target.method = d.Method;
 			return d;
 		}
 		else
 		{
-			FairyGUI.TransitionHook d = (new FairyGUI_TransitionHook_Event(func, self)).CallWithSelf;
+			FairyGUI_TransitionHook_Event target = new FairyGUI_TransitionHook_Event(func, self);
+			FairyGUI.TransitionHook d = target.CallWithSelf;
+			target.method = d.Method;
 			return d;
 		}
 	}
@@ -891,12 +995,16 @@ public static class DelegateFactory
 
 		if(!flag)
 		{
-			FairyGUI.UIPackage.LoadResource d = (new FairyGUI_UIPackage_LoadResource_Event(func)).Call;
+			FairyGUI_UIPackage_LoadResource_Event target = new FairyGUI_UIPackage_LoadResource_Event(func);
+			FairyGUI.UIPackage.LoadResource d = target.Call;
+			target.method = d.Method;
 			return d;
 		}
 		else
 		{
-			FairyGUI.UIPackage.LoadResource d = (new FairyGUI_UIPackage_LoadResource_Event(func, self)).CallWithSelf;
+			FairyGUI_UIPackage_LoadResource_Event target = new FairyGUI_UIPackage_LoadResource_Event(func, self);
+			FairyGUI.UIPackage.LoadResource d = target.CallWithSelf;
+			target.method = d.Method;
 			return d;
 		}
 	}
@@ -934,12 +1042,16 @@ public static class DelegateFactory
 
 		if(!flag)
 		{
-			FairyGUI.GObjectPool.InitCallbackDelegate d = (new FairyGUI_GObjectPool_InitCallbackDelegate_Event(func)).Call;
+			FairyGUI_GObjectPool_InitCallbackDelegate_Event target = new FairyGUI_GObjectPool_InitCallbackDelegate_Event(func);
+			FairyGUI.GObjectPool.InitCallbackDelegate d = target.Call;
+			target.method = d.Method;
 			return d;
 		}
 		else
 		{
-			FairyGUI.GObjectPool.InitCallbackDelegate d = (new FairyGUI_GObjectPool_InitCallbackDelegate_Event(func, self)).CallWithSelf;
+			FairyGUI_GObjectPool_InitCallbackDelegate_Event target = new FairyGUI_GObjectPool_InitCallbackDelegate_Event(func, self);
+			FairyGUI.GObjectPool.InitCallbackDelegate d = target.CallWithSelf;
+			target.method = d.Method;
 			return d;
 		}
 	}
